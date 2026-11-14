@@ -294,6 +294,17 @@ def test_threshold_and_bayer():
         o = halftone_stage(flat(float(tone), 64, 64), screen="bayer")[..., 0]
         worst = max(worst, abs(float(o.mean()) - float(tone)))
     check("Bayer: lit fraction = tone within 1/64", worst, 1 / 64)
+    # bayer_scale (Matt, 2026-11-14): whole pixels per matrix cell; 1 is the matrix above, 3 repeats each cell 3 x 3 pixels
+    t = flat(0.37, 96, 96)
+    check("Bayer scale 1 (and 1.3, rounded) is the unscaled matrix",
+          max(err(halftone_stage(t, screen="bayer", bayer_scale=1.0), halftone_stage(t, screen="bayer")),
+              err(halftone_stage(t, screen="bayer", bayer_scale=1.3), halftone_stage(t, screen="bayer"))), 0)
+    o1 = halftone_stage(t, screen="bayer")[..., 0]
+    o3 = halftone_stage(t, screen="bayer", bayer_scale=3.0)[..., 0]
+    check("Bayer scale 3: each matrix cell is 3 x 3 pixels", err(o3, np.repeat(np.repeat(o1[:32, :32], 3, 0), 3, 1)), 0)
+    worst = max(abs(float(halftone_stage(flat(float(tn), 96, 96), screen="bayer", bayer_scale=3.0)[..., 0].mean()) - float(tn))
+                for tn in np.linspace(0, 1, 23))
+    check("Bayer scale 3: lit fraction = tone within 1/64", worst, 1 / 64)
     src = ramp(256, 8)
     o = halftone_stage(src, screen="threshold", level=0.4, softness=0.0)[..., 0]
     check("Threshold, hard: 1 above the level, 0 below", err(o, (src[..., 0] > 0.4).astype(F32)), 0)

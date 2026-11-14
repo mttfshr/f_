@@ -17,6 +17,7 @@
 //   one-cell path, so the regular lattice is exactly the T020 one.
 // Threshold (ADR-6): smoothstep(level - w, level + w, tone), w = softness / 2 (a hard step at softness 0), per pixel.
 // Bayer: the 8 x 8 ordered matrix by texel, M = sum over bits b of 4^(2-b) (2 (x_b xor y_b) + y_b); lit where tone > (M + .5) / 64.
+//   bayer_scale (Matt, 2026-11-14): whole pixels per matrix cell, rounded, at least 1; the tone stays per pixel.
 // Single plate (T016b, plate_mode 1; spec "Plates from f_separate"): the whole texture is ONE plate at angle_b and phase_b.
 //   Its tone is the brightest channel, t = max(r, g, b), at the read texel; the colour is rgb / t there (black when t <= 0); the
 //   output is that colour times the coverage. The colour texel is the one the tone came from: the cell centre (displaced when
@@ -168,6 +169,7 @@ Param jitter(0);
 Param seed(1);
 Param level(0.5);
 Param plate_mode(0);
+Param bayer_scale(1);
 Param bypass_gate(0);
 Param width(1920);
 Param height(1080);
@@ -227,8 +229,9 @@ if (use_jit > 0.5) {
 }
 
 // T025: Threshold and Bayer replace the lattice, per pixel
-ixb = floor(norm.x * wd);
-iyb = floor(norm.y * ht);
+bsc = max(floor(bayer_scale + 0.5), 1);
+ixb = floor(floor(norm.x * wd) / bsc);
+iyb = floor(floor(norm.y * ht) / bsc);
 cov_r = switch(is_thr > 0.5, thresh(zr, level, soft), switch(is_bay > 0.5, bayer(zr, ixb, iyb), cov_r));
 cov_g = switch(is_thr > 0.5, thresh(zg, level, soft), switch(is_bay > 0.5, bayer(zg, ixb, iyb), cov_g));
 cov_b = switch(is_thr > 0.5, thresh(zb, level, soft), switch(is_bay > 0.5, bayer(zb, ixb, iyb), cov_b));

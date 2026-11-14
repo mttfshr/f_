@@ -48,6 +48,8 @@ patcher = {
          "hint": "Which random jitter pattern"},
         {"name": "level", "type": "float", "min": 0.0, "max": 1.0, "default": 0.5, "label": "Level",
          "hint": "Threshold only: the tone above which there is ink. Soft widens the cut"},
+        {"name": "bayer_scale", "type": "float", "min": 1.0, "max": 16.0, "default": 1.0, "label": "Bayer",
+         "hint": "Bayer only: pixels per dither cell, in whole pixels. 1 is the finest; larger gives a blocky, low-resolution dither"},
         {"name": "angle_r", "type": "float", "min": 0.0, "max": 180.0, "default": 15.0, "label": "Angle R",
          "hint": "Screen angle of the red plate, in degrees"},
         {"name": "angle_g", "type": "float", "min": 0.0, "max": 180.0, "default": 75.0, "label": "Angle G",
@@ -107,6 +109,7 @@ for _c, _x in _PLATE_X.items():
 # T024, T025 (2026-11-14): Jitter, Seed and Level on the third row, under the red and green plates
 _ov.update(_dial_at("jitter", _PLATE_X["r"], _ROW_LOW + 62.0))
 _ov.update(_dial_at("level", _PLATE_X["g"], _ROW_LOW + 62.0))
+_ov.update(_dial_at("bayer_scale", _PLATE_X["g"] + 37.0, _ROW_LOW + 62.0))     # Matt, 2026-11-14: a Bayer scale dial
 _ov["seed.ctl"] = {"presentation_rect": [_PLATE_X["r"] + 37.0 - 17.0, _ROW_LOW + 62.0 + 14.0, 34.0, 15.0], "outlettype": ["", "int"],
                    "saved_attribute_attributes": {"valueof": {
                        "parameter_initial": [1.0], "parameter_initial_enable": 1, "parameter_linknames": 1,
