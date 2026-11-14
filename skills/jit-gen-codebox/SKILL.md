@@ -344,6 +344,16 @@ same family as `texture` and `bypass` (names jit.gl.pix itself owns). **Fix: ren
 f_formconstants' frame counter is `frameno`. Treat any one-letter or generic Param name (`t`, `n`, `s`) as
 suspect until a bench leg proves the message reaches it (set a non-default value, read the output back).
 
+### A `Param` named `shape` never received its value — confirmed 2026-11-14 (f_halftone)
+Same shape as the `t` case above: `param shape <value>` on the codebox bench left the Param at its default, with no
+error. Renamed `dot_shape`, it works (the codebox bench's Shape rows pass; per the docs, `tests/logs/20261114-081815-bench.log`). Add `shape` to the
+suspect names; prove any generic name with a bench leg that sets a non-default value.
+
+### `exp(-(a + b))` compiled as `exp(-a + b)` — found by the bench 2026-11-10 (f_vf_erode)
+A unary minus in front of a parenthesised sum lost its distribution: the stage computed `exp(-a + b)`. The codebox
+bench caught it against the mirror (`tests/logs/20261110-105232-bench.log`). Write the sign into each term,
+`exp(-a - b)`, or name the sum first (`s = a + b; exp(0 - s)`). Related to "negative literals written `(0 - c)`".
+
 ### A control named like a `jit.gl.pix` attribute binds to the attribute, not your Param — confirmed 2026-10-24
 This is a builder/UI-side trap, not a codebox one, but it shows up as a "codebox Param that does nothing".
 A control's `param_connect` addresses `<pix object>::<dial name>`; if jit.gl.pix has a native attribute of
@@ -556,6 +566,11 @@ ha = fract(sin((x + s0) * 213.7 + (y + s0) * 157.3) * 43758.5453);
 hb = fract(sin((x + s1) * 213.7 + (y + s1) * 157.3) * 43758.5453);
 h = mix(ha, hb, sf);
 ```
+
+**The sin hash does not match a NumPy mirror per pixel** (f_halftone, 2026-11-14): one float32 ulp of `sin(...)`,
+times 43758, moves the hash by about 2.6e-3, and the GPU's `sin` differs from NumPy's by about an ulp, so hashed
+cells flip. Compare hash-driven output by means, lit fractions or distributions, with tolerances taken from the
+mirror's own spread over seeds, not pixel by pixel.
 
 ### Texture sampling
 ```
@@ -938,6 +953,15 @@ Measured on the codebox bench; probes and numbers in `ideas/optics_map.md` ("Fin
   called, and a call is one statement, so repeated code belongs in functions. `require("file")` works (below) but
   **adds no budget**: it is a textual include (2 required files of 150 statements compile, 4 fail, like the same
   code inline).
+- **But call sites of big functions cost too (f_halftone, 2026-11-14; the mechanism is inferred):** a codebox of
+  about 228 statements (counted by semicolons), far under 450, failed with the same error in Max's GL3 shader
+  transformer (`lua: [string DSL.Parser]:393: stack overflow (too many captures)`). Bisected offline: no single line
+  caused it, and the version before it (209 statements) also failed once any ~12 lines or one small function were
+  added. The fix cut the statement count only to 218 but cut the calls of the big per-plate function (about 50
+  lines, multi-value return, nested calls) from 7 inlined copies (3 hand-inlined blocks + 4 calls) to 3, and it
+  compiled; codebox bench 19/19. So "a function body is counted once" did not hold here: inferred, the transformer
+  sees the generated GLSL with function bodies expanded per call. Rule: call a big function a few times, not many;
+  pick per-call inputs (source, channel, settings row) in the main body and run one call per output slot.
 - **After that failure the bench is wedged**: every later job returns a STALE image (the same one, whatever the
   code) with no error, until `benchclient.reopen()`. Before trusting a result after any compile failure, probe with
   a known-good codebox (`tests/lib/benchclient.ensure_healthy`).
@@ -1072,10 +1096,11 @@ When reviewing any codebox, scan for these in order:
 - [ ] **`sample()` at jumpy, data-dependent coordinates** (iteration, ray marching, a gather over candidates) — reads NEAREST, not bilinear, whenever the coordinate changes by more than ~1 texel between neighboring pixels; interpolate by hand from four `nearest()` taps (bench-verified 2026-10-06, see above)
 - [ ] **`nearest()` tap coordinates normalized** — the four-tap idiom's taps take `(ix + 0.5) / width` UVs, NOT raw texel indices; raw indices silently read the frame border after the sampler's clamp (found 2026-10-17 refactoring a codebox)
 - [ ] **`atan2` fed possibly-(0,0) runtime args** — NaN; fix by biasing a denominator argument (+1e-7), not by guarding after (mix propagates NaN; no `isnan()`; `x == x` is TRUE even for NaN so that test is useless) — see the 2026-10-17 bench-facts section
-- [ ] **Statement count** — about 250 per function body or top level, about 450 for the whole program (not bytes, not lines); over that the parser fails with "stack overflow (too many captures)" and wedges the bench; move repeated code into functions (a call is one statement); `require` adds no budget
-- [ ] **`Param` named `t` (or another generic one-letter name)** — never applied, silently; use a descriptive name (`frameno`); prove a message reaches it in a bench leg (2026-10-24)
+- [ ] **Statement count** — about 250 per function body or top level, about 450 for the whole program (not bytes, not lines); over that the parser fails with "stack overflow (too many captures)" and wedges the bench; move repeated code into functions (a call is one statement); `require` adds no budget; but calls of a big function can count as copies (f_halftone failed at about 228 statements with 7 copies, compiled with 3): call it a few times, not many (2026-11-14)
+- [ ] **`Param` named `t`, `shape` (or another generic name)** — never applied, silently; use a descriptive name (`frameno`); prove a message reaches it in a bench leg (2026-10-24)
 - [ ] **Control token equal to a `jit.gl.pix` attribute** (`depth`, `texture`, `output`, `mode`) — the dial binds to the attribute and takes its type/range; prefix the token and keep the plain word in the label (2026-10-24)
 - [ ] **`sample()` used as an exact interpolator at texel corners or 1:1 in a chain** — returns ONE texel; use `nearest()` at texel centres for exact maths (2026-10-25)
+- [ ] **Unary minus before a parenthesised sum** — `exp(-(a + b))` compiled as `exp(-a + b)`; write `exp(-a - b)` (2026-11-10)
 - [ ] **`step()` with two literal arguments** — folds reversed (`step(0.3, 0.5)` = 0); keep one argument a variable or Param
 - [ ] **`snoise()` or `cycle()`** — replace with sin hash or `sin(x * twopi)` respectively
 - [ ] **`cell` used as an integer index** — it is `norm * (dim - 1)` on jit.gl.pix; use `floor(norm.x * dim.x)` for integer indices

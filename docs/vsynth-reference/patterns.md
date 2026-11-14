@@ -12,7 +12,7 @@
 
 **Where used:** Any module that behaves differently depending on whether an upstream texture is connected. `vs_displacement` uses **five** `vs_inState` instances — one per modulation inlet — confirming this is a standard pattern for optional inlets, not just for source/processor switching.
 
-**Mechanism:** `vs_inState` wraps the inlet, detects connection state via draw-callback timing (not luma/alpha — avoids false negatives with black textures). Outlet 0 = upstream texture or `vs_black` fallback. Outlet 1 = 0/1 state-change int.
+**Mechanism:** `vs_inState` wraps the inlet, detects connection state via draw-callback timing (not luma/alpha — avoids false negatives with black textures). Outlet 0 = upstream texture or `vs_black` fallback. Outlet 1 = 0/1 state-change int. `vs_black` is a 1x1 black texture (`vs_render.maxpat`); it does not by itself make the pix render (f_ modules wire `r draw` → pix; see `skills/vsynth-bpatcher/SKILL.md`, Dual-Mode Generator), and a pix that adapts to it renders 1x1.
 
 **Wiring pattern:**
 ```
@@ -25,7 +25,7 @@ inlet → routepass jit_gl_texture jit_matrix
 
 **f_ adoption:** Used in `f_stipple` (first f_ dual-mode patch). Confirmed working. The `src_mode` param is hidden — not in route, UI, or parameters block.
 
-**Extended use case (from vs_displacement):** Kevin uses `vs_inState` on every optional modulation inlet, not just the primary texture. Each optional modulation input (fmx, fmy, rotm, zoom_m, etc.) has its own `vs_inState`. When unconnected, the fallback `vs_black` keeps the param at zero modulation. This is the clean pattern for any f_ patch that wants optional texture modulation on parameters — no manual connection detection needed.
+**Extended use case (from vs_displacement):** Kevin uses `vs_inState` on every optional modulation inlet, not just the primary texture. Each optional modulation input (fmx, fmy, rotm, zoom_m, etc.) has its own `vs_inState`. When unconnected, the fallback `vs_black` reads (0, 0, 0, 1), which is zero modulation only for a unipolar input (for a bipolar input such as an `f_vecfield`, black decodes to -1: gate it by the `vs_inState` flag). This is the clean pattern for any f_ patch that wants optional texture modulation on parameters — no manual connection detection needed.
 
 ---
 

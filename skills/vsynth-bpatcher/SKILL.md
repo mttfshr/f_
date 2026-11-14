@@ -268,6 +268,8 @@ f_/
 
 - File naming: `f_<name>.maxpat`
 - JS files referenced by filename only — Max finds via search path
+- **A file added to the package is not found by a Max launched before it existed** (2026-11-14, `f_halftone`): `jit.matrix: can't find file f_bluenoise64.jxf` for a new file in `package/media/`, and newly written patchers failed to load by name; after a Max relaunch, found (module bench 9/9, `tests/logs/20261114-112730-bench.log`). Relaunch Max before benching or looking at a new media file, JS file or patcher. Users are unaffected (Max scans packages at launch).
+- Files shipped for a module to load (a texture, a lookup table) go in `package/media/`, loaded by name through the builder's `mod_inlets` `static` key (`build/build_patcher.py`).
 - Every patcher: `"openinpresentation": 1`
 
 ### Naming Convention: f_vf_ prefix for vecfield producers
@@ -351,10 +353,10 @@ Examples: `f_lens`, `f_droste`, `f_luma_processor`, `f_channel_grader`.
 
 The default archetype for any f_ patch that produces its own content. Uses `vs_inState` on inlet 0:
 
-- **Unconnected** — `vs_black` fallback keeps the patch drawing. Codebox generates content from its own parameters. Bypass outputs black.
+- **Unconnected** — `vs_inState` passes `vs_black`, a **1x1** black texture (`vs_render.maxpat`). It does **not** by itself make the pix render: wire `r draw` → pix inlet 0 (or the builder's render trigger) so the patch draws every frame, and fix the output size (`@adapt 0` plus `render_dim`), or a pix that adapts to its first input renders 1x1. Codebox generates content from its own parameters. Bypass outputs black.
 - **Connected** — upstream texture available in the codebox. Use it as a modulation source, a luma gate, a color source, or process it directly. Bypass passes input through.
 
-This is the correct pattern for f_ generators. The old "source requires a render-trigger texture" model was a workaround — `vs_inState` with `vs_black` fallback is the right solution. Kevin's native source modules (vs_sources/) use no texture inlet at all because they live at the top of the Vsynth signal chain and are driven directly by the render clock; f_ bpatchers sitting inside that chain need `vs_inState`/`vs_black` to participate in the draw cycle when unconnected.
+This is the pattern for f_ generators: `vs_inState` gives the codebox a defined input when nothing is cabled, and an `r draw` cord drives the render. Evidence: `f_quasi` drew nothing unconnected with only `vs_inState` on its inlet (Matt, live, 2026-10-30) and drew once `r draw` → pix was added; the same check on `f_stipple`, `f_weave` and `f_vf_flow` closed 2026-11-01. Unconnected, `f_stipple` showed a solid frame flipping white / black (Matt, live); the cause, the pix adapting to the 1x1 `vs_black`, is inferred, and `@adapt 0 @dim` plus `render_dim` fixed it (Matt, live). That `vs_black` alone never triggers a render is likewise inferred from these, not probed. Kevin's native source modules (vs_sources/) use no texture inlet at all because they live at the top of the Vsynth signal chain and are driven directly by the render clock.
 
 ```
 bpatcher in0 → routepass jit_gl_texture jit_matrix
