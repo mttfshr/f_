@@ -13,7 +13,7 @@ _Origin: `ideas/f_print_styles.md` (stage 2 of the print-styles family, "tone to
 - **A vocabulary, not a goal** (as for `f_vf_erode`): the screen is one composable operator that can reproduce a print look as a recipe and can also be bent into results that look unmistakably digital.
 - **Plain `f_` name** (no family prefix). Plates are RGB channels, up to three; alpha is not a plate. A reversed channel comes from Vsynth's invert module.
 - **Halftoning in general.** No riso-specific halftone work (Matt, 2026-11-08).
-- **Fixed-angle screens only** (tentative: "a decision but I'm not sure it's the decision"). Marks that follow the image's form (stretched dots, hatching, engraving) belong to the tensor family and the later `f_engrave`, not here.
+- **Fixed-angle screens only** (decided by Matt 2026-11-14, after his first look: "keep it straight"; each plate's angle is freely rotatable). Marks that follow the image's form (stretched dots, hatching, engraving) belong to the tensor family and the later `f_engrave`, not here.
 - **Dithering is one operation.** A halftone is a comparison of tone against a threshold field; ordered dither is the same comparison with a different field. `f_halftone` is the threshold-field stage, with a soft compare.
 - **`f_halftone` and `ideas/f_dither_grain.md` stay separate** (Matt, 2026-11-13: proceed with what is here). `f_dither_grain` was superseded 2026-07-21 (folded into `f_vf_seeds`, Evolution 3) and its spec is in `.specify/paused/`; nothing is shared except the cell vocabulary (`density`, `size`, `shape`, `jitter`).
 - **Print-faithful output.** Dot gain, mottle, dropout and the rest of the ink's behaviour belong to `f_vf_erode`, which follows `f_halftone` in a chain.

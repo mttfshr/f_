@@ -17,7 +17,7 @@ package/patchers/f_halftone.maxpat    docs/f-reference/f_halftone.md    package/
 ## Phase 0: gates and the mirror (BLOCKING for Phase 1)
 
 - [x] T001 [GATE] DECIDED (Matt, 2026-11-08): no riso-specific halftone work; general halftoning only.
-- [x] T002 [GATE] TENTATIVE (Matt, 2026-11-08: "a decision but I'm not sure it's the decision"): fixed-angle screens only; form-following marks go to `f_engrave`.
+- [x] T002 [GATE] DECIDED (Matt, 2026-11-14, after his first look: "keep it straight"; tentative since 2026-11-08): fixed-angle screens only, each plate's angle freely rotatable by its dial; form-following marks go to `f_engrave`.
 - [ ] T003 [GATE G1] PRELIMINARY: tiers 1, 2 and 3 all apply.
 - [ ] T004 [GATE G2] PRELIMINARY: lengths in frame heights, x scaled by the aspect (shared with `f_vf_erode`).
 - [x] T005 [GATE G3] (2026-11-13, offline Claude, `tests/logs/20261113-224223-offline.log`: A(r) vs Monte Carlo within 4e-3, ends exact, slope matches; area law at 24 texels: dot 0.0046, line 0.0002, square 0.0023, morph 0.0036) Verify the area-preserving spot functions in the mirror (plan ADR-2): line exact, square exact, round dot by `A(r)`, shape morph within tolerance. The round-dot derivation is inferred and must pass before the codebox copies it.
