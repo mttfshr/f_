@@ -2,6 +2,13 @@
 
 Entries moved out of `HANDOFF.md` on 2026-10-31, 2026-11-04, 2026-11-08, 2026-11-10, 2026-11-11, 2026-11-12, 2026-11-13 and 2026-11-14 (three times) (newest first, as they were). Not read at session start: grep it for history. The full pre-trim `HANDOFF.md` is also in git (commit 76c2ab8).
 
+## 2026-11-14 (night): `f_halftone` T035 benched and T036 passed
+
+- **Refactor (Matt chose it):** the T035 codebox failed to compile in Max's GL3 transformer (`lua: ... stack overflow (too many captures)`, then silent black output until a reopen); one `plate_path` called 3 times replaced 7 inlined copies (`6c229d4`).
+- **Static load:** the first module-bench Blue failure was Max not finding the new `.jxf` (launched before the file existed); after Matt relaunched Max, module bench 9/9 (`499e2d6`). Test fix: `differs` takes a `step` (Levels 4 moves in thirds).
+- **Matt's look passed** (T036, live). Records reconciled; `test_gates.py` run with Matt's go (this commit).
+- **Not touched:** Matt's `ideas/INDEX.md` edit and `ideas/f_util_row_engine.md`.
+
 ## 2026-11-14 (late): `f_halftone` blue-noise spike and G14 (moved out of HANDOFF.md 2026-11-14, night)
 
 - **T033 spike (offline Claude, mirror only):** IGN and R2 put 37-68% of their energy in 8 frequencies (lattice texture) and decorrelate plates poorly; void-and-cluster behaves as blue noise. Numbers in `.specify/f_halftone/tasks.md` Record (`3e1e982`).
