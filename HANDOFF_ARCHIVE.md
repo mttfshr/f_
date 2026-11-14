@@ -2,6 +2,19 @@
 
 Entries moved out of `HANDOFF.md` on 2026-10-31, 2026-11-04, 2026-11-08, 2026-11-10, 2026-11-11, 2026-11-12 and 2026-11-13 (newest first, as they were). Not read at session start: grep it for history. The full pre-trim `HANDOFF.md` is also in git (commit 76c2ab8).
 
+## 2026-11-13 (later): `f_halftone` renamed, clarified, mirrored (moved out of HANDOFF.md 2026-11-13)
+
+- **Done and committed (`5612cc6`, Claude, with Matt's go):** `f_screen` renamed `f_halftone` in the live docs; clarify answers recorded in the spec and tasks; `halftone_mirror.py` and `test_halftone.py` (Dot, Line, Square, shape morph, phase, Single, jitter, Threshold, Bayer), 16/16 offline.
+- **Found (mirror only):** the ADR-3 edge ramp loses ink in gaps thinner than a texel (cause inferred), so the area law needs about 10 texels of pitch; jitter 1 loses ink above mid-tone; a linear ramp cannot tell the centre tap from a 4 x 4 average, so that question waits for the live look.
+- **Not touched:** Matt's uncommitted `ideas/INDEX.md` edit and `ideas/f_util_row_engine.md`.
+
+## 2026-11-13: `f_util_vary` row UI, persistence, helpfile, closed (moved out of HANDOFF.md 2026-11-13)
+
+- **Done and committed (Claude, with Matt's go):** the cellblock table replaced by a scripted + row UI; persistence through the presets `pattrstorage` after scratch tests ruled out embedding and parameters; strip, seed and g dials each on their own `pattr`; param menu placeholder; bigger delete button; reference doc and helpfile (Matt: looks good); 8 destination outlets. Last commit `f44947d`.
+- **Found along the way:** a bpatcher does not understand an `embed` message (`setboxattr` works); parameter values do not save in an unembedded host; a `pattr @parameter_enable` blob keeps only the first list item; Max js `outlet.apply` is called with the js global as `this`; much of the afternoon's confusion was an old embedded instance still in the patch.
+- **Mistake to avoid:** `git stash` with a clean tree then `git stash pop` applied an OLD stash and conflicted four files; reset to HEAD with Matt's go, stash kept. Do not stash to compare a failure.
+- **Closed later the same day (Matt live):** all remaining checks passed; trim dial fixed (`8f1cdbd`); preflight and move to stable. `test_gates.py` run with Matt's go: 5/5. No bench applies.
+
 ## 2026-11-12: misregistration chain, then `f_util_vary` built (moved out of HANDOFF.md 2026-11-13)
 
 - **Done and committed (Claude, with Matt's go):** misregistration round 2 simplified to one plate and passed Matt's look; the randomizer engine prototyped and live-checked feature by feature in scratch; named `f_util_vary`; shipping design decided (see START HERE); T001 engine, T002 patcher, T002b editable cellblock grids; README row, menu entry, drift baseline entry; ideas note renamed `f_util_vary.md`.
