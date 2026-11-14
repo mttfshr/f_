@@ -41,7 +41,7 @@ N = 640
 SETTLE = 30            # frames after a control message
 TOL = 2e-3
 FRAC_BAD = 5e-3
-DEFAULTS = {"screen": 0, "pitch": 0.012, "softness": 0.1, "dot_shape": 0.0, "jitter": 0.0, "seed": 1, "level": 0.5, "plate_mode": 0, "bayer_scale": 1.0, "angle_r": 15.0, "angle_g": 75.0, "angle_b": 45.0,
+DEFAULTS = {"screen": 0, "pitch": 0.012, "softness": 0.1, "dot_shape": 0.0, "jitter": 0.0, "seed": 1, "level": 0.5, "plate_mode": 0, "angle_r": 15.0, "angle_g": 75.0, "angle_b": 45.0,
             "phase_r_x": 0.0, "phase_r_y": 0.0, "phase_g_x": 0.0, "phase_g_y": 0.0, "phase_b_x": 0.0, "phase_b_y": 0.0}
 SCREENS = {0: "dot", 1: "line", 2: "threshold", 3: "bayer"}
 
@@ -96,7 +96,7 @@ def matches(got, label, **deltas):
                           phases=((p["phase_r_x"], p["phase_r_y"]), (p["phase_g_x"], p["phase_g_y"]),
                                   (p["phase_b_x"], p["phase_b_y"])),
                           softness=p["softness"], shape=p["dot_shape"], jitter=p["jitter"],
-                          seed=int(p["seed"]), level=p["level"], bayer_scale=p["bayer_scale"],
+                          seed=int(p["seed"]), level=p["level"],
                           plate_mode="single" if p["plate_mode"] > 0.5 else "channels")
     err = np.abs(got[..., :3].astype(np.float64) - want[..., :3].astype(np.float64))
     bad = float((err > TOL).mean())
@@ -142,8 +142,8 @@ def test_types_jitter_seed_level():
              {"params": [["screen", 2]], "wait": SETTLE, "snap": "thr"},
              {"params": [["level", 0.3]], "wait": SETTLE, "snap": "lvl"},
              {"params": [["screen", 3]], "wait": SETTLE, "snap": "bay"},
-             {"params": [["bayer_scale", 4.0]], "wait": SETTLE, "snap": "bsc"},
-             {"params": [["bayer_scale", 1.0]], "wait": SETTLE, "snap": "bay1"},
+             {"params": [["pitch", 0.08]], "wait": SETTLE, "snap": "bsc"},
+             {"params": [["pitch", 0.03]], "wait": SETTLE, "snap": "bay1"},
              {"params": [["screen", 0], ["jitter", 1.0]], "wait": SETTLE, "snap": "jit"},
              {"params": [["seed", 5]], "wait": SETTLE, "snap": "seed"}])
     base, thr, lvl, bay, bsc, jit, sd = (snap(f, t) for t in ("base", "thr", "lvl", "bay", "bsc", "jit", "seed"))
@@ -153,8 +153,8 @@ def test_types_jitter_seed_level():
     differs(lvl, thr, "Level")
     matches(bay, "Screen menu: Bayer", pitch=0.03, screen=3, level=0.3)
     differs(bay, lvl, "Bayer")
-    matches(bsc, "Bayer scale 4", pitch=0.03, screen=3, level=0.3, bayer_scale=4.0)
-    differs(bsc, bay, "Bayer scale")
+    matches(bsc, "Bayer at pitch 0.08 (6-pixel cells at 640)", pitch=0.08, screen=3, level=0.3)
+    differs(bsc, bay, "Bayer follows pitch")
     for got, label, seed in ((jit, "Jitter 1", 1), (sd, "Seed 5", 5)):
         want = halftone_stage(SRC, screen="dot", pitch=0.03,
                               angles=(DEFAULTS["angle_r"], DEFAULTS["angle_g"], DEFAULTS["angle_b"]),
