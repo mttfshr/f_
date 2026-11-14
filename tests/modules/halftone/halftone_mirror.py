@@ -29,7 +29,14 @@ connected) returns None: the build supplies black with alpha 0 (vs_black), which
 
 `bug` values are mutations the tests must catch: "no_extremes", "no_zap", "wrong_area" ((2r)^2 instead of A(r)), "per_pixel_tone",
 "ignore_phase", "shared_phase", "ignore_alpha", "single_reads_r", "line_centre_tone", "ignore_scale", "shared_scale",
-"plates_shared_angle", "plates_no_clamp", "plates_read_src", "plates_alpha_src", "no_jitter_clip".
+"plates_shared_angle", "plates_no_clamp", "plates_read_src", "plates_alpha_src", "no_jitter_clip", and for Blue / Random /
+Levels (T034): "levels_one_bit", "dither_shared_plate", "dither_ignore_phase", "blue_transposed",
+"random_ignore_seed".
+
+Blue and Random (Matt, 2026-11-14; spec US10, FR-023 to FR-026, ADR-10; T034, offline Claude, not built): Bayer's grain cell and
+Read, the threshold from the shipped void-and-cluster file (Blue, 64 x 64, tiled) or the sin hash (Random) of the cell index
+shifted by the plate offset, the seed and the phase in whole grain cells. Levels (US11, FR-027, ADR-11) quantize Bayer, Blue and
+Random to L values; Dot, Line and Threshold ignore it.
 
 Per-plate pitch scale (Matt, 2026-11-14; spec FR-022, T029a): each plate's pitch is pitch * scale (scales R, G, B; Single uses
 scale B), formed in float32 as the codebox does; everything that follows the pitch (lattice, phase, edge ramp, jitter, Bayer
@@ -96,6 +103,10 @@ def bayer8_bits(x, y):
 
 
 _BLUE = None
+DITHERS = ("bayer", "blue", "random")
+PLATE_OFF = [(0, 0), (23, 41), (47, 13)]   # Blue / Random per-plate cell offsets (T033 spike; preliminary, Claude)
+BLUE_SEED_STEP = (61, 29)                  # Blue: cells the pattern moves per seed step (preliminary, Claude)
+SCREENS = {"dot": "dot", "line": "line", "threshold": "threshold", "bayer": "bayer", "blue": "blue", "random": "random"}
 
 
 def bluenoise64():
@@ -156,23 +167,58 @@ def _cover(T, dT, tone, softness, aa, extremes=True):
     return c.astype(F32)
 
 
-def plate(read, W, H, *, kind, pitch, theta, phase, softness, shape, jitter, seed, level, tone_mode, bayer_read="cell", bug=None):
+def _quantize(tone, thr, levels, bug=None):
+    """Levels (FR-027, ADR-11): q = tone (L - 1); out = (floor(q) + [fract(q) > thr]) / (L - 1), clamped, extremes exact.
+    At L = 2 and tone < 1 this is tone > thr, today's one-bit dither, bit for bit (float32: q = tone * 1 exactly)."""
+    L1 = F32(2 - 1) if bug == "levels_one_bit" else F32(int(levels) - 1)
+    q = (tone * L1).astype(F32)
+    fq = np.floor(q).astype(F32)
+    out = np.clip((fq + ((q - fq) > thr).astype(F32)) / L1, 0, 1).astype(F32)
+    # the clamp already gives exact extremes for thresholds in [0, 1) (tone <= 0: q <= 0; tone >= 1: q >= L - 1), so no
+    # mutation can tell this line from its absence; kept because FR-027 names the rule and the codebox writes it out
+    out = np.where(tone <= 0, F32(0), np.where(tone >= 1, F32(1), out))
+    return out.astype(F32)
+
+
+def dither_threshold(kind, ci, cj, *, plate_ix, seed, phase, bug=None):
+    """The threshold of grain cell (ci, cj) for Bayer, Blue or Random (ADR-10). Bayer is unchanged from before Blue and Random
+    (no plate offset, no phase, no seed). Blue and Random (FR-025; offsets preliminary, Claude, from the T033 spike): the cell
+    index is shifted by the plate's offset, by the seed, and by the plate phase in whole grain cells (8 per pitch, rounded),
+    so the marks move by +phase as the lattice screens' do."""
+    if kind == "bayer":
+        return ((bayer8_bits(ci, cj).astype(F32) + F32(0.5)) / F32(64)).astype(F32)
+    ox, oy = (0, 0) if bug == "dither_shared_plate" else PLATE_OFF[plate_ix]
+    if bug != "dither_ignore_phase":
+        ox -= int(np.floor(F32(phase[0]) * F32(8) + F32(0.5)))
+        oy -= int(np.floor(F32(phase[1]) * F32(8) + F32(0.5)))
+    x, y = ci + ox, cj + oy
+    if kind == "blue":
+        sx, sy = BLUE_SEED_STEP
+        x, y = x + sx * int(seed), y + sy * int(seed)
+        B = bluenoise64()
+        return (B.T if bug == "blue_transposed" else B)[np.mod(y, 64), np.mod(x, 64)].astype(F32)
+    s = 0 if bug == "random_ignore_seed" else seed
+    return hash2(x.astype(F32), y.astype(F32), s)[0]
+
+
+def plate(read, W, H, *, kind, pitch, theta, phase, softness, shape, jitter, seed, level, tone_mode, bayer_read="cell", levels=2,
+          plate_ix=0, bug=None):
     """One plate. read(i, j) -> tone at texel indices. Returns (coverage, i_read, j_read): the texel the tone came from."""
     if bug == "ignore_phase":
         phase = (0.0, 0.0)
     px, py, asp = _grid(W, H)
     ii, jj = np.meshgrid(np.arange(W), np.arange(H))
-    if kind == "bayer":
+    if kind in DITHERS:
         sc = max(np.floor(F32(pitch) * F32(H) / F32(8) + F32(0.5)), 1)   # the matrix repeats once per pitch (Matt, 2026-11-14)
         ci, cj = np.floor(ii / sc).astype(np.int64), np.floor(jj / sc).astype(np.int64)
-        m = bayer8_bits(ci, cj)
+        thr = dither_threshold(kind, ci, cj, plate_ix=plate_ix, seed=seed, phase=phase, bug=bug)
         if bayer_read == "cell":      # Matt, 2026-11-14: one tone per cell, at its centre pixel (a true ordered dither)
             ri = np.minimum(ci * int(sc) + int(sc) // 2, W - 1)
             rj = np.minimum(cj * int(sc) + int(sc) // 2, H - 1)
         else:                         # "pixel": the tone per pixel, a threshold at each cell's level
             ri, rj = ii, jj
         tone = read(ri, rj)
-        return (tone > (m.astype(F32) + F32(0.5)) / F32(64)).astype(F32), ri, rj
+        return _quantize(tone, thr, levels, bug), ri, rj
     if kind == "threshold":
         tone = read(ii, jj)
         w = F32(softness) * F32(0.5)
@@ -255,10 +301,10 @@ def _plate_pitch(pitch, scales, ch, bug=None):
     return F32(F32(pitch) * F32(sc))
 
 
-def _single(z, W, H, theta, phase, pitch, kw):
+def _single(z, W, H, theta, phase, pitch, kw, plate_ix=2):
     """The Single path (T016a) on one texture: tone the brightest channel, colour normalised, output colour * coverage."""
     read = lambda i, j: np.max(z[j, i, :3], axis=-1)   # noqa: E731
-    cov, ti, tj = plate(read, W, H, theta=theta, phase=phase, pitch=pitch, **kw)
+    cov, ti, tj = plate(read, W, H, theta=theta, phase=phase, pitch=pitch, plate_ix=plate_ix, **kw)
     t = np.max(z[tj, ti, :3], axis=-1)
     col = np.where(t[..., None] > 0, z[tj, ti, :3] / np.maximum(t, F32(1e-12))[..., None], F32(0))
     return (col * cov[..., None]).astype(F32)
@@ -266,13 +312,13 @@ def _single(z, W, H, theta, phase, pitch, kw):
 
 def halftone_stage(src, *, screen="dot", pitch=0.012, angles=(15.0, 75.0, 45.0), phases=((0, 0), (0, 0), (0, 0)), scales=(1.0, 1.0, 1.0),
                    softness=0.1, shape=0.0, jitter=0.0, seed=1, level=0.5, bayer_read="cell", plate_mode="channels",
-                   tone_mode="center", bypass=False, plates=(None, None, None), bug=None):
+                   levels=2, tone_mode="center", bypass=False, plates=(None, None, None), bug=None):
     """src: (H, W, 4) float32 (R, G, B, A) or None (inlet 0). plates: three (H, W, 4) textures or None (inlets 1-3; read
     only in plate_mode "plates", None = unconnected). Returns (H, W, 4) float32, or None where the build supplies black."""
     if plate_mode == "plates":
         return _plates_stage(src, plates, screen=screen, pitch=pitch, angles=angles, phases=phases, scales=scales,
                              softness=softness, shape=shape, jitter=jitter, seed=seed, level=level, bayer_read=bayer_read,
-                             tone_mode=tone_mode, bypass=bypass, bug=bug)
+                             levels=levels, tone_mode=tone_mode, bypass=bypass, bug=bug)
     if src is None:
         return None
     src = np.asarray(src, dtype=F32)
@@ -281,24 +327,24 @@ def halftone_stage(src, *, screen="dot", pitch=0.012, angles=(15.0, 75.0, 45.0),
     if bypass:
         return z.astype(F32)
     out = np.zeros((H, W, 4), dtype=F32)
-    kind = {"dot": "dot", "line": "line", "threshold": "threshold", "bayer": "bayer"}[screen]
+    kind = SCREENS[screen]
     kw = dict(kind=kind, softness=softness, shape=shape, jitter=jitter, seed=seed, level=level, bayer_read=bayer_read,
-              tone_mode=tone_mode, bug=bug)
+              tone_mode=tone_mode, levels=levels, bug=bug)
     if plate_mode == "single":
         ch = 0 if bug == "single_reads_r" else 2
-        out[..., :3] = _single(z, W, H, angles[ch], phases[ch], _plate_pitch(pitch, scales, ch, bug), kw)
+        out[..., :3] = _single(z, W, H, angles[ch], phases[ch], _plate_pitch(pitch, scales, ch, bug), kw, ch)
     else:
         for ch in range(3):
             ph = phases[0] if bug == "shared_phase" else phases[ch]
             read = lambda i, j, ch=ch: z[j, i, ch]   # noqa: E731
-            cov, _, _ = plate(read, W, H, theta=angles[ch], phase=ph, pitch=_plate_pitch(pitch, scales, ch, bug), **kw)
+            cov, _, _ = plate(read, W, H, theta=angles[ch], phase=ph, pitch=_plate_pitch(pitch, scales, ch, bug), plate_ix=ch, **kw)
             out[..., ch] = cov
     out[..., 3] = F32(1) if bug == "ignore_alpha" else z[..., 3]
     return out.astype(F32)
 
 
 def _plates_stage(src, plates, *, screen, pitch, angles, phases, scales, softness, shape, jitter, seed, level, bayer_read,
-                  tone_mode, bypass, bug):
+                  levels, tone_mode, bypass, bug):
     """Plates mode (spec US9, FR-017 to FR-021, plan ADR-8): plate k (inlet k + 1) is screened as Single at angle k, phase k
     and scale k; the three are summed and clamped to 0..1 (FR-019); alpha is the largest of the connected plates' alphas
     (FR-021); inlet 0 is ignored except by bypass, which passes it (P12; None, so the build's black, when it is empty).
@@ -318,16 +364,16 @@ def _plates_stage(src, plates, *, screen, pitch, angles, phases, scales, softnes
         shapes = [np.asarray(src).shape[:2]]
     H, W = shapes[0]
     out = np.zeros((H, W, 4), dtype=F32)
-    kind = {"dot": "dot", "line": "line", "threshold": "threshold", "bayer": "bayer"}[screen]
+    kind = SCREENS[screen]
     kw = dict(kind=kind, softness=softness, shape=shape, jitter=jitter, seed=seed, level=level, bayer_read=bayer_read,
-              tone_mode=tone_mode, bug=bug)
+              tone_mode=tone_mode, levels=levels, bug=bug)
     for k, p in enumerate(plates):
         if p is None:
             continue
         p = np.asarray(p, dtype=F32)
         z = p if bug == "no_zap" else zap(p)
         ch = 2 if bug == "plates_shared_angle" else k
-        out[..., :3] += _single(z, W, H, angles[ch], phases[ch], _plate_pitch(pitch, scales, ch, bug), kw)
+        out[..., :3] += _single(z, W, H, angles[ch], phases[ch], _plate_pitch(pitch, scales, ch, bug), kw, ch)
         out[..., 3] = np.maximum(out[..., 3], z[..., 3])
     if bug != "plates_no_clamp":
         out[..., :3] = np.clip(out[..., :3], 0, 1)
