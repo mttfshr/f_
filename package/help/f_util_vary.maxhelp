@@ -581,6 +581,36 @@
                     "fontname": "Ableton Sans Light",
                     "fontsize": 13.0
                 }
+            },
+            {
+                "box": {
+                    "bgcolor": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "fontface": 0,
+                    "fontname": "Ableton Sans Light",
+                    "id": "d-g1",
+                    "maxclass": "comment",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        338.0,
+                        684.0,
+                        380.0,
+                        76.0
+                    ],
+                    "text": "Groups: rows with the same grp number (1-4) share one random draw, so their params move together instead of independently. The g dial for that number sets how much: 0 = each row draws on its own, 1 = every member gets the same draw (same direction and size, scaled by its own amount). Try: rows on out 1 and out 2, both param x, both grp 1, g1 at 1, then roll. Grp 0 = never shared.",
+                    "saved_attribute_attributes": {
+                        "textcolor": {
+                            "expression": "themecolor.live_control_fg"
+                        }
+                    },
+                    "bubble": 1,
+                    "bubbleside": 1
+                }
             }
         ],
         "lines": [

@@ -49,6 +49,26 @@ effective = clamp(base + trim + offset * amount + wobble, lo, hi)     (in units 
   recalls a draw.
 - Rows run across outlets: a group is how plates share a draw.
 
+### Groups
+
+A group links rows so they vary together. Give rows the same group number (1-4 in the row's
+group box; 0 = none) and the engine makes one shared draw per group per roll. Each member's
+draw is `corr * shared + (1 - corr) * own`, where `corr` is that group's dial (g1-g4,
+0-1; a group the engine creates itself starts at 0.5).
+
+- **corr 1:** every member gets the same draw, so the rows move in the same direction and
+  proportion (each still scaled by its own amount, range, trim and sign).
+- **corr 0:** the group does nothing; each row draws on its own, as if ungrouped.
+- **in between:** a shared component plus an individual one: related, not identical.
+- A row with no group is always independent. The group only changes the draw; it does not
+  change which param or outlet a row varies, so members can sit on different outlets (the
+  intended use: the same param on out 1 and out 2 moving together, or `x` and `y` coupled)
+  or on different params.
+- A group of one row is not useful: with corr above 0 it only replaces part of that row's
+  own draw with another random one.
+- Try it: rows out 1 / `x` and out 2 / `x`, both group 1, g1 at 1, then `roll`: both outlets
+  send the same offset. Lower g1 and they drift apart.
+
 ---
 
 ## Settings (inlet 1)
