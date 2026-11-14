@@ -50,7 +50,7 @@ package/patchers/f_halftone.maxpat    docs/f-reference/f_halftone.md    package/
 
 ## Phase 1b: plate inlets (Matt, 2026-11-14; spec User Story 9, plan ADR-8; not started)
 
-- [ ] T026 [GATE G-plates] Decide with Matt: alpha in Plates mode, bypass in Plates mode, menu-only or automatic on connection, inlet 0's role in Plates mode (preliminary answers in plan ADR-8), and whether the R / G / B angle and phase dials serve as plates 1 to 3 (FR-018, preliminary).
+- [ ] T026 (answered by Matt 2026-11-14, spec FR-018 and FR-021: alpha the largest, bypass passes inlet 0, menu only, inlet 0 ignored, the dials serve plates 1-3; open only: whether "they should become numbers" means relabelling R / G / B as 1 / 2 / 3) [GATE G-plates] Decide with Matt: alpha in Plates mode, bypass in Plates mode, menu-only or automatic on connection, inlet 0's role in Plates mode (preliminary answers in plan ADR-8), and whether the R / G / B angle and phase dials serve as plates 1 to 3 (FR-018, preliminary).
 - [ ] T027 Mirror: `plate_mode="plates"` taking three plate textures; tier-1 tests: equals the sum of three Single screens clamped (US9 test), unconnected plate contributes nothing, one plate's angle leaves the others' marks unchanged, Channels and Single unchanged.
 - [ ] T028 Codebox and `definition.py`: three plate inlets (`mod_inlets` with connected flags), the Plates menu entry, the Single path as a function per inlet; rebuild, drift, contracts. Benches (codebox and module) on Matt's go; the contract bench's harness inputs for the new inlets; the 1080p cost.
 
