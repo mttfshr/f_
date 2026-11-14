@@ -219,6 +219,8 @@ INPUT_SIZE = {"f_vf_fluid": 512,
               "f_separate": RENDER_DIM_SIZE,
               # 2026-11-09: f_vf_erode follows render_dim (size_stages) and passes the source through.
               "f_vf_erode": RENDER_DIM_SIZE,
+              # 2026-11-13: f_halftone follows render_dim and passes inlet 0 through when bypassed (not yet run).
+              "f_halftone": RENDER_DIM_SIZE,
               # 2026-11-07: f_poincare follows render_dim and passes inlet 0 through when bypassed.
               "f_poincare": RENDER_DIM_SIZE,
               # 2026-11-06: f_vf_seeds follows render_dim and now passes inlet 0 through on out1.
