@@ -50,7 +50,7 @@ package/patchers/f_halftone.maxpat    docs/f-reference/f_halftone.md    package/
 
 ## Phase 2: tuning (Matt)
 
-- [ ] T030 Live look: a photo through three plates at 15, 75, 45; rosette and moiré; the staircase of dot sizes (T006).
+- [x] T030 (live, Matt, 2026-11-13, confirmed in chat 2026-11-14) Live look: a photo through three plates at 15, 75, 45; rosette and moiré; the staircase of dot sizes (T006).
 - [ ] T031 Live look: `f_halftone` into `f_vf_erode`; does it read as a print? One bent use (coarse screen, odd angles, a line screen on a simulation).
 - [ ] T032 Dial ranges, defaults, default angles, the smallest pitch, softness; back into the codebox and `definition.py`, then re-run tiers 1 and 2.
 
@@ -84,5 +84,5 @@ Phase 0 gates, then the mirror (T017) before any codebox; T020 to T022 in order;
   - G8 / T010: reads inside a function and a loop are exact; `sample()` equals `nearest()` at texel centres at 1:1.
   - Not run: the module bench, the contract bench, the 1080p cost, anything in Max by eye.
 - 2026-11-13 (bench, Claude with Matt's go): module bench 4/4 (`tests/logs/20261113-225708-bench.log`): load at defaults matches the mirror at 640 x 640 (so `width` / `height` arrive), and the Screen menu, pitch, softness, each angle and each phase dial reach their own plate only. Fraction of values beyond 2e-3: at most 2.3e-4 (Line); 0 for pitch and angles. Contract bench 1/2 (`tests/logs/20261113-225734-bench.log`): `f_halftone` listed with no BAD row (bypass passthrough at the render size); the one failure is `f_vf_fluid`'s known 640 vs 512 bypass frame (HANDOFF candidates). Not run: the 1080p cost (`--slow`). Never opened in Max by eye.
-- 2026-11-13 (live, Matt, chat): first look in Max: "it's working great". Recorded as a general pass; T030 and T031 stay unticked until Matt says which of their named checks it covered (three plates at 15 / 75 / 45, rosette and moire, the staircase; into `f_vf_erode`; a bent use). T002 (fixed-angle only) was left open until this look: still Matt's call.
+- 2026-11-13 (live, Matt, chat): first look in Max: "it's working great". Recorded as a general pass; Matt, 2026-11-14: the look covered T030 (ticked), not T031 (into `f_vf_erode`, a bent use), which stays open. T002 (fixed-angle only) was left open until this look: still Matt's call.
 - 2026-11-13 (Matt, chat): about 10 texels accepted as the practical pitch floor for now, no ADR-3 change, the bench (T022) repeats the measurement, so T007 stays open; the jitter ink loss above mid-tone is accepted for now and spec US6 scenario 2 is reworded.
