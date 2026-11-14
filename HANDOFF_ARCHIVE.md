@@ -1,6 +1,12 @@
 # HANDOFF archive
 
-Entries moved out of `HANDOFF.md` on 2026-10-31, 2026-11-04, 2026-11-08, 2026-11-10, 2026-11-11, 2026-11-12, 2026-11-13 and 2026-11-14 (twice) (newest first, as they were). Not read at session start: grep it for history. The full pre-trim `HANDOFF.md` is also in git (commit 76c2ab8).
+Entries moved out of `HANDOFF.md` on 2026-10-31, 2026-11-04, 2026-11-08, 2026-11-10, 2026-11-11, 2026-11-12, 2026-11-13 and 2026-11-14 (three times) (newest first, as they were). Not read at session start: grep it for history. The full pre-trim `HANDOFF.md` is also in git (commit 76c2ab8).
+
+## 2026-11-14 (late): `f_halftone` blue-noise spike and G14 (moved out of HANDOFF.md 2026-11-14, night)
+
+- **T033 spike (offline Claude, mirror only):** IGN and R2 put 37-68% of their energy in 8 frequencies (lattice texture) and decorrelate plates poorly; void-and-cluster behaves as blue noise. Numbers in `.specify/f_halftone/tasks.md` Record (`3e1e982`).
+- **Decided (Matt, chat):** G14, the void-and-cluster texture (`6e319cb`); the .jxf load design (plan ADR-10; this commit). T033b added and done (tier 1 6/6, `tests/logs/20261114-105259-offline.log`); T035 now includes the builder key.
+- **Not run:** benches, `test_gates.py`. **Not touched:** Matt's `ideas/INDEX.md` edit and `ideas/f_util_row_engine.md`.
 
 ## 2026-11-14 (evening): `f_halftone` Plates mode and the jitter bloom fix
 
