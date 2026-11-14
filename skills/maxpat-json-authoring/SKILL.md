@@ -1,6 +1,6 @@
 ---
 name: maxpat-json-authoring
-description: Conventions and a validation checklist for hand-authoring or hand-editing Max/MSP .maxpat files directly as JSON text (via Read/Edit/Write or a script), rather than through Max's own editor. Use whenever a .maxpat is being created or modified without a running Max instance to catch errors at edit time — the errors this catches are otherwise silent until someone opens the file in Max. Distinct from gen-tilde-codebox/jit-gen-codebox, which cover codebox *contents*.
+description: Conventions and a validation checklist for writing or editing Max/MSP .maxpat files directly as JSON text (by hand, with Read/Edit/Write, or from a script) instead of in Max's own editor. Use this skill whenever creating, patching, generating or reviewing a .maxpat, .maxhelp or bpatcher file as text, even a one-line change, and whenever a script will write one; the mistakes it catches are silent until someone opens the file in Max. Load it especially when a hand-made patch opens with broken or missing boxes, a codebox shows its default template instead of the code written, patchcords are missing after load, a pfft~ says "no patcher", a dial bound with param_connect has the wrong type or range or will not move, or a Max-saved file needs a small surgical change without a noisy diff. Distinct from gen-tilde-codebox and jit-gen-codebox, which cover the GenExpr code inside codeboxes.
 ---
 
 # Hand-Authoring `.maxpat` JSON
@@ -13,6 +13,33 @@ later and reported as "it's broken" with no hint of where. This skill is the
 discipline for catching those before handing a file over.
 
 Findings are dated and were observed on Max 9.
+
+---
+
+## Quick rules
+
+Each rule names the section with the details and evidence.
+
+1. **Use only `maxclass` names you have seen in a file Max saved.** There is
+   no `numbox`; use `flonum` (a good default, even for integers) or
+   `number`. (There is no `maxclass: "numbox"`)
+2. **Put codebox source under `"code"`, not `"text"`;** `text` silently
+   gives the default template. (Codebox source lives under the `code` key)
+3. **Run the validation script before handing a file over:** valid JSON,
+   unique ids per patcher scope (each nested patcher has its own), no
+   patchline pointing at a missing id. (Validation checklist)
+4. **Give `pfft~` a separate subpatch file on disk;** an inline `"patcher"`
+   key fails on load. (Validation checklist)
+5. **Treat a file Max has rewritten as the current state:** re-read it
+   before editing; never revert Max's reformatting. (Expect Max to rewrite
+   the file)
+6. **For a small change to a Max-saved file, parse, change and dump with
+   formatting that round-trips byte for byte, then prove the diff is only
+   the intended change.** Don't hand-edit the text or regenerate the file.
+   (Surgical edit)
+7. **Name `param_connect` controls with a token that can't be a
+   `jit.gl.pix` attribute** (`pulse_depth`, not `depth`); keep the plain
+   word in the label only. (A control's name can collide)
 
 ---
 
