@@ -1,431 +1,264 @@
 ---
 name: jit-gen-codebox
-description: Canonical reference for writing jit.gl.pix codebox code in f_ Vsynth bpatchers. Use when writing, reviewing, or debugging any codebox in a jit.gl.pix gen subpatcher. Covers valid operators, silent failure patterns, known-good idioms, and a health check checklist. All findings are empirically verified in Max 9 jit.gl.pix GPU path — not just from docs.
+description: Empirically verified rules for writing GenExpr in a jit.gl.pix codebox (Max/Jitter, compiled to a GPU shader). Use this skill whenever writing, reviewing, porting or debugging code in a jit.gl.pix gen patcher, or a .genjit file, even if the user only says "pix", "codebox", "GenExpr" or "shader in Max". Load it especially on these symptoms: a pix that compiles clean but renders black or passes its input through unchanged; a Param that ignores its messages ("invalid message" or no effect); "operator not defined", "invalid left-hand expression" or "stack overflow (too many captures)"; edges that wrap, smear or band; sample() results that are blocky, noisy or don't match a reference; NaN or all-black frames from atan2; a dial with the wrong type or range. Covers valid and silently broken operators, reserved names, inlets and outlets, sampling and out-of-range behavior, numeric precision, compiler limits, known-good idioms, and a review checklist. For gen~ (audio, CPU) use gen-tilde-codebox instead: the dialects share syntax but not rules (noise() fails here and works in gen~).
 ---
 
 # jit.gl.pix Codebox Reference
 
 **Canonical docs:** https://docs.cycling74.com/userguide/gen/gen_genexpr/
 
-Empirically verified operator reference for GenExpr code inside `jit.gl.pix` gen subpatchers. All findings verified in Max 9 against the Vsynth `vsynth` GL context. The GPU path (jit.gl.pix) has important differences from the CPU path (jit.gen, jit.pix) — operators listed in Cycling '74 docs may still fail silently on GPU.
+Empirically verified rules for GenExpr inside `jit.gl.pix` gen patchers, on
+Max 9. The GPU path (`jit.gl.pix`) differs from the CPU path (`jit.gen`,
+`jit.pix`): operators listed in the Cycling '74 docs can still fail silently
+on the GPU, and the compiler is silent about many GPU-incompatible constructs
+(they compile and render black). Measurements were made on one machine's GPU;
+other GPUs may differ in the precision details.
 
-**Source of truth:** `/Users/matt/Github/f_/.specify/codebox.skill/tasks.md` — full test results.
+**Evidence levels.** Entries are marked by what backs them: *bench* (measured
+numerically: a codebox rendered by a test harness, read back as float32 and
+compared with a NumPy mirror), *scratch patch* (seen by eye in Max), or
+*docs-only*. Prefer a numeric check for anything that can be stated as
+numbers, and check a codebox under development numerically before calling it
+working. Items marked unverified, inferred or suspected are exactly that.
 
+**Where things are:**
 
-**Evidence levels (since 2026-09-22).** Entries here were mostly verified by
-eye in a scratch patch. The `f_` test bench (`tests/bench.sh`) can now verify
-GenExpr behavior *numerically* on the GPU — see "Bench-Verified Facts" below.
-When adding or revising an entry, say which kind of evidence backs it
-(bench / scratch patch / docs-only), and prefer the bench for anything that
-can be stated as numbers. A codebox under development should be checked with
-`benchclient.run_pass()` before being declared working.
-
----
-
-## Language Model
-
-GenExpr is a typeless expression language compiled to GLSL for `jit.gl.pix`. It resembles C but has important restrictions:
-
-- **No type declarations** — do not write `float x`, `float4 col`, `int n`, etc. Variables are untyped; just assign: `x = 1.0;`. Type keywords are not valid syntax and will cause errors.
-- No array notation (`[index]`)
-- No pointer types
-- Semicolons required for multi-line code
-- Variables are local-to-scope by default — no `var` keyword needed
-- Functions must be declared before all statements (before `Param` declarations and main body)
-- User-defined functions are supported in jit.gl.pix GPU path — **confirmed working 2026-06-18**
-- Function syntax: `funcname(arg1, arg2, ...) { ... return val; }` — no `def` keyword
-- `Param` values are NOT accessible inside function bodies — must be passed as explicit arguments
-- `in` and `out` are reserved keywords (inlet/outlet references) — do not use as variable names
-- The compiler is silent about many GPU-incompatible constructs — they compile but produce black output
+| File | Read it when |
+|---|---|
+| this file | always: quick rules, language, operators, silent failures, hard errors, inlets, review checklist |
+| `references/sampling.md` | sampling textures: `sample()`/`nearest()` accuracy, out-of-range coordinates and `boundmode`, edges, minifying, hand interpolation |
+| `references/numerics-and-limits.md` | precision, NaN, `atan2`, `step`, trig, the compiler's statement budget, loops, cost |
+| `references/pix-object.md` | the `jit.gl.pix` object around the codebox: `dim`, inlet counts, unconnected inlets, bypass, renders, naming, compile errors, readback |
+| `references/patterns.md` | known-good idioms: functions, sin hash, bypass, branchless selection, polar, masks, vector accumulation, complex/Möbius math, debugging mismatches |
 
 ---
 
-## Multiple Return Values
+## Quick rules
 
-Functions that return multiple values use comma assignment. The compiler strips unused return values automatically — no performance penalty:
+1. **Never write type declarations** (`float x`, `vec4 c`): assign bare,
+   `x = 1.0;`. Build vectors with `vec(...)`, not `vec4(...)`/`vec2(...)`.
+2. **Never read `.x`/`.y`/`.r` from a stored variable;** read it inline on
+   the call: `sample(in1, uv).x`. A stored read renders black. Writing
+   `z.x = ...` is a compile error: use separate scalars (`zx`, `zy`).
+3. **Don't use `noise()`, `snoise()`, `cycle()`, `swiz`, `select()`:** use a
+   sin hash, `sin(x * twopi)`, manual `vec()`, `switch()` or `mix/step`.
+4. **Don't name variables or Params after built-ins** (`cell`, `in`, `norm`,
+   `snorm`, `dim`, `inN`, `active`, `mix`, `step`, `t`, `shape`, constants
+   like `PI`). The failure is silent: black output or a Param that never
+   takes its value.
+5. **Declare functions before everything, and pass Params in as arguments;**
+   Params are invisible inside function bodies.
+6. **Declare loop-carried variables before the loop;** a variable first
+   assigned inside a `for` does not exist after it.
+7. **Make an inlet or outlet exist by referencing `inN`/`outN` in the code
+   first,** then add and wire the `in N`/`out N` object. Codebox `in 1` is
+   the pix's inlet 0.
+8. **Out-of-range coordinates wrap by default** (pix-to-pix), and exactly
+   0.0/1.0 is a seam. Pass `boundmode="clamp"` when you want an edge.
+   (`references/sampling.md`)
+9. **Don't trust `sample()` to interpolate** at jumpy data-dependent
+   coordinates, at texel corners, or when minifying; use four `nearest()`
+   taps at normalized texel centres and blend by hand.
+   (`references/sampling.md`)
+10. **Write `0 - (...)`, not `-(...)`,** in front of a parenthesis; unary
+    minus before a parenthesised expression mis-compiles.
+    (`references/numerics-and-limits.md`)
+11. **Never let `(0, 0)` reach a runtime `atan2`** (NaN on the GPU; a `mix`
+    guard can't clear it): bias the argument, `atan2(y, x + 1e-7)`.
+    (`references/numerics-and-limits.md`)
+12. **Stay under about 250 statements per function or top level, 450 per
+    program,** and call a big function a few times, not many; past that the
+    compiler fails with "too many captures". (`references/numerics-and-limits.md`)
+
+---
+
+## Language model
+
+GenExpr is a typeless expression language compiled to GLSL for `jit.gl.pix`.
+It resembles C with restrictions:
+
+- **No type declarations**: `float x`, `float4 col`, `int n` are invalid
+  syntax. Variables are untyped; just assign: `x = 1.0;`.
+- No array notation (`[index]`), no pointer types.
+- Semicolons required for multi-line code.
+- Variables are local to their scope by default; no `var` keyword.
+- Functions must be declared before all statements (before `Param`
+  declarations and the main body). User-defined functions work on the GPU
+  path (confirmed 2026-06-18; bench 2026-10-06: bit-identical to the unrolled
+  code). Syntax: `funcname(arg1, arg2, ...) { ... return val; }`, no `def`.
+- **`Param` values are NOT visible inside function bodies:** pass them as
+  explicit arguments.
+- A function body can call `sample(in2, ...)` and `nearest(in2, ...)`,
+  contain `for` loops with local variables (declare them before the loop),
+  and return several values (bench 2026-10-06).
+- `in` and `out` are reserved keywords (inlet/outlet references).
+
+### Multiple return values
+
+Functions return several values by comma assignment. Unused return values are
+stripped by the compiler, at no cost:
 
 ```
-// cartopol returns r and theta
-r, theta = cartopol(x, y);
-
-// ignore theta — compiler optimizes it out
-r = cartopol(x, y);
-
-// ignore r
-notused, theta = cartopol(x, y);
-out1 = theta;
-
-// multiple right-hand side expressions
+r, theta = cartopol(x, y);       // both
+r = cartopol(x, y);              // ignore theta
+notused, theta = cartopol(x, y); // ignore r
 sum, diff = in1 + in2, in1 - in2;
 out1, out2 = diff, sum;
 ```
 
----
+### Abstractions as functions, and `require`
 
-## Abstractions as Functions
+Gen abstraction files (`.genjit`) on the Max search path can be called by
+name like functions: `out1 = myHelper(in1, in2);`. Names must be valid
+identifiers (letters, numbers, underscores; no `~` or `.`).
 
-Gen abstraction files (`.genjit` for jit.gl.pix) on the Max search path can be called by name from a codebox as if they were functions:
-
-```
-// Calls myHelper.genjit from the search path
-out1 = myHelper(in1, in2);
-```
-
-Function names must be valid identifiers — letters, numbers, underscores only. Names with `~` or `.` are invalid.
+`require("name")` includes `name.genexpr` from the search path (bench
+2026-10-06: it resolved from the patch's own folder, and a required function
+can sample `in2`). It is a textual include: it **adds no statement budget**
+(see `references/numerics-and-limits.md`).
 
 ---
 
-## Requiring GenExpr Files
+## Valid operators (jit.gl.pix GPU path)
 
-Shared function definitions can live in `.genexpr` files and be included with `require`:
-
-```
-require("myHelpers");  // loads myHelpers.genexpr from search path
-out1 = myHelperFunc(in1);
-```
-
----
-
-## Out-of-range coordinates and the `boundmode` keyword — bench-verified 2026-11-14
-
-Measured on the codebox bench, Max 9, input fed pix-to-pix (how modules chain); probes
-`tests/records/bench_boundmode_probes.py` (B1, B2), log `tests/logs/20261114-141112-bench.log`, plus the
-2026-10-20 probes P2/P6/P7/P9 in `bench_mirror_findings_probes.py`. **A matrix-fed input (jit.matrix or
-jit.movie into the pix) is untested**; the 2026-06-21 "defaults to clamp" observation was probably that case.
-
-- **Default (no keyword): both `sample()` and `nearest()` WRAP**, on both axes: -0.2 reads 0.8, 1.3 reads 0.3.
-- **Exactly 0.0 or 1.0 is a seam, not an edge:** on x both read the FIRST texel; on y both read the LAST row
-  (`1 - fract(1 - v)`). Same for `sample()` and `nearest()`. So `clamp(coord, 0, 1)` before a bare `sample()`
-  protects only two of the four edges (x = 1.0 reads the first column, y = 0.0 the last row). To clamp by hand,
-  clamp to texel-centre bounds (e.g. 0.999 on x, 0.001 on y), not exactly 0.0 / 1.0.
-- **The `boundmode` keyword works** (`sample(in1, c, boundmode="clamp")`, also on `nearest()`); it is NOT
-  silently ignored, as this skill used to say:
-  - `"clamp"`: clamps on x and y. The simplest way to get clamp-to-edge. (Its behavior at exactly 0.0 / 1.0
-    was not probed; inferred, not verified, that it fixes the seam above.)
-  - `"wrap"`: wraps on x and y (same as the default).
-  - `"mirror"`: mirrors on **x only**. On y it read as WRAP (coordinates below 0; above 1 not probed). Cause
-    unknown. Mirror y by hand: `v_m = 1.0 - abs(1.0 - mod(abs(v), 2.0))`.
-  - An unknown value (`"bogus"`) compiles silently and behaves as the default. A typo gives no error.
-- **`nearest()` at a literal coordinate returned an interpolated value** (`nearest(in1, vec(-0.2, ...))`
-  read 0.79999, not the texel centre 0.8047); at run-time coordinates it returned texel centres. Observed once;
-  cause not investigated.
+- **Math:** `+ - * / %` `abs neg sign floor ceil fract sqrt pow log exp mod`.
+  `sqrt` of a negative returns NaN: guard with `max(x, 0.0)`.
+  `mod()` is GPU-safe for discrete banding as well as wrapping (scratch patch
+  2026-07-09: `mod(x, 1.0)` matched `x - floor(x/m)*m` exactly, no sign
+  quirk), e.g. `mod(circle_id, 2.0)` for alternating colors.
+- **Trigonometry:** `sin cos tan asin acos atan atan2 sinh cosh tanh`.
+  `atan2` is accurate on all four quadrants, including on decoded texture
+  input; see `references/numerics-and-limits.md` for its ±π and `(0, 0)`
+  behavior.
+- **Range / interpolation:** `clamp wrap fold mix smoothstep step`.
+  `step(a, b)` with two *literal* constants folds the wrong way; see
+  `references/numerics-and-limits.md`.
+- **Comparison / logic:** `> < >= <= == != && || ! min max`.
+- **Control flow:** `if / else if / else` (GPU-safe);
+  `switch(condition, true_val, false_val)` (condition first);
+  `for` / `while` (fixed counts or Param-bounded counts both work; see limits).
+- **Vector:** `vec(x, y)`, `vec(x, y, z)`, `vec(x, y, z, w)`; `concat(a, b)`.
+  Whole-vector arithmetic on stored vectors (`a + b`, `a * b`, `a * s`) is
+  fine; only component access is broken.
+- **Coordinate globals:** `norm` (UV in [0, 1], texel centres),
+  `snorm` ([-1, 1]), `dim` (pixel size, NOT normalized; whose size it is:
+  `references/pix-object.md`), `cell` (**not an integer index**:
+  `cell = norm * (dim - 1)`; use `floor(norm * dim)`).
+- **Sampling:** `sample(inN, coord)` (bilinear, normalized coord) and
+  `nearest(inN, coord)` (normalized coord too). Out-of-range and accuracy
+  rules: `references/sampling.md`.
+- **Color:** `hsl2rgb(vec)`, `rgb2hsl(vec)`, alpha preserved.
+- **Coordinate math:** `cartopol(x, y)` → r, theta; `poltocar(r, theta)` → x, y.
+- **Constants (read-only):** `pi twopi halfpi e phi sqrt2 DEGTORAD RADTODEG`.
+- **Parameters:** `Param name(default)`.
 
 ---
 
-## Valid Operators (confirmed in jit.gl.pix GPU path)
+## Silent failures (compile clean, wrong output, no console message)
 
-### Math
-`+` `-` `*` `/` `%` `abs` `neg` `sign` `floor` `ceil` `fract` `sqrt` `pow` `log` `exp` `mod`
+### `noise()` always renders black
+Listed in the docs, compiles with any arguments, always outputs black on the
+GPU. `snoise()` and `cycle()` are hard errors. Use a sin hash, which is
+deterministic, spatially stable and gives per-cell identities with no
+per-frame flicker (idioms and its precision caveat in `references/patterns.md`):
 
-**`mod()` confirmed GPU-safe for discrete banding (2026-07-09):** tested via a
-minimal isolated scratch patch (`mod_test.maxpat`) comparing `mod(x, 1.0)`
-directly against a manual `x - floor(x/m)*m` fallback, split across the
-frame via `snorm.y` sign so both render simultaneously. Both produced
-identical vertical stripe banding — no silent divergence, no NaN, no
-sign-related quirk. Safe to use directly for discrete region/id coloring
-(e.g. `mod(circle_id, 2.0)` for flat lineage-based coloring), not just for
-continuous wrapping.
-
-### Trigonometry
-`sin` `cos` `tan` `asin` `acos` `atan` `atan2` `sinh` `cosh` `tanh`
-
-**`atan2` confirmed GPU-safe including the decode use case (2026-10-12):**
-`tests/records/spike_atan2_safety.py` verified it on *decoded sampled-texture*
-input (the vecfield-decode pattern, stronger than the analytic-coords
-precedent above): all four quadrants match `np.arctan2` to 5.6e-7 rad,
-the ±π branch cut is correctly wrapped (adjacent-texel 2π jumps, no
-cross-cut interpolation smearing), and the half-angle and doubled-angle
-round-trip identities pass. **One quirk:** at the degenerate cut boundary
-(`Fy == 0, Fx < 0`) the GPU returns +π where IEEE `atan2(-0, -x)` gives
-−π — benign for angle work (±π is the same line), but a NumPy mirror
-diffing GPU output must wrap-compare at that line.
-
-### Range / Interpolation
-`clamp` `wrap` `fold` `mix` `smoothstep` `step`
-
-### Comparison / Logic
-`>` `<` `>=` `<=` `==` `!=` `&&` `||` `!` `min` `max`
-
-### Control Flow
-`if / else if / else` — valid and GPU-safe
-`switch(condition, true_val, false_val)` — valid; argument order is condition first, then true value, then false value
-`for` / `while` — valid but use with caution on GPU (fixed iteration counts only)
-
-### Vector
-`vec(x, y)` `vec(x, y, z)` `vec(x, y, z, w)` — pack scalars into vector
-`concat(a, b)` — concatenate two vectors into larger vector
-
-### Coordinate (Jitter-specific globals)
-`norm` — normalized UV [0,1] as vec2, current pixel position
-`snorm` — signed normalized UV [-1,1] as vec2
-`cell` — **NOT an integer index on jit.gl.pix: `cell = norm * (dim - 1)`** (bench-verified 2026-09-22; see Bench-Verified Facts). Integer index: `floor(norm * dim)`
-`dim` — pixel dimensions as vec2 (e.g. vec(640, 480) — NOT normalized). **In the test bench it is the FIRST INPUT's size, not the job's output size** (bench-verified 2026-10-26, "f_quasi codebox bench" below): a 4x4 stand-in first input reads as square.
-
-### Sampling
-`sample(inN, coord)` — bilinear sample inN at normalized coord vec2. Out-of-range coordinates **wrap** by default in a pix-to-pix chain; `boundmode="clamp"` / `"wrap"` / `"mirror"` (x only) change that. See "Out-of-range coordinates and the `boundmode` keyword" above (bench-verified 2026-11-14; superseded the 2026-06-21 "default is CLAMP" entry, probably a matrix-fed input).
-`nearest(inN, coord)` — nearest-neighbor sample; same out-of-range rules as `sample()`
-
-**`uv.x` / `uv.y` silent failure in ring offset code (empirically verified 2026-06-21):**
-When computing per-sample ring positions, do NOT store `norm` in a variable and then access `.x`/`.y` — that's the stored-variable component access silent failure. Use `norm.x` and `norm.y` directly:
 ```
-// WRONG — su0 becomes dx0*reach (centered on origin, not current pixel)
-uv = norm;
-su0 = uv.x + dx0 * reach;  // uv.x silently returns 0
-
-// CORRECT
-su0 = norm.x + dx0 * reach;
-```
-
-**Clamp artifact in ring-accumulation modules (empirically verified 2026-06-21):**
-When a module samples a ring of positions around each pixel (e.g. `f_vf_repulse`), pixels
-within `reach` distance of any frame edge have some ring positions going OOB. Those
-positions read a value from elsewhere in the frame (the edge pixel when this was found, which
-assumed clamp; in a pix-to-pix chain the opposite side, since the default wraps: see
-"Out-of-range coordinates"), introducing it into the field accumulation asymmetrically. Result: visible
-bands along all four edges, with band width proportional to `reach`. Fix (valid either way): zero-gate any
-OOB sample using:
-```
-in_bounds = step(0., su) * step(su, 1.) * step(0., sv) * step(sv, 1.);
-w = max(luma - threshold, 0.0) * in_bounds;
-```
-This gives Clear semantics: OOB positions contribute zero weight, field weakens naturally
-near edges rather than reading false edge-pixel values.
-
-**Also note:** the earlier squished-texture result (before using a literal OOB value) was
-caused by the stored-variable silent failure on `oob_u` — `sample(in1, vec(oob_u, norm.y))`
-was silently sampling at `norm.x` instead of `oob_u`. Always use literals or verify with
-literals when testing boundmode behavior.
-
-### An unconnected `jit.gl.pix` inlet reads a constant (0, 0, 0, 1) — verified 2026-10-07
-
-An inlet nothing is cabled to does not read stale data or garbage: `sample(in2, norm)` returns black **with alpha 1**
-(probe: a 2-inlet pix with only inlet 0 connected; one distinct value across the whole image). A guard that wants to
-know "is this input absent?" must test the color channels, not alpha. (f_caustic's sheets composite treats a vecfield
-that is exactly 0 in R and G at four fixed points as absent: real vecfields encode zero as 0.5.)
-
-### Color (Jitter-specific)
-`hsl2rgb(vec)` — convert HSL to RGB, preserving alpha
-`rgb2hsl(vec)` — convert RGB to HSL, preserving alpha
-
-### Coordinate Math
-`cartopol(x, y)` — returns r, theta (radians)
-`poltocar(r, theta)` — returns x, y
-
-### Constants
-`pi` `twopi` `halfpi` `e` `phi` `sqrt2` `DEGTORAD` `RADTODEG`
-
-Read-only: never assign to these (`PI = 3.14159...` fails to compile on Max 9.2.0, see Silent Failures).
-
-### Parameters
-`Param name(default)` — declares a named parameter controllable from outside gen patcher
-
----
-
-## Silent Failures — Most Dangerous
-
-These compile without error but produce black output or wrong results. No console warning.
-
-### `noise()`
-Listed in Cycling '74 docs as a common operator. Compiles with any argument signature. **Always outputs black in jit.gl.pix GPU path.** Use sin-based hash instead:
-```
-// canonical sin hash — verified working
 hash = fract(sin(x * 43758.5453) * 43758.5453);
-// or for 2D input:
-hash = fract(sin(x * 127.1 + y * 311.7) * 43758.5453);
+hash = fract(sin(x * 127.1 + y * 311.7) * 43758.5453);   // 2D
 ```
 
-### Component access on stored variables
-`.x/.y/.z/.w` and `.r/.g/.b` on a **stored variable** silently fail — output goes black with no error.
+### Component access on stored variables (read)
+`.x/.y/.z/.w` and `.r/.g/.b` on a **stored variable** render black. The most
+common silent failure:
 
 ```
-// WRONG — silent failure
-col = sample(in1, uv);
-r = col.x;  // black
-
-// CORRECT — inline access on sample() return value
-r = sample(in1, uv).x;
+col = sample(in1, uv);  r = col.x;   // WRONG: black
+r = sample(in1, uv).x;               // CORRECT: inline on the call
 ```
 
-This is the single most common silent failure pattern. Always access components inline on the `sample()` call, never on a stored intermediate variable.
-
-### `boundmode` value typos, and `"mirror"` on y
-`boundmode=` works (see "Out-of-range coordinates" above; an earlier version of this skill wrongly said it was
-silently ignored). Two silent traps remain: an unknown value (`boundmode="mirorr"`) compiles and falls back to
-the default (wrap), and `"mirror"` mirrors x but wraps y. Bench-verified 2026-11-14.
+It applies to `norm` too: `uv = norm; su = uv.x + dx;` reads `uv.x` as 0
+(2026-06-21); use `norm.x` directly. Whole-vector arithmetic on stored
+variables is fine.
 
 ### `swiz`
-Documented operator for component remapping. Silently fails in jit.gl.pix GPU path regardless of argument syntax. Use manual `vec()` construction instead:
-```
-// WRONG — silent failure
-swapped = swiz(col, 2, 1, 0, 3);
+Documented for component remapping; silently fails on the GPU whatever the
+syntax. Remap by hand:
+`out1 = vec(sample(in1, uv).z, sample(in1, uv).y, sample(in1, uv).x, 1.0);`
 
-// CORRECT — manual channel remap via inline access
-out1 = vec(sample(in1, uv).z, sample(in1, uv).y, sample(in1, uv).x, 1.0);
-```
+### Names that collide with built-ins
+All of these compiled clean and broke output silently. The fix is always to
+rename **only the internal codebox identifier**; UI labels, control names
+and external message keywords live outside the codebox and can keep the
+nice name (but see the attribute collision in `references/pix-object.md`).
 
-### Variable name shadowing
-`cell`, `in`, `norm`, `snorm`, `dim` are coordinate operators. Using them as variable names compiles silently but produces undefined/zero output:
-```
-// WRONG — shadows coordinate operator
-cell = floor(uv.x * 10.0);  // compiles, black output
+- **Coordinate operators as variables** (`cell`, `in`, `norm`, `snorm`,
+  `dim`): undefined/zero output. Use `cell_idx`, `band_idx`.
+- **`inN`-shaped variables** (`in0`, `in1`...`in7`) — *root cause
+  unverified*, but a real solid-black repro (2026-07-08) in a codebox with
+  no texture inlets. Suspected: any `in`+digits token is parsed as an inlet
+  reference. Renaming to `ins0`, `ins1` fixed it (correlation in a complex
+  codebox, not a minimal isolation). Treat any `in`+digits name as suspect.
+- **`active`** (2026-07-08): a sticky flag `active = active * escaped` gave
+  solid black even when correctly pre-declared; renamed `alive`, it worked.
+  Suspected (no minimal repro) to collide like `inN`; `@active` is a common
+  Jitter attribute. Two such collisions in one session: when a new state
+  variable gives solid black despite correct declaration, suspect its
+  *name* next.
+- **A `Param` named after an operator** (`mix`, 2026-07-12):
+  `Param mix(100.0)` then `mix(a, b, mix / 100.0)` gave solid black. Rename
+  (`mix_pct`). Check candidate Param names against the operator list (`mix`,
+  `step`, `clamp`, `smoothstep`, `sample`, `wrap`, `mod`...).
+- **A `Param` named `t`** (2026-10-24) accepts `t <value>` messages without
+  complaint but **never takes the value**: it stays at its default (a
+  square-wave drive stuck at one phase). Same family as `texture` and
+  `bypass`, names `jit.gl.pix` itself owns. Rename (`frameno`).
+- **A `Param` named `shape`** (2026-11-14, bench) stayed at its default the
+  same way; renamed `dot_shape`, it works. Treat any one-letter or generic
+  Param name (`t`, `n`, `s`, `shape`) as suspect until a test sets a
+  non-default value and reads the effect back.
 
-// CORRECT
-cell_idx = floor(uv.x * 10.0);
-```
+### Assigning to a predefined constant — compile failure on Max 9.2.0 (2026-10-04)
+`PI = 3.14159265359;` ran under Max 9.1.4 and **fails to compile on 9.2.0**:
+the whole pix renders nothing and every `Param` message reports "invalid
+message". The symptom (dead output, Params that "don't exist") points away
+from the cause. Use another name (`pi_val`) or the built-in `pi`/`twopi`.
+Two cautions: a patch that "worked when it was saved" is not evidence its
+codebox compiles on the installed Max; and only `PI` was observed — that
+`e`, `phi`, `twopi`, `halfpi` and the rest are rejected the same way is
+inferred, **not tested**. Treat all of them as read-only.
 
-### `inN`-shaped variable names (e.g. `in0`, `in1`...`in7`) — UNVERIFIED root cause, but a real solid-black repro (2026-07-08)
-Naming ordinary scalar variables `in0`, `in1`, ... `in7` (e.g. per-candidate
-containment flags in a multi-circle loop, `f_apollonian`'s generalized-ring
-work) produced solid black output with a clean console — no compile error
-— in a module with **no texture inlets at all**. Suspected cause, not yet
-isolated with a minimal repro: `inN` (an `in` followed by digits) is
-GenExpr's actual inlet-reference syntax (`in1`, `in2`, `in3`...), and the
-parser may treat any `in`+digit token as an inlet reference regardless of
-whether that inlet exists in this codebox, rather than as an ordinary
-identifier — silently reading as zero/undefined instead of erroring. Same
-*family* as the `cell`/`norm`/`snorm`/`dim` shadowing issue above, but not
-previously documented for `inN` specifically, and not yet confirmed via a
-dedicated minimal test (the fix below resolved the symptom in a complex
-codebox — that's correlation, not a controlled isolation).
-```
-// SUSPECT — silent black output despite clean console, no texture inlets used
-in0 = step(dist2, r2) * active0;
-in1 = step(dist2b, r2) * active1;
+### Variables first assigned inside a `for` loop don't exist after it (2026-07-08)
+This one is a compile error (`"varname" is not defined`), listed here because
+the shape is easy to write. Declare with an initial value BEFORE the loop and
+only reassign inside it. The same goes for loop-carried state read inside the
+loop (an accumulator, a sticky flag):
 
-// FIX — avoid the inN shape entirely
-ins0 = step(dist2, r2) * active0;
-ins1 = step(dist2b, r2) * active1;
 ```
-If this resurfaces, treat any variable name matching `in` + digits as
-suspect, not just the literal reserved words already documented above.
-
-### Variables first assigned inside a `for` loop are out of scope after it — confirmed 2026-07-08
-A variable whose *first* assignment happens inside a `for` block cannot
-be read after the loop ends — the compiler reports `"varname" is not
-defined`, even though the variable clearly has a value by the time the
-loop exits in any C-like mental model. This bit `f_apollonian`'s
-generalized-ring work twice: once for a loop-carried accumulator
-(`any_inside`), once for a sticky flag (`active`) — both needed their
-values to persist past (and across) loop iterations. **Fix: declare the
-variable with an initial value BEFORE the loop, then only reassign
-(never first-declare) it inside the loop body:**
-```
-// WRONG — "any_inside" not defined outside the loop
+any_inside = 0.0;                 // declare first
 for (i = 0; i < 16; i += 1) {
     any_inside = max(a, b);
-    ...
 }
-result = any_inside;  // ERROR: any_inside is not defined
-
-// CORRECT — pre-declare before the loop
-any_inside = 0.0;
-for (i = 0; i < 16; i += 1) {
-    any_inside = max(a, b);
-    ...
-}
-result = any_inside;  // works
+result = any_inside;              // works
 ```
-This also applies to any loop-carried state read *inside* the loop
-across iterations (an accumulator, a sticky/latching flag like
-`active = active * escaped_this_iter`) — pre-declare it above the loop
-even though every read of it happens inside the loop body too.
 
-### `Param` named after a built-in operator (e.g. `mix`) — confirmed 2026-07-12
-Declaring a `Param` with the same name as a built-in codebox operator —
-`Param mix(100.0)`, then calling `mix(a, b, mix / 100.0)` on the same
-line — produced solid black output with a clean console on `f_vf_advect`.
-Same silent-failure shape as the `cell`/`norm`/`snorm`/`dim`/`in`/`inN`/
-`active` entries above: no compile error, just broken output, because
-the parser reads the name as the reserved operator token rather than the
-user's `Param`. **Fix: rename only the internal codebox identifier**
-(e.g. `mix` → `mix_pct`) — the UI-facing label, `attrui` `attr`,
-`live.numbox`/`live.dial` `varname`, and any external control-message
-keyword can keep the original name, since those live outside the
-codebox and aren't part of this collision. Treat any candidate `Param`
-name against the full operator list (`mix`, `step`, `clamp`,
-`smoothstep`, `sample`, `wrap`, `mod`, etc.) before using it — this is
-the same class of risk as the `active`/`inN` cases, not limited to those
-specific words.
+### `boundmode` typos, and `"mirror"` on y
+`boundmode=` works, but an unknown value (`"mirorr"`) compiles and falls back
+to the default (wrap), and `"mirror"` mirrors x but wraps y (bench
+2026-11-14). Details: `references/sampling.md`.
 
-### A `Param` named `t` is never applied — confirmed 2026-10-24 (f_formconstants T046)
-A codebox `Param t(...)` accepts `param t <value>` messages without complaint but **never takes the value**:
-it stays at its default. The symptom was a square-wave drive stuck at one phase (the module's `s` wave never
-alternated) with a clean console. Same silent-failure shape as the operator-named `Param` above, and the
-same family as `texture` and `bypass` (names jit.gl.pix itself owns). **Fix: rename the internal Param** —
-f_formconstants' frame counter is `frameno`. Treat any one-letter or generic Param name (`t`, `n`, `s`) as
-suspect until a bench leg proves the message reaches it (set a non-default value, read the output back).
-
-### A `Param` named `shape` never received its value — confirmed 2026-11-14 (f_halftone)
-Same shape as the `t` case above: `param shape <value>` on the codebox bench left the Param at its default, with no
-error. Renamed `dot_shape`, it works (the codebox bench's Shape rows pass; per the docs, `tests/logs/20261114-081815-bench.log`). Add `shape` to the
-suspect names; prove any generic name with a bench leg that sets a non-default value.
-
-### `exp(-(a + b))` compiled as `exp(-a + b)` — found by the bench 2026-11-10 (f_vf_erode)
-A unary minus in front of a parenthesised sum lost its distribution: the stage computed `exp(-a + b)`. The codebox
-bench caught it against the mirror (`tests/logs/20261110-105232-bench.log`). Write the sign into each term,
-`exp(-a - b)`, or name the sum first (`s = a + b; exp(0 - s)`). Related to "negative literals written `(0 - c)`".
-
-### A control named like a `jit.gl.pix` attribute binds to the attribute, not your Param — confirmed 2026-10-24
-This is a builder/UI-side trap, not a codebox one, but it shows up as a "codebox Param that does nothing".
-A control's `param_connect` addresses `<pix object>::<dial name>`; if jit.gl.pix has a native attribute of
-that name, the dial binds to the **attribute** and inherits its type and range. f_formconstants' dial named
-`depth` became Type Int, Range 0 1 in Max, because jit.gl.pix has an int 0/1 attribute `depth`; f_wc's dial
-named `texture` snapped back to its minimum, because native `@texture` takes a texture-name list. **Fix:
-give the control a token that cannot be a pix attribute** (a prefix: `pulse_depth`, `grain`, `out_mode`,
-not `depth`, `texture`, `output`, `mode`) and keep the nice name only in the label. Scan a definition's
-control tokens against jit.gl.pix's attributes before the first build.
-
-### `active` as a variable name — silent collision, confirmed 2026-07-08
-Naming a scalar variable `active` (e.g. a sticky "is this pixel still
-iterating" flag, `active = active * escaped_this_iter`) produced solid
-black output with a clean console — no compile error — even after
-pre-declaring it correctly above its loop (see previous entry) and
-pairing its update via comma-assignment (neither fix helped). Renaming
-the identical variable to `alive` (no other change) immediately fixed
-it and produced correct output. `active` is a common Jitter/Max object
-attribute name (e.g. `@active`), and is suspected — not yet proven via
-a fully minimal repro — to silently collide the same way `inN` does:
-compiles clean, reads as zero/undefined rather than erroring. **Treat
-`active` as a reserved-word-class name to avoid**, on top of the
-already-documented `cell`/`in`/`norm`/`snorm`/`dim`/`inN` list. If a
-self-referential scalar accumulator produces solid black despite correct
-pre-declaration and comma-assignment pairing, suspect the variable's
-*name* next, not just its update pattern — this was the second such
-collision found in one session, so treat this as a real class of risk
-whenever introducing a new named flag/state variable, not a one-off.
-
-### Assigning to a predefined constant (`PI = ...`) — compile failure on Max 9.2.0, confirmed 2026-10-04
-`f_stereo`'s codebox contained `PI = 3.14159265359;`. Saved and working
-under Max 9.1.4, it **fails to compile on Max 9.2.0**: the whole
-`jit.gl.pix` produces nothing, and every `Param` message sent to it
-reports "invalid message" (20 contract-test issues, all from this one
-line). Same shape as the collisions above — the symptom (dead output,
-params that "don't exist") points away from the cause — except that
-here the cause is a line the same patch ran fine on an earlier build.
-Assigning to a name Gen predefines (the constants list under
-"Constants") is not accepted by 9.2.0's compiler. **Fix: use a
-different variable name** (`pi_val`, used in `f_stereo`), or read the
-lowercase built-in `pi` / `twopi` directly instead of redefining it.
-Two cautions: (1) the 9.2.0 compile strictness differs from 9.1.4, so
-a patch that "worked when it was saved" is not evidence its codebox is
-valid on the installed Max; the bench's per-module contract test is
-what caught this. (2) Only `PI` was observed. That any *other*
-predefined name (`e`, `phi`, `twopi`, `halfpi`, ...) is rejected the
-same way is a reasonable inference, **not tested** — treat all of them
-as read-only and never assign to them.
+### Others, with details elsewhere
+- Unary minus before a parenthesis mis-compiles (`references/numerics-and-limits.md`).
+- `step()` with two literal arguments folds reversed (same file).
+- Runtime `atan2(0, 0)` gives NaN; `x == x` can't detect it (same file).
+- `sample()` reads nearest, not bilinear, at jumpy coordinates or when
+  minifying; `nearest()` given raw texel indices reads the border
+  (`references/sampling.md`).
+- A control whose name matches a `jit.gl.pix` attribute binds to the
+  attribute (`references/pix-object.md`).
 
 ---
 
-## Codebox bench: do not write `outN` in a comment (hard error, 2026-10-07)
-
-The codebox bench sizes the codebox from the `outN` tokens in its text, **comments included**. A one-output codebox
-whose header comment says "(the second outlet of caustic_pix is out2)" is built with two outputs, and the job fails with
-`codebox: patchcord outlet out of range: deleting patchcord`. Reword the comment ("the second outlet"); the same goes
-for `inN` mentions if a stage's input count is read from the text. (Found verifying f_caustic's select stages.)
-
-## Hard Errors ("operator X not defined")
-
-These produce a console error and fail to compile:
+## Hard errors (console error, no compile)
 
 | Invalid | Use instead |
 |---|---|
@@ -434,690 +267,94 @@ These produce a console error and fail to compile:
 | `float2(x, y)` | scalar vars |
 | `select(cond, a, b)` | `mix(a, b, step(threshold, val))` or `switch(cond, a, b)` |
 | `cycle(x)` | `sin(x * twopi) * 0.5 + 0.5` |
-| `snoise(x)` | sin hash (see above) |
+| `snoise(x)` | sin hash |
+| `texdim()`, `in1.dim` | not available (`texdim` undefined, `in1.dim` reads 0): pass a texture's size as a literal or Param |
 
-### Component assignment on a stored variable — hard error, distinct from component *read* (empirically verified 2026-07-08)
-Writing to a component of a stored variable (`z.x = ...`) fails to compile
-with **"invalid left-hand expression"** — a hard console error, not the
-silent black-output failure documented above for component *reads*
-(`col.x` on the right-hand side of `=`). Both are forms of "don't treat a
-stored variable as having addressable components," but they fail
-differently, and only the read case was previously documented:
+Too many statements gives `lua: [string DSL.Parser]: stack overflow (too many
+captures)`: see `references/numerics-and-limits.md`.
 
-```
-// WRONG — hard compile error, "invalid left-hand expression"
-z.x = invertX(z.x, z.y, cx, cy, r);
+### Component assignment on a stored variable — "invalid left-hand expression" (2026-07-08)
+Writing a component (`z.x = ...`) is a hard compile error, unlike the silent
+*read* failure above. Don't model a 2D point as one variable with fields:
+use two scalars (`zx`, `zy`) throughout, and write a 2-output transform as
+two single-return functions (one for the new x, one for the new y).
 
-// CORRECT — use separate scalar variables instead of one vector-like
-// variable with component fields
-zx = invertX(zx, zy, cx, cy, r);
-zy = invertY(zx_prev, zy, cx, cy, r);  // see sequencing note below
-```
-
-**Practical fallback**: don't model a 2D point as one variable with `.x`/
-`.y` fields inside a codebox — use two independent scalars (`zx`, `zy`)
-throughout, and write any transform as two single-return functions (one
-returning the new x, one returning the new y) rather than one function
-attempting to return or assign into a vector-like result. This sidesteps
-both the read-side and write-side component-access failures at once, at
-the cost of some duplicated argument-passing across the two functions.
-
-**Sequencing hazard when splitting a 2-output transform into two calls**:
-if the y-output function's math depends on the *original* x (before the
-x-output function's result overwrites it), capture the old value in a
-third scalar before reassigning `zx`: `zx_prev = zx; zx = invertX(...);
-zy = invertY(zx_prev, zy, ...);`. Getting this ordering wrong produces a
-silently different (wrong) result, not a compile error — worth
-double-checking any translated two-output transform for this trap.
+**Sequencing hazard:** if the y function needs the *original* x, capture it
+before overwriting: `zx_prev = zx; zx = invertX(...); zy = invertY(zx_prev, zy, ...);`.
+Getting the order wrong gives a silently wrong result, not an error.
 
 ---
 
-## Known-Good Patterns
+## Inlets and outlets
 
-### Inlet/outlet count on jit.gl.pix — code-first, object-second
+### Code first, object second
+**`numinlets` and `numoutlets` on `jit.gl.pix` and on the codebox are
+read-only,** derived, never settable. The causality is always
+code → connection point → object:
 
-**Both `numinlets` and `numoutlets` on jit.gl.pix are read-only.** Neither is
-settable anywhere. Same applies to the codebox itself — it is not a jsui.
+- **Inlet:** (1) reference `inN` in the code (this makes the codebox inlet
+  appear), (2) an `in N` object exists in the gen patcher, (3) it is wired
+  to that codebox inlet.
+- **Outlet:** (1) assign `outN` in the code (`out2 = period_vis;`), (2) an
+  `out N` object exists, (3) the codebox outlet is wired to it.
 
-**The causality is always code → connection point → object**, for both
-inlets and outlets. Referencing `inN` (or `outN`) in the codebox code is what
-causes that inlet (or outlet) to exist on the codebox. You do not create the
-`in N`/`out N` object first and then expect a reference to "connect" to it —
-the reference in the code comes first, the connection point appears as a
-consequence, and only then does placing and wiring the `in N`/`out N` object
-make sense.
+So when adding one: edit the code, confirm the new nub appears, then place
+and wire the object. Placing the object first and expecting the reference to
+"connect" to it is a recurring source of confusion: the object alone does
+nothing.
 
-**Inlets — three things must all be true:**
-1. `inN` is referenced in the codebox code (this is what makes the inlet
-   *appear* on the codebox — do this first)
-2. `in N` object exists inside the gen subpatcher
-3. The `in N` object is wired to that codebox inlet
+(The pix's own inlet count also follows the gen patcher's `in` objects, and
+an unwired `out N` still keeps its outlet: `references/pix-object.md`.)
 
-**Outlets — same pattern, symmetric:**
-1. `outN` is assigned in the codebox code (e.g. `out2 = period_vis;` — this
-   is what makes the outlet *appear* on the codebox — do this first)
-2. `out N` object exists inside the gen subpatcher
-3. The codebox outlet is wired to that `out N` object
-
-**Practical sequence when adding a new inlet or outlet:**
-1. Edit the codebox code first — add the `inN`/`outN` reference
-2. Compile/confirm the codebox now shows the new inlet/outlet nub
-3. Only now place the `in N`/`out N` object in the gen subpatcher
-4. Wire it to the newly-appeared codebox inlet/outlet
-
-Getting this backwards (placing the `in N`/`out N` object before the code
-references it, then expecting the reference to "connect" to an
-already-existing nub) is a recurring source of confusion — the object alone
-does nothing; the code reference is what creates the connection point.
-
-### Inlet indexing (empirically verified 2026-06-06)
-
-Codebox `in N` maps to outer pix inlet N-1:
-
-- `in 1` inside gen → outer pix inlet 0 (also carries control bang)
-- `in 2` inside gen → outer pix inlet 1
-- `in 3` inside gen → outer pix inlet 2
-
-There is no separate bang-only inlet. Outer inlet 0 carries both the bang and the first texture. This is different from what some Vsynth source comments imply — verified by observation.
+### Inlet indexing (2026-06-06)
+Codebox `in N` is the outer pix inlet N-1: `in 1` → pix inlet 0 (which also
+carries the bang: there is no separate bang-only inlet), `in 2` → inlet 1,
+`in 3` → inlet 2.
 
 ```
 // Two-texture pix: source on outer inlet 0, field on outer inlet 1
-// Requires: in 1 and in 2 objects in gen subpatcher, in2 referenced in codebox, both wired
-r = sample(in1, norm).x;                  // in1 = outer inlet 0
-fx = (sample(in2, norm).x - 0.5) * 2.0;  // in2 = outer inlet 1
-
-// Three-texture pix: source, light source, field
-// Requires: in 1, in 2, in 3 objects in gen subpatcher, in3 referenced in codebox, all wired
-src   = sample(in1, norm);   // in1 = outer inlet 0
-light = sample(in2, norm);   // in2 = outer inlet 1
-field = sample(in3, norm);   // in3 = outer inlet 2
+r  = sample(in1, norm).x;                  // in1 = outer inlet 0
+fx = (sample(in2, norm).x - 0.5) * 2.0;    // in2 = outer inlet 1
 ```
 
 ---
 
-### User-defined functions (confirmed GPU-safe 2026-06-18)
-```
-// Declare BEFORE Param statements and main body
-// No 'def' keyword — bare funcname(args) { ... return val; }
-// Params are NOT accessible inside — pass as arguments
-
-eval_field(ux, uy, radius, reflect, phase) {
-    ddx = ux - 0.5;
-    ddy = uy - 0.5;
-    rs  = max(sqrt(ddx*ddx + ddy*ddy) * 2.0 * radius, 0.001);
-    th  = atan2(ddy, ddx);
-    ev  = sqrt(2.0 / (pi * rs));
-    return ev * cos(rs - 2.4048) * cos(0.0*th + phase);
-}
-
-Param dishradius(1.0);
-Param ph0(0.0);
-
-// Call with explicit param values
-result = eval_field(norm.x, norm.y, dishradius, 0.0, ph0);
-
-// Useful for central-difference gradient sampling:
-eps = 0.004;
-t_xp = eval_field(norm.x + eps, norm.y, dishradius, 0.0, ph0);
-t_xn = eval_field(norm.x - eps, norm.y, dishradius, 0.0, ph0);
-gx = (t_xp - t_xn) / (2.0 * eps);
-```
-
-### Sin hash (noise substitute)
-```
-// 1D hash — stable, GPU-safe
-hash1d = fract(sin(x * 43758.5453) * 43758.5453);
-
-// 2D hash
-hash2d = fract(sin(x * 127.1 + y * 311.7) * 43758.5453);
-
-// Seeded hash (smoothly interpolated across seed values)
-s0 = floor(seed); s1 = s0 + 1.0; sf = fract(seed);
-ha = fract(sin((x + s0) * 213.7 + (y + s0) * 157.3) * 43758.5453);
-hb = fract(sin((x + s1) * 213.7 + (y + s1) * 157.3) * 43758.5453);
-h = mix(ha, hb, sf);
-```
-
-**The sin hash does not match a NumPy mirror per pixel** (f_halftone, 2026-11-14): one float32 ulp of `sin(...)`,
-times 43758, moves the hash by about 2.6e-3, and the GPU's `sin` differs from NumPy's by about an ulp, so hashed
-cells flip. Compare hash-driven output by means, lit fractions or distributions, with tolerances taken from the
-mirror's own spread over seeds, not pixel by pixel.
-
-### Texture sampling
-```
-uv = norm;
-
-// Basic sample — store result as vec4, access channels inline only
-luma = sample(in1, uv).x;
-
-// Explicit edge behavior: say what you want rather than rely on the default
-col = sample(in1, vec(uv.x + offset, uv.y), boundmode="clamp");   // or "wrap"
-
-// Aspect-correct UV for generators
-aspect = dim.x / dim.y;
-px = uv.x * aspect;
-py = uv.y;
-```
-
-### Bypass pattern
-```
-// Processor
-out1 = mix(effect_out, sample(in1, norm), bypass);
-
-// Dual-mode generator
-out1 = mix(result, mix(vec(0,0,0,1), sample(in1, norm), step(0.5, src_mode)), bypass);
-```
-
-### Branchless selection (GPU-friendly)
-```
-// step() for hard threshold
-result = mix(val_false, val_true, step(threshold, x));
-
-// switch() for explicit branching — switch(condition, true_val, false_val)
-result = switch(uv.x > 0.5, 1.0, 0.0);  // 1.0 on right, 0.0 on left
-
-// smoothstep() for soft threshold
-result = smoothstep(edge0, edge1, x);
-```
-
-### Polar coordinates
-```
-sn = snorm;
-r, theta = cartopol(sn.x, sn.y);
-// or manually:
-r = sqrt(sn.x * sn.x + sn.y * sn.y);
-theta = atan2(sn.y, sn.x);
-```
-
-### Per-course modulation sampling
-For masonry-style patterns where modulation must be identical across all pixels in a row:
-```
-// Sample at course center — breaks circularity with per-pixel geometry
-course_uv = vec(0.5, (course_idx + 0.5) / course_scale);
-mod_val = sample(in2, course_uv).x;
-```
-
-### Discrete-item gate is a bounding box, not the shape's silhouette (confirmed 2026-07-22)
-In any "seed/mark" style codebox — a position-based `gate` (rectangular
-region test against `along`/`across` vs. some `size`-derived half-extent)
-combined with a *separately sampled* shape texture that draws the actual
-visible silhouette inside that box — the gate box is almost always larger
-than the shape's own drawn content. Most of the box reads as black only
-because the shape tex itself is black there, not because the gate excludes
-it. This is easy to miss because the box and the shape's footprint look
-identical as long as everything inside the box is either the shape's color
-or black.
-
-The bug this causes: blending in any **per-seed constant value** (a color
-sampled once at the seed's own position, a per-seed id, anything that
-doesn't vary across the box's local UV space) using `gate` as the mask
-floods the *entire box* with that constant — not just the shape's visible
-pixels — because `gate` doesn't know where the shape actually is. If seed
-spacing is anywhere close to the gate's size, this reads as a full
-per-cell tessellation with hard box edges once rendered, easily mistaken
-for a Voronoi-cell bug elsewhere in the chain rather than a masking bug
-local to this codebox (empirically confirmed on `f_vf_seeds`'s hue/color
-Evolution 3 work — a per-seed sampled color, correctly gated by the wrong
-mask, produced a full-frame flat-colored Voronoi tessellation instead of
-the intended per-mark tint).
-
-**Fix: weight any per-seed constant by the shape's own alpha/luma, not
-just by `gate`.** `gate` confines *where marks can appear at all*;
-`shape_luma` (or the shape tex's own alpha channel) confines *where this
-specific mark is actually drawn* — those are two different masks, and
-per-seed constants need the second one, not the first:
-```
-// WRONG — floods the whole gate box with drive_color wherever gate=1,
-// not just where the shape is actually drawn
-blend = color_mode;
-final_r = mix(shape_r, drive_r, blend);
-mark_r = final_r * gate;
-
-// CORRECT — confine the constant swap to the shape's own footprint
-blend = color_mode * shape_luma;
-final_r = mix(shape_r, drive_r, blend);
-mark_r = final_r * gate;
-```
-This generalizes beyond color: any per-seed id, gradient sample, or other
-constant blended into a discrete-item codebox needs the same `shape_luma`
-(or shape alpha) weighting, not just `gate`, or it will bleed to the full
-bounding box rather than staying confined to the item's visible silhouette.
-
-### `vec4 + vec4` addition on stored variables (confirmed GPU-correct 2026-07-15)
-Elementwise addition of two stored `vec4` variables (not component-sliced
-— see the component-access failure class above) is safe, same as the
-already-confirmed `vec4 * vec4`/`vec4 * scalar` multiplication pattern
-(`effect_out * warm_shift * vignette` in `f_lens`). Confirmed on
-`f_lens`'s ghost-images addition, where an addend vector's alpha channel
-was deliberately zeroed (`vec(r, g, b, 0.0)`) before adding to a base
-`vec4` whose alpha was already 1.0, specifically to avoid alpha drifting
-above 1.0 from naive whole-vector accumulation:
-```
-ghost_vec = vec(ghost_r, ghost_g, ghost_b, 0.0);
-effect_out = effect_out + ghost_vec * ghost;  // confirmed working in Max
-```
-General lesson: when accumulating color contributions onto a base `vec4`
-via plain addition, explicitly zero the alpha channel of anything being
-added (rather than letting it default to 1.0 from a `sample()` call) —
-the addition itself is GPU-safe, but the *semantics* of adding two
-alpha=1.0 vectors together will push the result past 1.0 if you don't
-control for it.
-
-### Complex/Möbius arithmetic (confirmed GPU-correct 2026-07-09)
-GenExpr has no complex number type. Representing a complex value as two
-scalars (`_re`, `_im`) and a 2x2 complex Möbius matrix as eight scalars
-(`Are,Aim,Bre,Bim,Cre,Cim,Dre,Dim`) works correctly — confirmed both by
-extensive hand-derivation *and* by an isolated GPU unit test (hardcoded
-literals, no loop, checked against hand-computed expected output; see
-`f_apollonian`/`f_poincare` `plan.md` for the full derivation this
-supported). Safe, verified building blocks:
-```
-cmulre(are, aim, bre, bim) { return are*bre - aim*bim; }
-cmulim(are, aim, bre, bim) { return are*bim + aim*bre; }
-
-cdivre(are, aim, bre, bim) {
-    dd = max(bre*bre + bim*bim, 0.0001);
-    return (are*bre + aim*bim) / dd;
-}
-cdivim(are, aim, bre, bim) {
-    dd = max(bre*bre + bim*bim, 0.0001);
-    return (aim*bre - are*bim) / dd;
-}
-
-// Möbius point-map (a*z+b)/(c*z+d), split into two single-return
-// functions per the component-assignment rule above
-mobPtX(Are,Aim,Bre,Bim,Cre,Cim,Dre,Dim,Px,Py) {
-    numre = cmulre(Px,Py,Are,Aim) + Bre;
-    numim = cmulim(Px,Py,Are,Aim) + Bim;
-    denre = cmulre(Px,Py,Cre,Cim) + Dre;
-    denim = cmulim(Px,Py,Cre,Cim) + Dim;
-    return cdivre(numre,numim,denre,denim);
-}
-mobPtY(Are,Aim,Bre,Bim,Cre,Cim,Dre,Dim,Px,Py) {
-    numre = cmulre(Px,Py,Are,Aim) + Bre;
-    numim = cmulim(Px,Py,Are,Aim) + Bim;
-    denre = cmulre(Px,Py,Cre,Cim) + Dre;
-    denim = cmulim(Px,Py,Cre,Cim) + Dim;
-    return cdivim(numre,numim,denre,denim);
-}
-```
-Composing a chain of anti-holomorphic maps (e.g. circle inversions, line
-reflections) into a single accumulated matrix follows
-`N_{k+1} = M_{k+1} * conj(N_k)` (matrix product, entries of `N_k`
-conjugated elementwise) regardless of parity; the *result* is
-`N_k(z)` if the step count is even, `N_k(conj(z))` if odd. Matrix
-inverse for these projective (Möbius) matrices is the plain adjugate
-swap-and-negate (`d,-b,-c,a`) — **no division by determinant needed**,
-since scaling all four entries by a nonzero constant doesn't change the
-transform represented.
-
----
-
-## Debugging Numerical Mismatches — Threshold Sensitivity Near Möbius Poles (2026-07-09)
-
-When comparing two mathematically-equivalent formulations of a Möbius/
-circle-inversion computation (e.g. a real-vector inversion formula vs.
-a complex-matrix reconstruction) via an error-magnitude debug view, a
-**tight mismatch threshold (e.g. `0.01`) will produce false-positive
-"bug" patterns** in regions where the map sends points to large
-magnitudes (near the transform's pole) — this is expected float32
-precision softness inherent to the math, not a logic error. Confirmed
-by loosening a threshold from `0.01` to `0.3` and watching a persistent,
-confusing four-lobed mismatch pattern shrink dramatically, after
-extensive independent hand-verification had already shown the underlying
-formulas were correct in every case checked.
-
-**Practical lesson**: when a debug/verification check shows a mismatch
-that survives multiple isolation attempts (fresh vs. loop-tracked state,
-literals vs. `Param`s, in-loop vs. out-of-loop, different geometric
-configurations) *and* the underlying math checks out by hand every time,
-suspect the **threshold itself** before suspecting a deeper undiscovered
-logic bug — loosen it by an order of magnitude or more and see if the
-mismatched region shrinks proportionally (precision) or stays exactly
-the same size (real bug). This is a cheap, fast, and often decisive test
-to run early, not late.
-
-### `dim` for aspect ratio
-`dim` returns pixel dimensions (e.g. 640×480), not normalized values:
-```
-aspect = dim.x / dim.y;   // e.g. 1.333 for 640×480
-```
-Do not use `dim` to get normalized output size — use `norm` for that.
-
-**Whose size is it?** In a Vsynth chain modules use `dim.x / dim.y` for the aspect and it works, because the first
-inlet carries a render-sized texture (upstream, or `vs_black`). In the test bench `dim` is the **first input's**
-size (2026-10-26: a 256x144 first input read 16:9; the 4x4 stand-in read square; the output was 256x144 both
-times). So a bench of a codebox that uses `dim` must give the first input the render's size, or take the aspect
-from a Param. A pattern that matches its mirror only at aspect 1, or a cutoff on `dim.y` that flattens everything,
-is this.
-
----
-
-## What NOT to Use for Randomness/Noise
-
-| Don't use | Reason |
-|---|---|
-| `noise()` | Compiles silently, always black on GPU |
-| `snoise()` | "operator not defined" error |
-| `cycle()` | "operator not defined" error |
-
-**Always use sin hash.** It is deterministic, spatially consistent, GPU-safe, and produces stable per-cell identities with no per-frame variation.
-
----
-
-## Bench-Verified Facts (Max test bench, 2026-09-22)
-
-Measured numerically through the `f_` test bench (`tests/**/bench_*.py`,
-`.specify/test_bench/`), not inferred from docs or screenshots. Max 9,
-jit.gl.pix, float32.
-
-### `cell` is NOT an integer pixel index — it is `norm * (dim - 1)`
-At texel centers `cell.x` = 0.492, 1.477, … for dim 64 (exact to float32
-across the whole frame). Any codebox that needs an integer index (bin
-number, grid id, parity) must compute it: `i = floor(norm.x * dim.x)`.
-`norm` itself is exactly `(i + 0.5) / dim` (texel centers), and matrix row
-0 is where `norm.y` is smallest (no flip on readback).
-
-### Compile errors ARE catchable — but never wire `[error]` straight into `js`
-A gen compile failure posts `codebox: <message>` to the Max window (e.g.
-`codebox: addition op missing argument`) and `[error 1]` does output it.
-Wiring `[error]` directly into a `js` object recursed: js re-reported the
-incoming error, `[error]` caught that, until Max hit a stack overflow —
-which disables *all outlets in Max* until the yellow bar is cleared. Safe
-shape: `[error 1] → [deferlow] → [prepend some_name] → js`, with a handler
-that never posts or throws.
-
-### Long fixed-count loops compile fine
-128-, 256- and 512-iteration `for` loops with four `nearest()` reads per
-iteration compile and produce correct results (separable DFT vs `np.fft`:
-~1e-7 relative). Loop length is not a practical limit at these sizes.
-
-### Reduce trig arguments before `sin`/`cos`
-Computing a twiddle angle as `twopi * mod(k * n, N) / N` instead of
-`twopi * k * n / N` was ~12x more accurate on real GPU `sin`/`cos` at N=256
-(6.8e-7 vs 8.0e-6 relative). Large float32 angles lose precision before
-the trig function even runs.
-
-### jit.gl.pix object behavior (outside the codebox)
-- **Inlet count follows the gen patcher's `in` objects**, not only what
-  the codebox references: a `.genjit` with `in 1..3` (only `in 1` wired to
-  the codebox) gives a 3-inlet pix, and cords into inlets 1–2 survive and
-  deliver. Useful to keep inlet counts stable when swapping gen patchers
-  (`inputs` is read-only).
-- **A texture message sent to the pix (e.g. from js `message()`) lands on
-  input 0** regardless of `activeinput`; `sendinput N jit_gl_texture name`
-  did *not* set input N. Use physical cords for inputs 2+.
-- **A newly loaded gen compiles at its first render.** Params sent right
-  after `gen <name>` — and even on the next draw bang, which fires before
-  the render — hit "jit.gl.pix: invalid message <param>". Send params a
-  couple of frames later.
-- **Every texture message a pix receives triggers a render.** Sending it a
-  second texture per frame doubles the work downstream.
-- **Float32 readback is exact:** texture → `jit.matrix @type float32` via
-  the matrix's `jit_gl_texture` method, then `write` to `.jxf`, round-trips
-  values outside [0,1] bitwise. Matrix planes are ARGB.
-- **Native `@bypass` skips the shader and flips secondary outlets**
-  (module bench, 2026-09-23). With the native `bypass` attribute on, outlet 1
-  equals input 0 exactly, but outlets 2+ output input 0 **vertically
-  flipped** (exact `flipud`), and codebox logic like `mix(x, y, bypass)` never
-  executes. Seen on 11 shipped modules (two more multi-stage modules differ). To give secondary outlets a real bypass
-  state, drive a Param with a *different* name (`param bypass_gate 1`) and leave
-  the native attribute off.
-- **A unary minus before a parenthesis mis-parses** (bench control probe,
-  2026-09-23): `exp(-(v * k2 + drag) * dt)` evaluated as `-v*k2 + drag*dt`.
-  `0 - (v * k2 + drag) * dt` is correct. Write `0 - ...` in front of any
-  parenthesis or product (a bare `-1` literal is fine).
-- **A codebox cannot read an input texture's size**: `texdim()` is not defined,
-  `in1.dim` returns 0, and `dim` is the first input's size in the bench (the render's in a chain,
-  where the first inlet is render-sized; corrected 2026-10-26). Manual bilinear taps
-  therefore need the size as a literal or a Param.
-- **Hardware `sample()` on this GPU**: exact bilinear at 1:1 and when
-  magnifying, but with 8-bit interpolation weights (~1e-3 for general
-  fractions), it clamps its neighbor taps (a `fract()`ed coordinate does not
-  wrap them: 0.5 error at a periodic seam), and it is **nearest-like when the
-  output is smaller than the source** (half a source texel off). A manual
-  4-tap with `wrap(x, 0, N)` on integer indices is exact and periodic (1e-6).
-- **`NaN == NaN` is TRUE on jit.gl.pix here**: an `x == x` NaN test does
-  nothing. `switch(abs(x) < 1e30, x, 0)` clears NaN and Inf.
-- **A `Param`-bounded `for` loop compiles and runs** on jit.gl.pix (row DFT
-  matched `np.fft` at N = 128 and 64), so a loop bound need not be a literal.
-
-
-### More bench-verified facts (E1–E4, 2026-09-22)
-- **An unwired `out N` in a gen patcher compiles, keeps its outlet, and
-  emits an all-zero texture.** Handy for keeping outlet counts constant.
-- **char pix output quantizes round-to-nearest, clamped to [0, 1]** (not
-  floor). In a char feedback loop every step re-quantizes: increments below
-  0.5/255 per step never accumulate.
-- **Feedback into a non-left pix inlet is a clean one-frame delay** (the
-  Pattern 1 state/pass loop): stepping is frame-exact -- verified with an
-  exact counter over 20 steps and a closed-form decay accumulator.
-
-### More bench-verified facts (f_vf_fluid force taps, 2026-09-28)
-- **Hardware `sample()` is nearest-like when the source is larger than the pix
-  (minifying).** Measured with white noise: a single tap into 1920x1080 or 3840x2160
-  gave 5.97x / 11.6x the noise of an exact area average (the bilinear model predicts
-  3.8x / 9.3x; the nearest model, 5.9x / 11.5x, matches). Exact at 1:1 and magnified.
-  So any codebox reading a much larger texture needs its own averaging.
-- **A `for` loop bounded by an expression of a `Param`, nested, compiles and runs**
-  (`tn = max(1, floor(taps)); for (a = 0; a < tn; a += 1) { for (b = 0; ...`).
-  Averaging a taps x taps grid of `sample()` calls at offsets in NORMALIZED
-  coordinates needs no texture size. Cost ~ taps^2: 8 taps = ~0.4-0.7 ms, 16 = 1.2-1.7 ms
-  for a 256^2 pix reading an HD/4K force. Components stay inline on each `sample()`.
-- **The bench keeps a `Param`'s last value between jobs.** A job that omits a Param
-  inherits whatever the previous job set, not the codebox default. Pin every Param a
-  measurement depends on (a cost test silently measured taps=16 after a loop that ended
-  on 16).
-- **Generalization (2026-09-29): a fixed-`@dim` stage is a resampler, whether you meant
-  it to be or not.** Any module with an internal fixed-resolution stage minifies every
-  input it reads from the render context, by render_size / internal_dim -- 4-15x at
-  HD/4K for a 256^2 grid. Combined with nearest-like minification above, one `sample()`
-  per texel then reads well under 1% of the source and aliases hard on noisy input.
-  The fix is generic and needs no source size: average a `taps x taps` grid at offsets
-  in NORMALIZED coordinates. Treat this as a design consequence of choosing an internal
-  resolution, not as a fluid-specific detail -- the codebox cannot read an input's size
-  (no `texdim`), so nothing warns you.
-- **Prefiltering is a correctness setting, not a performance control.** It does nothing
-  on smooth inputs, and on noisy ones it only removes noise -- there is no expressive
-  range to perform. Fix it at a measured value in the shader (`Param taps(8)`); if the
-  cost/cleanliness trade needs to stay reachable, keep a route token and no panel slot
-  (`"ui": False` in `f_vf_fluid`'s `definition.py`) rather than spending a control.
-
----
-
-### More bench-verified facts (caustic gather / scatter spike, 2026-10-06)
-
-Measured on the codebox bench; probes and numbers in `ideas/optics_map.md` ("Findings: multi-guess gather").
-
-- **`sample()` is NOT bilinear when its coordinate is data-dependent and jumps between neighboring pixels.**
-  Texture filtering chooses magnify or minify from the coordinate's screen-space derivative; above about one
-  texel per pixel it falls back to the NEAREST minification filter. So any dependent read whose coordinate differs
-  by more than a texel from pixel to pixel (Newton starts from different cells, ray marching, fractal iteration,
-  a gather with jumpy candidates) reads the texture piecewise-constant: error up to half a texel of variation
-  (median 6e-3 against 2e-5 at pixel-aligned coordinates, on a field changing 0.06 per texel). Smooth warps
-  (coordinate = uv + smooth offset) stay bilinear. This is the same mechanism as the "nearest-like when the source
-  is larger than the pix" fact above. It is silent: no error, plausible output, and iterations that never converge.
-  **Fix: interpolate by hand from four exact `nearest()` taps** (costs about 3.7x the reads of one `sample()`):
-  ```
-  fxy(u, v) {                       // texture side W (here 256); returns the decoded field (x, y)
-    tx = u * 256.0 - 0.5;  ty = v * 256.0 - 0.5;
-    ix = floor(tx);  iy = floor(ty);  ax = tx - ix;  ay = ty - iy;
-    x0c = (ix + 0.5) / 256.0;  x1c = (ix + 1.5) / 256.0;  y0c = (iy + 0.5) / 256.0;  y1c = (iy + 1.5) / 256.0;
-    px = (nearest(in2, vec(x0c, y0c)).x * (1.0 - ax) + nearest(in2, vec(x1c, y0c)).x * ax) * (1.0 - ay)
-       + (nearest(in2, vec(x0c, y1c)).x * (1.0 - ax) + nearest(in2, vec(x1c, y1c)).x * ax) * ay;
-    py = (same with .y);
-    return (px - 0.5) * 2.0, (py - 0.5) * 2.0;
-  }
-  fx, fy = fxy(wu, wv);
-  ```
-  With this the GPU equalled a float32 NumPy mirror to r = 1.0000. The hardware's own interpolation precision is
-  not the problem (8-bit weights: error median 2e-5, max 1.2e-4). If a GPU result disagrees with the mirror only
-  where coordinates are jumpy, suspect this before float32 arithmetic (a step-for-step float32 mirror was identical
-  to the float64 one).
-- **The codebox parser has a STATEMENT budget** ("lua: [string DSL.Parser]: stack overflow (too many captures)").
-  Bisected: about **250 statements** in one function body or at the top level (260 fails), about **450 for the
-  whole program** (450 compiled, 458 failed), a `for` loop body tolerates more (680). It is not bytes or lines: 600
-  one-statement lines and 120 lines packed five to a line behave the same, and a complicated 11 KB program
-  compiled where a 7.7 KB file of 600 simple statements failed. A loop's iteration count does not matter (the
-  long-loop fact above is about iterations, not statements). A function body is counted once however often it is
-  called, and a call is one statement, so repeated code belongs in functions. `require("file")` works (below) but
-  **adds no budget**: it is a textual include (2 required files of 150 statements compile, 4 fail, like the same
-  code inline).
-- **But call sites of big functions cost too (f_halftone, 2026-11-14; the mechanism is inferred):** a codebox of
-  about 228 statements (counted by semicolons), far under 450, failed with the same error in Max's GL3 shader
-  transformer (`lua: [string DSL.Parser]:393: stack overflow (too many captures)`). Bisected offline: no single line
-  caused it, and the version before it (209 statements) also failed once any ~12 lines or one small function were
-  added. The fix cut the statement count only to 218 but cut the calls of the big per-plate function (about 50
-  lines, multi-value return, nested calls) from 7 inlined copies (3 hand-inlined blocks + 4 calls) to 3, and it
-  compiled; codebox bench 19/19. So "a function body is counted once" did not hold here: inferred, the transformer
-  sees the generated GLSL with function bodies expanded per call. Rule: call a big function a few times, not many;
-  pick per-call inputs (source, channel, settings row) in the main body and run one call per output slot.
-- **After that failure the bench is wedged**: every later job returns a STALE image (the same one, whatever the
-  code) with no error, until `benchclient.reopen()`. Before trusting a result after any compile failure, probe with
-  a known-good codebox (`tests/lib/benchclient.ensure_healthy`).
-- **Functions work inside a codebox, including the cases that matter:** a function body can call
-  `sample(in2, ...)` and `nearest(in2, ...)`, contain `for` loops with local variables (declare them before the
-  loop), and return several values (`return a, b;` received as `x, y = f(...)`). A program using a function is
-  bit-identical to the unrolled one (r = 1.00000). Params are still not visible inside: pass them in.
-- **`require("name")` loads `name.genexpr`** from the search path (it resolved from the bench's own folder) and a
-  required function can sample `in2`.
-- **`step(a, b)` with two literal constants folds the opposite way** (`step(0.3, 0.5)` gives 0, not 1). With
-  variables, `norm` or Params it follows GLSL, `step(edge, x)` = `x >= edge`, which is what the examples above
-  assume. Never test `step` with two literals, and write comparisons as `1.0 - step(b, a)` for `a < b`.
-- **Cost reference:** an empty `out1 = in1` pass measures about 2.1-2.5 ms per frame on the bench (CPU overhead
-  floor), so `measure` readings below that are upper bounds, not costs.
-
----
-
-### More bench-verified facts (caustic resolution/detail cost spike, 2026-10-08)
-
-`tests/records/spike_caustic_res_cost.py`; see `.specify/f_caustic_scatter/tasks.md` T046.
-
-- **The MODULE bench's `period_ms` (`caustic_runner.py`/`cr.period_ms`, real `vs_render` context) is a different
-  instrument from the codebox bench's `measure`, with its own floor: it is vsync-locked at `cr.CAP_MS` (~16.7 ms,
-  60 fps). A module cheaper than that reads as ~16.7 ms regardless of its true cost — the same failure shape as
-  the codebox bench's CPU-overhead floor above, different number, different cause (display vsync, not per-job
-  overhead). A set of `period_ms` readings that all cluster at ~16.7 ms across configs that should differ (e.g. a
-  cost-scaling parameter swept end to end) means "all cheaper than the floor," not "no effect" — push the inputs
-  (bigger textures, more points, stacked module instances) until readings clear 16.7 ms before concluding a
-  parameter has no cost impact.
-- **A single `period_ms` sample is noisy — up to ~2x run to run**, independent of and worse than the floor issue
-  above (seen as wildly non-monotonic readings, e.g. a *higher* detail step timing faster than a lower one on one
-  draw). The first job after `cr.ensure_bench()` reopens the module bench is particularly unreliable (cold-GPU-state
-  artifact). Take 3+ samples per config and use the median, never a single draw, before comparing configs.
-
-### More bench-verified facts (glyph/aniso tensor consumers, 2026-10-17)
-
-Probes: `tests/modules/tf_glyph/bench_tf_glyph.py`, `tests/modules/tf_aniso_blur/bench_tf_aniso_blur.py`; evidence in
-`.specify/f_tf_glyph/plan.md` ADR-2 amendment and `docs/f-reference/f_tensor_type.md` rules 5–6.
-
-- **RUNTIME `atan2(0, 0)` returns NaN on this GPU (compile-time literals fold to 0).**
-  *Counter-observation 2026-10-20 (probe P5, codebox bench):* with zeros made by arithmetic on `norm` (dx = dy = +0 at an odd texture's centre) `atan2` read +pi, finite (also pi for dx < 0, dy = 0, and 0 for dx > 0). So NaN is not universal: it was seen for zeros sampled from a texture. GLSL leaves `atan2(0, 0)` undefined; treat it as undefined, never as a specific value.
-  `theta = 0.5 * atan2(0.0, 0.0)` in a probe read 0/1 exactly (constant-folded, host-side);
-  the same expression on runtime-zero values sampled from a texture read NaN — and a
-  constant-isotropic tensor region (Jxx = Jyy, Jxy = 0: any flat, edge-free stretch of
-  content) rendered an all-black frame with a clean console, NaN propagating through
-  `cos`/`sin`. **A `mix()` guard cannot clear it**: mix(NaN, safe, 1) = NaN·0 + safe·1 —
-  NaN·0 is still NaN in the arithmetic expansion. GenExpr has no `isnan()`. Note the skill's
-  own "NaN == NaN is TRUE" fact above (confirmed live this session: `(a == a)` read 0.0... i.e.
-  TRUE for NaN, so that test cannot detect NaN here). **Fix at the source — never let (0,0)
-  reach atan2:** bias the denominator argument (`atan2(y, x + 1e-7)`); where the bias matters
-  the tensor is near-isotropic (aspect ≈ 1), so the swung angle renders identically in
-  anything rotation-symmetric. Same idiom family-wide; do not build module guards on
-  mix-clears-NaN assumptions (see the tensormap known-unknown below).
-- **`nearest()` takes NORMALIZED coordinates, same as `sample()`** — the 2026-10-06 four-tap
-  idiom above says `(ix + 0.5) / 256.0`; a first-draft refactor passed RAW texel indices
-  (`ix + 0.5` in texel units) and every interior tap read texture coords ~89 → clamped to the
-  last texel: the whole frame silently read the frame border. Symptom: a bilinear-blend
-  result that looks like an edge-smeared version of the truth. If taps disagree with the
-  mirror by a large coordinate-scale shift, check units before checking math.
-- **A codebox compile ERROR inside a SHIPPED patcher (jit.gl.pix) falls back to passthrough
-  of its first texture** — live session 2026-10-17: a broken gen graph ("patchcord source
-  not found: deleting patchcord" on load; the codebox's untapped input typed dead: "type is
-  not a sampler") made the module render its inlet texture UNCHANGED, "irrespective of any
-  dial". The codebox bench never sees this (it wraps code in its own genjit) — only the
-  module bench (`tests/contracts/bench_modules.py`) instantiates the shipped patcher as Max does. A
-  live module "acting like a passthrough" = suspect the gen graph / compile first, the math
-  second.
-- **Ob3D `@name` bindings are context-global and collide**: instantiating two copies of a
-  module whose pix is bare-named (`sharpen_pix`) in one GL context errors "name already in
-  use. ob3d does not allow multiple bindings" and the loser's Params go unset ("no attribute
-  ... on target pix") — the failing instance renders its inlet passthrough. Fix: prefix
-  module-bound pix names with `#0_` (`#0_sharpen_pix`) — Max substitutes the bpatcher's
-  instance id, making each instance's binding unique. The shipped multi-stage modules did
-  this all along; single-pix definitions must too. (The module bench itself exercises this
-  by keeping a live instance while instantiating fresh ones.)
-- **The tensormap known-unknown (do not build on it):** tensormap's stage C survives flat
-  content with `mix(NaN, 0.5, iso_dir)` while glyph's identical-shape `mix(NaN, 0.0, flag)`
-  did not clear the NaN — the compiler's select/fold behavior on `mix` with a computed-NaN
-  operand is not characterized. Tensormap is verified + live-checked and stays as-is; every
-  NEW consumer uses the bias-at-source idiom above instead of a mix guard.
-
----
-
-### More bench-verified facts (f_formconstants block-mean attempt, 2026-10-25)
-
-- **A `sample()` tap on a texel corner returns ONE texel, not the mean of four.** A reduction chain was built
-  assuming each `sample()` at a block corner bilinearly averages the surrounding texels (16 taps per stage,
-  4 x 4 blocks). The GPU block values had twice the std of the true 8 x 8 block means (0.072 against 0.036)
-  and correlated only 0.5 with them, which is what averaging 16 single texels (not 64) looks like; which
-  texel is returned varies with rounding. Do not rely on `sample()` to interpolate when the tap lands on a
-  texel corner or when the source is read at 1:1 in a pix-to-pix chain. **Fix: use `nearest()` at texel
-  centres** (`(ix + 0.5) / width`) and do the arithmetic yourself; the maths is then exact (a 1024 -> 1 mean
-  is five stages of 4 x 4 blocks, 16 taps each, 1024 -> 256 -> 64 -> 16 -> 4 -> 1). Related to the
-  "nearest-like" facts above; this one bites even with smooth coordinates.
-- **A ~256-tap unrolled codebox fails the parser** with `lua: stack overflow (too many captures)` (the
-  statement budget above, hit by writing 256 tap reads in one shader). A chain of four 16-tap stages
-  compiled fine. The failed compile also left the bench patch failing 7 unrelated legs until the next run,
-  the wedge described above, so after any compile failure re-probe before trusting later results.
-- **Where the evidence lives:** `tests/logs/fc_t075_mean1.npz` and `.specify/f_formconstants/tasks.md` T075.
-
-### More bench-verified facts (f_quasi codebox bench, 2026-10-26)
-
-- **`dim` is the first input's size in the bench** (see "`dim` for aspect ratio"). Probe: the same codebox with a
-  256x144 first input and with the 4x4 stand-in, `dim=(256, 144)` on both jobs; the scalar outlet matched the 16:9
-  mirror to 5e-6 in the first case and the square mirror to 5e-6 in the second, 0.73 off the other way each time.
-- **GPU `cos`/`sin` at large arguments are fine for a sum of cosines.** A 7-octave x 5-wave plane-wave sum (phase up
-  to ~1.6e3 rad at density 4, up to ~1e4 at density 12 on a negligible-weight octave) matched a float64 evaluation to
-  3.7e-5 in the normalised sum over 12 parameter sets, with the plain phase `beta s + d 2 pi B s` and with an
-  argument-reduced `2 pi fract(cycles)` alike (worst 3.7e-5 and 3.2e-5). The 12x gain from reducing the argument in
-  the DFT ("Reduce trig arguments", above) is an accumulation effect over 256 taps, not a property of one `cos`.
-  A drift phase that multiplies a growing octave scale is a different matter: an unbounded accumulator lost a level
-  of precision by 1e4, so wrap it (a phase in turns times the integer 2^i is exactly periodic).
-- **Cost of that shader:** 35 `cos` + 35 `sin` + 14 `exp` per pixel, three outlets, costs under 0.21 ms per pass at
-  1920x1080 on the M3 Max (an upper bound: below what the bench resolves; M1 not measured).
-- **A uniform per-octave branch** (`if (weight > 0.001)` on a Param-only value) and a per-octave `smoothstep` fade both
-  compile and run; neither moved the cost at this size.
-- **A Param-bounded multi-outlet codebox with ~48 lines of unrolled waves compiles first time** when it follows the
-  hazards above: negative literals written `(0 - c)`, no variables named `e`/`phi`/`pi`, accumulators declared before
-  the loop, no outlet names in comments.
-
-## Code Health Checklist
+## Code health checklist
 
 When reviewing any codebox, scan for these in order:
 
-- [ ] **No type declarations** — `float x`, `float4 col`, `int n` are invalid syntax; write bare assignments: `x = 1.0;`
-- [ ] **Inlet count correct** — for each texture inlet needed: (1) `inN` referenced in codebox code (this makes the codebox inlet appear), (2) `in N` object exists in gen subpatcher, (3) `in N` wired to that codebox inlet. Neither `numinlets` on pix nor on codebox is settable — both are derived.
-- [ ] **`noise()` calls** — always wrong on GPU; replace with sin hash
-- [ ] **Component access on stored variables (read)** — `col = sample(...); col.x` is always black; rewrite as inline `sample(...).x`
-- [ ] **Component assignment on stored variables (write)** — `z.x = ...` is a hard "invalid left-hand expression" compile error; use separate scalar variables (`zx`, `zy`) instead of one vector-like variable with component fields
-- [ ] **`vec4()` or `vec2()` constructors** — replace with `vec()`
-- [ ] **`select()`** — replace with `mix(a, b, step(...))` or `switch(cond, a, b)`
-- [ ] **`sample()` at jumpy, data-dependent coordinates** (iteration, ray marching, a gather over candidates) — reads NEAREST, not bilinear, whenever the coordinate changes by more than ~1 texel between neighboring pixels; interpolate by hand from four `nearest()` taps (bench-verified 2026-10-06, see above)
-- [ ] **`nearest()` tap coordinates normalized** — the four-tap idiom's taps take `(ix + 0.5) / width` UVs, NOT raw texel indices; raw indices silently read the frame border after the sampler's clamp (found 2026-10-17 refactoring a codebox)
-- [ ] **`atan2` fed possibly-(0,0) runtime args** — NaN; fix by biasing a denominator argument (+1e-7), not by guarding after (mix propagates NaN; no `isnan()`; `x == x` is TRUE even for NaN so that test is useless) — see the 2026-10-17 bench-facts section
-- [ ] **Statement count** — about 250 per function body or top level, about 450 for the whole program (not bytes, not lines); over that the parser fails with "stack overflow (too many captures)" and wedges the bench; move repeated code into functions (a call is one statement); `require` adds no budget; but calls of a big function can count as copies (f_halftone failed at about 228 statements with 7 copies, compiled with 3): call it a few times, not many (2026-11-14)
-- [ ] **`Param` named `t`, `shape` (or another generic name)** — never applied, silently; use a descriptive name (`frameno`); prove a message reaches it in a bench leg (2026-10-24)
-- [ ] **Control token equal to a `jit.gl.pix` attribute** (`depth`, `texture`, `output`, `mode`) — the dial binds to the attribute and takes its type/range; prefix the token and keep the plain word in the label (2026-10-24)
-- [ ] **`sample()` used as an exact interpolator at texel corners or 1:1 in a chain** — returns ONE texel; use `nearest()` at texel centres for exact maths (2026-10-25)
-- [ ] **Unary minus before a parenthesised sum** — `exp(-(a + b))` compiled as `exp(-a + b)`; write `exp(-a - b)` (2026-11-10)
-- [ ] **`step()` with two literal arguments** — folds reversed (`step(0.3, 0.5)` = 0); keep one argument a variable or Param
-- [ ] **`snoise()` or `cycle()`** — replace with sin hash or `sin(x * twopi)` respectively
-- [ ] **`cell` used as an integer index** — it is `norm * (dim - 1)` on jit.gl.pix; use `floor(norm.x * dim.x)` for integer indices
-- [ ] **Variable names shadowing operators** — `cell`, `in`, `norm`, `snorm`, `dim` as variable names produce silent wrong output; rename with suffix (e.g. `cell_idx`, `band_idx`)
-- [ ] **Out-of-range `sample()`/`nearest()` coordinates** — wrap by default (pix-to-pix); exact 0.0/1.0 is a seam (x reads the first texel, y the last row); want an edge, pass `boundmode="clamp"`; check `boundmode` spelling (a typo is silent) and that `"mirror"` is not relied on for y (2026-11-14)
-- [ ] **`dim` used for normalized sizing** — `dim` returns pixel dimensions, not [0,1]; use `norm` for normalized coords
-- [ ] **`sqrt()` on potentially negative values** — valid but returns NaN for negative input; guard with `max(x, 0.0)` before `sqrt()`
-- [ ] **User-defined functions declared after main body** — functions must come before `Param` declarations and all statements; move them to the top
-- [ ] **`Param` accessed inside function body** — Params not visible inside functions; pass as explicit arguments instead
-- [ ] **`swiz` calls** — silently fails on GPU; use manual `vec(sample(...).z, sample(...).y, sample(...).x, 1.0)` instead
+- [ ] **No type declarations** (`float x`, `float4 col`, `int n`); bare assignments only
+- [ ] **Inlet/outlet count**: each needed `inN`/`outN` is referenced in the code, has its `in N`/`out N` object, and is wired
+- [ ] **`noise()`**: always black on GPU; sin hash
+- [ ] **Component read on a stored variable** (`col.x`): black; read inline on `sample(...).x`
+- [ ] **Component write** (`z.x = ...`): compile error; separate scalars
+- [ ] **`vec4()`/`vec2()`**: use `vec()`
+- [ ] **`select()`**: `mix(a, b, step(...))` or `switch(cond, a, b)`
+- [ ] **`snoise()`/`cycle()`**: sin hash / `sin(x * twopi)`
+- [ ] **`swiz`**: manual `vec(...)`
+- [ ] **Names shadowing built-ins**: `cell`, `in`, `norm`, `snorm`, `dim`, `inN`, `active`, operator names; suffix them (`cell_idx`)
+- [ ] **Generic `Param` names** (`t`, `shape`, one letter) or operator names: silently never applied; use descriptive names and prove a message reaches the Param
+- [ ] **Assignments to constants** (`PI = ...`): compile failure on Max 9.2.0
+- [ ] **Control names equal to a `jit.gl.pix` attribute** (`depth`, `texture`, `output`, `mode`): the dial binds to the attribute; prefix the name
+- [ ] **Functions declared after the main body**: move them to the top
+- [ ] **`Param` read inside a function body**: pass it as an argument
+- [ ] **Loop-carried variables first assigned inside the loop**: declare before
+- [ ] **Out-of-range `sample()`/`nearest()` coordinates**: wrap by default; exact 0.0/1.0 is a seam; want an edge, pass `boundmode="clamp"`; check its spelling; don't rely on `"mirror"` for y
+- [ ] **`sample()` at jumpy, data-dependent coordinates** (iteration, ray marching, gathers): reads nearest; four `nearest()` taps blended by hand
+- [ ] **`sample()` as an exact interpolator** at texel corners or 1:1: returns one texel; `nearest()` at texel centres
+- [ ] **`sample()` of a much larger texture** (minifying, or a fixed-`dim` internal stage): nearest-like, aliases; average a taps x taps grid
+- [ ] **`nearest()` coordinates normalized** (`(ix + 0.5) / width`), not raw texel indices
+- [ ] **`cell` used as an integer index**: use `floor(norm.x * dim.x)`
+- [ ] **`dim` used for normalized sizing**: it is pixels; use `norm`
+- [ ] **Unary minus before a parenthesis** (`exp(-(a + b))`): write `0 - (...)` or distribute the sign
+- [ ] **`step()` with two literal arguments**: folds reversed; keep one a variable
+- [ ] **`atan2` fed possibly-(0, 0) runtime values**: bias an argument (+1e-7); no `mix` guard, no `x == x` test, no `isnan()`
+- [ ] **`sqrt()` of possibly negative values**: `max(x, 0.0)` first
+- [ ] **Large trig arguments in long accumulations**: reduce first (`mod(k * n, N)`)
+- [ ] **Statement count**: about 250 per function or top level, 450 per program; repeated code into functions; `require` adds no budget; a big function called many times can still overflow
+- [ ] **Bare pix `@name` in a module that may be instantiated twice**: prefix `#0_`
+
+---
+
+If a `local.md` sits next to this file, read it too: it holds project-specific
+tooling and conventions that extend this skill.
