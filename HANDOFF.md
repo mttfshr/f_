@@ -25,7 +25,7 @@
 - `f_weave` name (keeping `weave` for now); `f_ks` docs (T040).
 - `f_vf_erode` open, not blocking: the cost at a 1920 x 3840 atlas is unmeasured; the menu category is provisional (`G-menu`).
 - `f_vf_fluid` fails the contract bench as a whole on its frame size (bypassed frame 640 x 640 against an expected 512 x 512): update the expectation or fix the module (Matt's call).
-- **Skills for sharing (in progress, latest entry below):** gen-tilde-codebox split next, then jit-gen-codebox.
+- **Skills for sharing (in progress, latest entry below):** gen-tilde-codebox split done; jit-gen-codebox next.
 - Skills: written 2026-11-14 (night), uploaded and stamped by Matt the same night: `skills/jit-gen-codebox/SKILL.md` (call sites of big functions count toward the GL3 "too many captures" budget; `Param shape`; the sin hash vs the mirror; `exp(-(a + b))`) and `skills/vsynth-bpatcher/SKILL.md` (the `vs_black` wording: 1x1, does not trigger a render; relaunch Max for new package files; `package/media/` and the `static` key). `docs/vsynth-reference/patterns.md` `vs_black` wording fixed too.
 - `f_vf_seeds` cost at 1080p is unmeasured; optional cap on the `f_vf_advect` Trail dial.
 
@@ -38,6 +38,6 @@
 
 - **Goal (Matt):** share gen-tilde-codebox, jit-gen-codebox and maxpat-json-authoring with other developers, posted directly on Discord; no attribution needed; max-patch-notation and pfft-spectral-processing are not shared yet.
 - **Pattern:** each skill gets a project-neutral `SKILL.md` plus an f_-only `local.md` next to it (SKILL.md ends by telling the reader to load it). Share the folder without `local.md`; upload WITH it to claude.ai. `skills/check.sh` now hashes every file in a skill folder (SKILL.md-only hashes unchanged).
-- **Done:** maxpat-json-authoring split (`975de65`). `boundmode` probes B1/B2 (`tests/records/bench_boundmode_probes.py`, 2/2, `tests/logs/20261114-141112-bench.log`): the keyword works ("clamp"/"wrap" both axes, "mirror" x only, typos silent); jit-gen-codebox's three conflicting entries are one section (`e4197d3`); `G-edge-wrap` noted.
-- **Owed to Matt:** re-upload jit-gen-codebox and maxpat-json-authoring, then `./skills/check.sh stamp`. Optional: matrix-fed `boundmode` (fix path A of `scratch/boundmode_probe.maxpat`, live look); whether gpu_sim's `nearest()` should wrap.
-- **Next:** gen-tilde-codebox split (strip f_a_ provenance, remove the duplicate "Testing-methodology lessons" section, fix the stale "Carried over" framing and its "see Silent Failures above" pointer, drop `_build_purr_scratch.py`; the `code`-key item now also lives in maxpat-json-authoring). Then jit-gen-codebox split and topic regroup, in its own session.
+- **Done:** maxpat-json-authoring split (`975de65`). `boundmode` probes B1/B2 (`tests/records/bench_boundmode_probes.py`, 2/2, `tests/logs/20261114-141112-bench.log`): the keyword works ("clamp"/"wrap" both axes, "mirror" x only, typos silent); jit-gen-codebox's three conflicting entries are one section (`e4197d3`); `G-edge-wrap` noted. gen-tilde-codebox split (this entry's commit): provenance and the `prepend`/`trig` convention in local.md; duplicate testing section and stale "Carried over" section folded in.
+- **Owed to Matt:** re-upload jit-gen-codebox, maxpat-json-authoring and gen-tilde-codebox, then `./skills/check.sh stamp`. Optional: matrix-fed `boundmode` (fix path A of `scratch/boundmode_probe.maxpat`, live look); whether gpu_sim's `nearest()` should wrap.
+- **Next:** jit-gen-codebox split and topic regroup, in its own session.
