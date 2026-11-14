@@ -2,7 +2,7 @@
 f_halftone -- definition.py
 
 Tone to marks: a fixed-angle halftone screen, one plate per color channel (R, G, B), each with its own angle and lattice
-phase. Dot and Line types so far (T020, T021); shape, jitter, Threshold, Bayer and the Single plate mode are later tasks.
+phase. Dot and Line types and shape so far (T020, T021, T023); jitter, Threshold, Bayer and the Single plate mode are later tasks.
 Stateless, one stage. A texture processor: one inlet, one outlet; the output follows the render size (render_dim: Params
 `width` and `height`). Spec, plan and tasks: .specify/f_halftone/{spec,plan,tasks}.md.
 Mirror: tests/modules/halftone/halftone_mirror.py.
@@ -27,7 +27,7 @@ patcher = {
     "bypass_mode":         "param",
 
     "presentation_width":  290,
-    "presentation_height": 150,
+    "presentation_height": 212,
 
     "outlets": [{"comment": "texture"}],
 
@@ -38,6 +38,8 @@ patcher = {
          "hint": "Lattice period in frame heights. Below about 10 pixels the inked area stops tracking the tone"},
         {"name": "softness", "type": "float", "min": 0.0, "max": 1.0, "default": 0.1, "label": "Soft",
          "hint": "Width of the edge between ink and no ink. 0 is as sharp as one pixel allows"},
+        {"name": "shape", "type": "float", "min": 0.0, "max": 1.0, "default": 0.0, "label": "Shape",
+         "hint": "Dot only: round at 0, square at 1, the same inked area at every setting"},
         {"name": "angle_r", "type": "float", "min": 0.0, "max": 180.0, "default": 15.0, "label": "Angle R",
          "hint": "Screen angle of the red plate, in degrees"},
         {"name": "angle_g", "type": "float", "min": 0.0, "max": 180.0, "default": 75.0, "label": "Angle G",
@@ -71,7 +73,7 @@ patcher = {
 
 # ---- the panel (Claude's first placement, 2026-11-13; T013) ----------------------------------------------------------
 _ROW_TOP, _ROW_LOW = 38.0, 100.0    # dial tops; a label sits 18 px above
-_COL_LEFT = 24.0                    # Pitch over Soft
+_COL_LEFT = 24.0                    # Pitch over Soft over Shape
 _PLATE_X = {"r": 70.0, "g": 151.0, "b": 232.0}   # center of each plate's x-phase column; y-phase is 37 px right
 
 
@@ -87,6 +89,7 @@ _ov = {
 }
 _ov.update(_dial_at("pitch", _COL_LEFT, _ROW_TOP))
 _ov.update(_dial_at("softness", _COL_LEFT, _ROW_LOW))
+_ov.update(_dial_at("shape", _COL_LEFT, _ROW_LOW + 62.0))     # T023: a third row on the left, under Soft
 for _c, _x in _PLATE_X.items():
     _ov.update(_dial_at(f"angle_{_c}", _x + 18.5, _ROW_TOP))
     _ov.update(_dial_at(f"phase_{_c}_x", _x, _ROW_LOW))

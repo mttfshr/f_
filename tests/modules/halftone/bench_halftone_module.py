@@ -12,7 +12,7 @@ fed every frame at the render size, 640 x 640 (bench_modules.RENDER_DIM_SIZE); e
 Asserted:
   - load, no messages: the output is the render size and matches the mirror at the definition's defaults. This is the row that
     proves `width` and `height` arrive: at the codebox defaults (1920 x 1080) the lattice would be a different one.
-  - the Screen menu (Line), pitch, softness, the three angles and the six phase dials each reach the pix: the frame matches the
+  - the Screen menu (Line), pitch, softness, shape (T023, 2026-11-14), the three angles and the six phase dials each reach the pix: the frame matches the
     mirror with that value, and differs from the frame before it.
 A picture is compared as a fraction of values within TOL (bench_halftone.py explains why edge pixels can flip cells).
 
@@ -41,7 +41,7 @@ N = 640
 SETTLE = 30            # frames after a control message
 TOL = 2e-3
 FRAC_BAD = 5e-3
-DEFAULTS = {"screen": 0, "pitch": 0.012, "softness": 0.1, "angle_r": 15.0, "angle_g": 75.0, "angle_b": 45.0,
+DEFAULTS = {"screen": 0, "pitch": 0.012, "softness": 0.1, "shape": 0.0, "angle_r": 15.0, "angle_g": 75.0, "angle_b": 45.0,
             "phase_r_x": 0.0, "phase_r_y": 0.0, "phase_g_x": 0.0, "phase_g_y": 0.0, "phase_b_x": 0.0, "phase_b_y": 0.0}
 SCREENS = {0: "dot", 1: "line"}
 
@@ -95,7 +95,7 @@ def matches(got, label, **deltas):
                           angles=(p["angle_r"], p["angle_g"], p["angle_b"]),
                           phases=((p["phase_r_x"], p["phase_r_y"]), (p["phase_g_x"], p["phase_g_y"]),
                                   (p["phase_b_x"], p["phase_b_y"])),
-                          softness=p["softness"])
+                          softness=p["softness"], shape=p["shape"])
     err = np.abs(got[..., :3].astype(np.float64) - want[..., :3].astype(np.float64))
     bad = float((err > TOL).mean())
     note(f"{label}: worst rgb error (edge pixels may flip cells)", float(err.max()))
@@ -120,14 +120,17 @@ def test_screen_pitch_softness():
     f = job([{"wait": 60, "snap": "load"},
              {"params": [["screen", 1]], "wait": SETTLE, "snap": "line"},
              {"params": [["screen", 0], ["pitch", 0.03]], "wait": SETTLE, "snap": "pitch"},
-             {"params": [["softness", 0.5]], "wait": SETTLE, "snap": "soft"}])
-    load, line, pitch, soft = (snap(f, t) for t in ("load", "line", "pitch", "soft"))
+             {"params": [["softness", 0.5]], "wait": SETTLE, "snap": "soft"},
+             {"params": [["softness", 0.1], ["shape", 1.0]], "wait": SETTLE, "snap": "shape"}])
+    load, line, pitch, soft, shape = (snap(f, t) for t in ("load", "line", "pitch", "soft", "shape"))
     matches(line, "Screen menu: Line", screen=1)
     differs(line, load, "Screen menu")
     matches(pitch, "pitch 0.03", pitch=0.03)
     differs(pitch, load, "pitch")
     matches(soft, "softness 0.5", pitch=0.03, softness=0.5)
     check("softness: the frame changed", float(np.abs(soft[..., :3] - pitch[..., :3]).max() < 0.1), 0.0)
+    matches(shape, "shape 1 (T023)", pitch=0.03, shape=1.0)
+    differs(shape, pitch, "shape")
 
 
 def test_angles_reach_their_own_plate():

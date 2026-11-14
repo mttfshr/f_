@@ -28,7 +28,7 @@ Tolerances:
 Gates measured here: G8 / T010 (reads inside a function and a loop; sample() against nearest() at texel centres) and G5 / T007
 (the area law against pitch in texels, GPU beside the mirror).
 
-Not here: non-finite input (the bench's input path for NaN is unproven, and the mirror tests the zap); shape, jitter, Threshold,
+Not here: non-finite input (the bench's input path for NaN is unproven, and the mirror tests the zap); jitter, Threshold,
 Bayer and Single (not in the codebox yet); the shipped patcher (bench_halftone_module.py).
 
 Needs Max with tests/bench/bench.maxpat open.
@@ -53,7 +53,7 @@ FRAC_BAD = 5e-3
 PITCH = 16.0 / H       # 16 texels
 PINNED = {"screen": 0.0, "pitch": PITCH, "angle_r": 15.0, "angle_g": 75.0, "angle_b": 45.0,
           "phase_r_x": 0.0, "phase_r_y": 0.0, "phase_g_x": 0.0, "phase_g_y": 0.0, "phase_b_x": 0.0, "phase_b_y": 0.0,
-          "softness": 0.0, "bypass_gate": 0.0}
+          "softness": 0.0, "shape": 0.0, "bypass_gate": 0.0}
 SCREENS = {0: "dot", 1: "line"}
 
 
@@ -105,7 +105,7 @@ def mirror(src, **deltas):
                           angles=(p["angle_r"], p["angle_g"], p["angle_b"]),
                           phases=((p["phase_r_x"], p["phase_r_y"]), (p["phase_g_x"], p["phase_g_y"]),
                                   (p["phase_b_x"], p["phase_b_y"])),
-                          softness=p["softness"], bypass=bool(p["bypass_gate"]))
+                          softness=p["softness"], shape=p["shape"], bypass=bool(p["bypass_gate"]))
 
 
 def mx(a, b):
@@ -192,6 +192,20 @@ def test_phase_and_plate_independence():
     a, b = gpu(p), gpu(p, angle_r=33.0)
     check("angle r: green and blue exactly unchanged", mx(a[..., 1:3], b[..., 1:3]), 0.0)
     check("angle r: red changes", float(mx(a[..., 0], b[..., 0]) < 0.5), 0.0)
+
+
+def test_shape():
+    """T023 (added 2026-11-14): round to square for Dot, at the flat-tone (every pixel) and picture tolerances. Line ignores
+    shape, so a Line frame at shape 1 must equal the one at shape 0 exactly."""
+    t, p = flat(0.3, 0.5, 0.8), photo()
+    for sh in (0.5, 1.0):
+        everywhere(f"dot, flat, shape {sh}", t, shape=sh)
+        mostly(f"dot, picture, shape {sh}", p, shape=sh)
+    everywhere("dot, flat, shape 1, softness 0.3", t, shape=1.0, softness=0.3)
+    got = everywhere("dot, flat, shape 1", t, shape=1.0)
+    for c, tone in enumerate((0.3, 0.5, 0.8)):
+        note(f"square: mean coverage minus tone {tone}", float(got[..., c].mean()) - tone)
+    check("line: shape changes nothing", mx(gpu(p, screen=1.0, shape=1.0), gpu(p, screen=1.0, shape=0.0)), 0.0)
 
 
 def test_bypass():
