@@ -4,6 +4,8 @@ f_halftone -- definition.py
 Tone to marks: a fixed-angle halftone screen, one plate per color channel (R, G, B), each with its own angle and lattice
 phase. Dot, Line, Threshold and Bayer, shape and jitter (T020-T025), the Single plate mode (T016b), and the Plates mode
 (T028): inlets 1 to 3 take f_separate's plates, each screened as Single at the R / G / B angle, phase and scale, summed.
+Blue and Random screens and Levels (T035, Matt 2026-11-14): Blue reads the void-and-cluster pattern shipped as
+package/media/f_bluenoise64.jxf, through a static mod inlet (gen in5; no outer inlet).
 Stateless, one stage. A texture processor: four inlets (0 the texture, 1-3 the plates), one outlet; the output follows the render size (render_dim: Params
 `width` and `height`). Spec, plan and tasks: .specify/f_halftone/{spec,plan,tasks}.md.
 Mirror: tests/modules/halftone/halftone_mirror.py.
@@ -40,15 +42,17 @@ patcher = {
         {"label": "plate 1 (Plates mode: screened at the R angle, phase and scale)", "state_param": "plate1_on"},
         {"label": "plate 2 (Plates mode: screened at the G angle, phase and scale)", "state_param": "plate2_on"},
         {"label": "plate 3 (Plates mode: screened at the B angle, phase and scale)", "state_param": "plate3_on"},
+        # T035 (Matt, 2026-11-14; plan ADR-10): the Blue screen's thresholds, loaded from the package (gen in5)
+        {"label": "blue-noise pattern", "static": {"file": "f_bluenoise64.jxf", "planes": 1, "type": "float32", "dim": [64, 64]}},
     ],
 
     "params": [
-        {"name": "screen", "type": "menu", "options": ["Dot", "Line", "Threshold", "Bayer"], "default": 0, "label": "Screen",
-         "hint": "Dot: a lattice of dots, each sized by the tone at its center. Line: parallel lines whose width follows the tone. Threshold: ink where the tone is above Level. Bayer: an ordered dither, one pixel per mark"},
+        {"name": "screen", "type": "menu", "options": ["Dot", "Line", "Threshold", "Bayer", "Blue", "Random"], "default": 0, "label": "Screen",
+         "hint": "Dot: a lattice of dots, each sized by the tone at its center. Line: parallel lines whose width follows the tone. Threshold: ink where the tone is above Level. Bayer: an ordered dither. Blue: an even, grainy dither with no visible grid. Random: a coarse, clumpy dither"},
         {"name": "plate_mode", "type": "menu", "options": ["Channels", "Single", "Plates"], "default": 0, "label": "Plate",
          "hint": "Channels: red, green and blue are three plates, each at its own angle. Single: the texture is one spot-color plate, screened at the B row, in its own color. Plates: inlets 2-4 take f_separate's plates, screened at rows 1, 2, 3 and added (the main inlet is ignored)"},
         {"name": "pitch", "type": "float", "min": 0.003, "max": 0.2, "default": 0.012, "label": "Pitch",
-         "hint": "Lattice period in frame heights, for all three plates (each plate's Scale multiplies it). Below about 10 pixels the inked area stops tracking the tone. Bayer: the dither repeats once per pitch, in whole pixels"},
+         "hint": "Lattice period in frame heights, for all three plates (each plate's Scale multiplies it). Below about 10 pixels the inked area stops tracking the tone. Bayer, Blue, Random: the grain cell is Pitch / 8, in whole pixels"},
         {"name": "scale_r", "type": "float", "min": 0.25, "max": 4.0, "default": 1.0, "label": "Scale R", "widget": "numbox",
          "hint": "Multiplies Pitch for the red plate alone, so the plates can run at different rulings (1 = Pitch)"},
         {"name": "scale_g", "type": "float", "min": 0.25, "max": 4.0, "default": 1.0, "label": "Scale G", "widget": "numbox",
@@ -62,11 +66,13 @@ patcher = {
         {"name": "jitter", "type": "float", "min": 0.0, "max": 1.0, "default": 0.0, "label": "Jitter",
          "hint": "Dot only: moves each dot off the lattice, from a regular screen at 0 toward a random one at 1. Above mid-tone it loses a little ink"},
         {"name": "seed", "type": "int", "min": 1, "max": 999, "default": 1, "label": "Seed", "modmode": 0,
-         "hint": "Which random jitter pattern"},
+         "hint": "Which random pattern: the jitter, and the Blue and Random grain"},
+        {"name": "levels", "type": "int", "min": 2, "max": 16, "default": 2, "label": "Levels", "modmode": 0,
+         "hint": "Bayer, Blue and Random: how many output values per channel. 2 is black and white; more steps between them, dithered"},
         {"name": "level", "type": "float", "min": 0.0, "max": 1.0, "default": 0.5, "label": "Level",
          "hint": "Threshold only: the tone above which there is ink. Soft widens the cut"},
         {"name": "bayer_cell", "type": "text_button", "options": ["Pixel", "Cell"], "default": 1, "label": "Read",
-         "hint": "Bayer only. Cell: one tone per dither cell, so each cell is wholly lit or dark (an ordered dither). Pixel: the tone per pixel, so the image cuts through each cell. The same at 1-pixel cells"},
+         "hint": "Bayer, Blue and Random. Cell: one tone per dither cell, so each cell is wholly lit or dark (an ordered dither). Pixel: the tone per pixel, so the image cuts through each cell. The same at 1-pixel cells"},
         {"name": "angle_r", "type": "float", "min": 0.0, "max": 180.0, "default": 15.0, "label": "Angle R", "widget": "numbox",
          "hint": "Screen angle of the red plate, in degrees"},
         {"name": "angle_g", "type": "float", "min": 0.0, "max": 180.0, "default": 75.0, "label": "Angle G", "widget": "numbox",
@@ -127,12 +133,19 @@ _ov = {
 }
 for _n, _x in _GLOBAL_X.items():
     _ov.update(_dial_at(_n, _x, _DIAL_TOP))
-_ov["seed.ctl"] = {"presentation_rect": [_SEED_X - 17.0, _DIAL_TOP + 14.0, 34.0, 15.0], "outlettype": ["", "int"],
+# Seed and Levels share a column (T035; placement Claude's, T032 tuning)
+_ov["seed.ctl"] = {"presentation_rect": [_SEED_X - 17.0, _DIAL_TOP - 2.0, 34.0, 15.0], "outlettype": ["", "int"],
                    "saved_attribute_attributes": {"valueof": {
                        "parameter_initial": [1.0], "parameter_initial_enable": 1, "parameter_linknames": 1,
                        "parameter_longname": "seed", "parameter_mmax": 999.0, "parameter_mmin": 1.0, "parameter_modmode": 0,
                        "parameter_shortname": "seed", "parameter_type": 1, "parameter_unitstyle": 0}}}
-_ov["seed.label"] = {"presentation_rect": [_SEED_X - 19.0, _DIAL_TOP - 4.0, 38.0, 18.0]}
+_ov["seed.label"] = {"presentation_rect": [_SEED_X - 19.0, _DIAL_TOP - 18.0, 38.0, 18.0]}
+_ov["levels.ctl"] = {"presentation_rect": [_SEED_X - 17.0, _DIAL_TOP + 29.0, 34.0, 15.0], "outlettype": ["", "int"],
+                     "saved_attribute_attributes": {"valueof": {
+                         "parameter_initial": [2.0], "parameter_initial_enable": 1, "parameter_linknames": 1,
+                         "parameter_longname": "levels", "parameter_mmax": 16.0, "parameter_mmin": 2.0, "parameter_modmode": 0,
+                         "parameter_shortname": "levels", "parameter_type": 1, "parameter_unitstyle": 0}}}
+_ov["levels.label"] = {"presentation_rect": [_SEED_X - 19.0, _DIAL_TOP + 13.0, 38.0, 16.0]}
 _ov["bayer_cell.ctl"] = {"presentation_rect": [_READ_X - 20.0, _DIAL_TOP + 13.0, 40.0, 17.0]}   # shows Cell / Pixel itself
 
 # the plate table: one row per plate; the per-cell labels are hidden, the headers and row labels are comments

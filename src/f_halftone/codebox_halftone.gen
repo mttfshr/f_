@@ -32,7 +32,16 @@
 //   the largest of the connected plates' alphas. An unconnected plate is skipped by its connected flag (plate1_on etc., from
 //   vs_inState), never by its value: an unconnected inlet reads black with alpha 1, which would set alpha to 1. Inlet 0 is
 //   ignored except by bypass. The Single path is the function single_path; `src` picks the inlet (0 = in1 ... 3 = in4).
-// screen: 0 = Dot, 1 = Line, 2 = Threshold, 3 = Bayer. Angles in degrees. bypass_gate = 1: the (zapped) source.
+// Blue and Random (T035, Matt 2026-11-14; spec US10, FR-023 to FR-026, plan ADR-10): screens 4 and 5, Bayer's grain cell
+//   and Read, the threshold from the void-and-cluster pattern (gen in5: package/media/f_bluenoise64.jxf through the builder's
+//   static mod inlet, 64 x 64, tiled, nearest) or the sin hash of the cell. The cell index is shifted by the plate's offset
+//   ((0, 0), (23, 41), (47, 13) for plates 0 / 1 / 2; Single is plate 2, Plates plate k is k - 1), by the phase in whole
+//   grain cells (8 per pitch, rounded), and for Blue by (61, 29) per seed step; Random hashes the shifted cell with the seed.
+//   All offsets preliminary (Claude, T033 spike); the mirror's dither_threshold is the reference. Inferred, for the bench: that
+//   the one-plane float texture reads its value in .x, and that its row 0 is the smallest norm.y.
+// Levels (T035, FR-027, ADR-11): Bayer, Blue and Random: q = tone (L - 1); out = (floor(q) + [fract(q) > threshold]) / (L - 1),
+//   clamped, tone <= 0 exactly 0, tone >= 1 exactly 1. At L = 2 it is the one-bit dither, bit for bit.
+// screen: 0 = Dot, 1 = Line, 2 = Threshold, 3 = Bayer, 4 = Blue, 5 = Random. Angles in degrees. bypass_gate = 1: the (zapped) source.
 // Non-finite input is zapped to 0: abs(x) < 1e30 with switch() (NaN == NaN is TRUE on this GPU).
 // The render size comes from the Params `width` and `height` (render_dim; the size global reads 1 inside a live Vsynth pix,
 // build/spec.md). A bench job must set both to the output's size.
@@ -171,7 +180,8 @@ thresh(tone, lvl, soft) {
     return switch(hw > 0, smoothstep(lvl - hw, lvl + hw, tone), switch(tone > lvl, 1, 0));
 }
 
-bayer(tone, ix, iy) {
+// T035: the dither screens. kind 0 Bayer, 1 Blue, 2 Random; plt the plate (0, 1, 2); lv the levels.
+dither(tone, ix, iy, kind, plt, sd, phx, phy, lv) {
     x0 = mod(ix, 2);
     x1 = mod(floor(ix / 2), 2);
     x2 = mod(floor(ix / 4), 2);
@@ -179,7 +189,23 @@ bayer(tone, ix, iy) {
     y1 = mod(floor(iy / 2), 2);
     y2 = mod(floor(iy / 4), 2);
     mm = 16 * (2 * abs(x0 - y0) + y0) + 4 * (2 * abs(x1 - y1) + y1) + (2 * abs(x2 - y2) + y2);
-    return switch(tone > (mm + 0.5) / 64, 1, 0);
+    t_bay = (mm + 0.5) / 64;
+    ox = switch(plt < 0.5, 0, switch(plt < 1.5, 23, 47));
+    oy = switch(plt < 0.5, 0, switch(plt < 1.5, 41, 13));
+    gx = ix + ox - floor(phx * 8 + 0.5);
+    gy = iy + oy - floor(phy * 8 + 0.5);
+    bx = gx + 61 * sd;
+    by = gy + 29 * sd;
+    bx = bx - 64 * floor(bx / 64);
+    by = by - 64 * floor(by / 64);
+    t_blue = nearest(in5, vec((bx + 0.5) / 64, (by + 0.5) / 64)).x;
+    t_rand = fract(sin(gx * 127.1 + gy * 311.7 + sd * 74.7) * 43758.5453);
+    thr = switch(kind < 0.5, t_bay, switch(kind < 1.5, t_blue, t_rand));
+    l1 = max(floor(lv + 0.5) - 1, 1);
+    q = tone * l1;
+    fq = floor(q);
+    o = clamp((fq + switch(q - fq > thr, 1, 0)) / l1, 0, 1);
+    return switch(tone <= 0, 0, switch(tone >= 1, 1, o));
 }
 
 // T029b (Matt, 2026-11-14; FR-022): Bayer's cell follows the plate's own pitch. Returns the read uv and the cell indices.
@@ -194,7 +220,7 @@ bay_cell(pp, nx, ny, wd, ht, cellmode) {
 
 // T028: the Single path (T016b) on one inlet, as a function so Plates can run it per plate. Returns the plate's r, g, b:
 // colour (rgb / brightest, at the texel the tone came from) times coverage. nx, ny: the pixel's norm.
-single_path(src, px, py, nx, ny, is_line, is_thr, is_bay, use_jit, cs, sn, pit, phx, phy, asp, wd, ht, soft, aa, shp, jit, sd, lvl, cellmode) {
+single_path(src, px, py, nx, ny, is_line, is_thr, is_bay, dkind, use_jit, cs, sn, pit, phx, phy, asp, wd, ht, soft, aa, shp, jit, sd, lvl, cellmode, lv) {
     qx, qy = lat_xy(px, py, cs, sn, pit, phx, phy);
     ru, rv = read_uv(qx, qy, is_line, cs, sn, pit, phx, phy, asp, wd, ht);
     cov = cover(qx, qy, is_line, rd(ru, rv, 3, src), soft, aa, shp);
@@ -205,7 +231,9 @@ single_path(src, px, py, nx, ny, is_line, is_thr, is_bay, use_jit, cs, sn, pit, 
         cu, cv = jit_uv(qx, qy, cs, sn, pit, phx, phy, asp, wd, ht, jit, sd);
     }
     bu, bv, ix, iy = bay_cell(pit, nx, ny, wd, ht, cellmode);
-    cov = switch(is_thr > 0.5, thresh(rd(nx, ny, 3, src), lvl, soft), switch(is_bay > 0.5, bayer(rd(bu, bv, 3, src), ix, iy), cov));
+    plt = switch(src < 0.5, 2, src - 1);
+    cov = switch(is_thr > 0.5, thresh(rd(nx, ny, 3, src), lvl, soft),
+                 switch(is_bay > 0.5, dither(rd(bu, bv, 3, src), ix, iy, dkind, plt, sd, phx, phy, lv), cov));
     cu = switch(is_thr > 0.5, nx, switch(is_bay > 0.5, bu, cu));
     cv = switch(is_thr > 0.5, ny, switch(is_bay > 0.5, bv, cv));
     cr = rd(cu, cv, 0, src);
@@ -237,6 +265,7 @@ Param seed(1);
 Param level(0.5);
 Param plate_mode(0);
 Param bayer_cell(1);
+Param levels(2);
 Param bypass_gate(0);
 Param plate1_on(0);
 Param plate2_on(0);
@@ -265,7 +294,8 @@ soft = clamp(softness, 0, 1);
 shp = clamp(dot_shape, 0, 1);
 is_line = switch(abs(screen - 1) < 0.5, 1, 0);
 is_thr = switch(abs(screen - 2) < 0.5, 1, 0);
-is_bay = switch(abs(screen - 3) < 0.5, 1, 0);
+is_bay = switch(screen > 2.5, 1, 0);          // Bayer, Blue, Random: the dither screens (T035)
+dkind = clamp(floor(screen + 0.5) - 3, 0, 2);
 jit = clamp(jitter, 0, 1);
 use_jit = switch(jit > 0, 1, 0) * switch(screen < 0.5, 1, 0);
 d2r = pi / 180;
@@ -303,27 +333,27 @@ if (use_jit > 0.5) {
     cov_b = dot_jit(qxb, qyb, 2, 0, csb, snb, pit_b, phase_b_x, phase_b_y, asp, wd, ht, soft, aa_b, shp, jit, seed);
 }
 
-// T025: Threshold and Bayer replace the lattice, per pixel
+// T025: Threshold and the dithers (Bayer; Blue and Random, T035) replace the lattice, per pixel
 bur, bvr, ixr, iyr = bay_cell(pit_r, norm.x, norm.y, wd, ht, bayer_cell);
 bgu, bvg, ixg, iyg = bay_cell(pit_g, norm.x, norm.y, wd, ht, bayer_cell);
 bu, bv, ixb, iyb = bay_cell(pit_b, norm.x, norm.y, wd, ht, bayer_cell);
-cov_r = switch(is_thr > 0.5, thresh(zr, level, soft), switch(is_bay > 0.5, bayer(rd(bur, bvr, 0, 0), ixr, iyr), cov_r));
-cov_g = switch(is_thr > 0.5, thresh(zg, level, soft), switch(is_bay > 0.5, bayer(rd(bgu, bvg, 1, 0), ixg, iyg), cov_g));
-cov_b = switch(is_thr > 0.5, thresh(zb, level, soft), switch(is_bay > 0.5, bayer(rd(bu, bv, 2, 0), ixb, iyb), cov_b));
+cov_r = switch(is_thr > 0.5, thresh(zr, level, soft), switch(is_bay > 0.5, dither(rd(bur, bvr, 0, 0), ixr, iyr, dkind, 0, seed, phase_r_x, phase_r_y, levels), cov_r));
+cov_g = switch(is_thr > 0.5, thresh(zg, level, soft), switch(is_bay > 0.5, dither(rd(bgu, bvg, 1, 0), ixg, iyg, dkind, 1, seed, phase_g_x, phase_g_y, levels), cov_g));
+cov_b = switch(is_thr > 0.5, thresh(zb, level, soft), switch(is_bay > 0.5, dither(rd(bu, bv, 2, 0), ixb, iyb, dkind, 2, seed, phase_b_x, phase_b_y, levels), cov_b));
 
 // T016b: Single, one plate at the blue plate's angle and phase (single_path on in1)
 is_single = switch(plate_mode > 0.5, 1, 0);
-sr, sg, sb = single_path(0, px, py, norm.x, norm.y, is_line, is_thr, is_bay, use_jit, csb, snb, pit_b, phase_b_x, phase_b_y,
-                         asp, wd, ht, soft, aa_b, shp, jit, seed, level, bayer_cell);
+sr, sg, sb = single_path(0, px, py, norm.x, norm.y, is_line, is_thr, is_bay, dkind, use_jit, csb, snb, pit_b, phase_b_x, phase_b_y,
+                         asp, wd, ht, soft, aa_b, shp, jit, seed, level, bayer_cell, levels);
 oa = za;
 // T028: Plates, inlets 1 to 3 as Single at the R, G, B sets; summed, clamped; alpha the largest connected plate's
 if (plate_mode > 1.5) {
-    r1, g1, b1 = single_path(1, px, py, norm.x, norm.y, is_line, is_thr, is_bay, use_jit, csr, snr, pit_r, phase_r_x, phase_r_y,
-                             asp, wd, ht, soft, aa_r, shp, jit, seed, level, bayer_cell);
-    r2, g2, b2 = single_path(2, px, py, norm.x, norm.y, is_line, is_thr, is_bay, use_jit, csg, sng, pit_g, phase_g_x, phase_g_y,
-                             asp, wd, ht, soft, aa_g, shp, jit, seed, level, bayer_cell);
-    r3, g3, b3 = single_path(3, px, py, norm.x, norm.y, is_line, is_thr, is_bay, use_jit, csb, snb, pit_b, phase_b_x, phase_b_y,
-                             asp, wd, ht, soft, aa_b, shp, jit, seed, level, bayer_cell);
+    r1, g1, b1 = single_path(1, px, py, norm.x, norm.y, is_line, is_thr, is_bay, dkind, use_jit, csr, snr, pit_r, phase_r_x, phase_r_y,
+                             asp, wd, ht, soft, aa_r, shp, jit, seed, level, bayer_cell, levels);
+    r2, g2, b2 = single_path(2, px, py, norm.x, norm.y, is_line, is_thr, is_bay, dkind, use_jit, csg, sng, pit_g, phase_g_x, phase_g_y,
+                             asp, wd, ht, soft, aa_g, shp, jit, seed, level, bayer_cell, levels);
+    r3, g3, b3 = single_path(3, px, py, norm.x, norm.y, is_line, is_thr, is_bay, dkind, use_jit, csb, snb, pit_b, phase_b_x, phase_b_y,
+                             asp, wd, ht, soft, aa_b, shp, jit, seed, level, bayer_cell, levels);
     k1 = step(0.5, plate1_on);
     k2 = step(0.5, plate2_on);
     k3 = step(0.5, plate3_on);

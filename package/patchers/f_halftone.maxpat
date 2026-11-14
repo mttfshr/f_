@@ -77,8 +77,9 @@
 					"id": "obj-4",
 					"maxclass": "newobj",
 					"numinlets": 1,
-					"numoutlets": 21,
+					"numoutlets": 22,
 					"outlettype": [
+						"",
 						"",
 						"",
 						"",
@@ -104,17 +105,17 @@
 					"patching_rect": [
 						56.5,
 						204.0,
-						1519.0,
+						1591.0,
 						22.0
 					],
-					"text": "route screen plate_mode pitch scale_r scale_g scale_b softness dot_shape jitter seed level bayer_cell angle_r angle_g angle_b phase_r_x phase_r_y phase_g_x phase_g_y phase_b_x phase_b_y"
+					"text": "route screen plate_mode pitch scale_r scale_g scale_b softness dot_shape jitter seed levels level bayer_cell angle_r angle_g angle_b phase_r_x phase_r_y phase_g_x phase_g_y phase_b_x phase_b_y"
 				}
 			},
 			{
 				"box": {
 					"id": "obj-5",
 					"maxclass": "newobj",
-					"numinlets": 4,
+					"numinlets": 5,
 					"numoutlets": 2,
 					"outlettype": [
 						"jit_gl_texture",
@@ -211,13 +212,31 @@
 							},
 							{
 								"box": {
-									"code": "// codebox_halftone.gen -- f_halftone: the one stage. Tone to marks on a fixed-angle lattice, one plate per color channel.\n// Stateless, per pixel. Float32. Mirror: tests/modules/halftone/halftone_mirror.halftone_stage() (the conventions in its\n// docstring are the ones followed here). T020: Dot and Line, soft edge, exact extremes, zap, bypass, alpha; the per-plate\n// phase (FR-016) is in because it is part of the lattice formula. 2026-11-14: shape (T023), jitter (T024), Threshold and\n// Bayer (T025), the Single plate mode (T016b).\n//\n// Lattice (plan ADR-1): p = ((u - .5) * aspect, v - .5) in frame heights; q = R(-angle) p / pitch - phase;\n//   lattice cell = floor(q + .5), local f = q - that, in [-.5, .5]^2.\n// Spot functions (ADR-2): Dot T = A(r), the area of the radius-r circle inside the unit cell; Line T = 2 |f_y|.\n//   dot_shape (T023, Dot only; a Param named `shape` never received its value on the bench, 2026-11-14) morphs round to square: T = mix(A(r), (2 max(|f_x|, |f_y|))^2, shape), the slope likewise.\n// Soft edge (ADR-3): coverage = clamp(.5 + (tone - T) / w, 0, 1), w = max(softness / 2, aa) * |dT/dd|,\n//   aa = 1 / (pitch in texels); then tone <= 0 gives exactly 0 and tone >= 1 exactly 1.\n// Tone (ADR-4): ONE nearest read per plate at a texel centre: Dot at the lattice cell's centre, Line at the pixel's own\n//   position along its centreline row. The reads are in the main body, the tone is passed to the functions (gate G8).\n// Jitter (ADR-5, Dot only): each cell centre moves by jitter * .5 * (hash - .5) cells (the sin hash, seeded); the nine cells\n//   around the pixel are tested and the largest coverage wins; the tone is read at each displaced centre. jitter 0 takes the\n//   one-cell path, so the regular lattice is exactly the T020 one. Each jittered mark is clipped to its own displaced unit\n//   square (fix A, Matt 2026-11-14), as the mirror does.\n// Threshold (ADR-6): smoothstep(level - w, level + w, tone), w = softness / 2 (a hard step at softness 0), per pixel.\n// Bayer: the 8 x 8 ordered matrix by texel, M = sum over bits b of 4^(2-b) (2 (x_b xor y_b) + y_b); lit where tone > (M + .5) / 64.\n//   The matrix repeats once per pitch (Matt, 2026-11-14): a cell is pitch / 8 frame heights, rounded to whole pixels, at\n//   least 1. bayer_cell 1 (default; Matt, 2026-11-14) reads one tone per cell at its centre pixel, a true ordered dither;\n//   0 reads it per pixel (a threshold at each cell's level). Identical at 1-pixel cells.\n// Per-plate pitch (T029b, Matt 2026-11-14, FR-022): a plate's pitch is pitch * scale_<plate>; every length above that says\n//   \"pitch\" means the plate's own pitch. Single uses scale_b. bay_cell returns four values (inferred to compile; the bench decides).\n// Single plate (T016b, plate_mode 1; spec \"Plates from f_separate\"): the whole texture is ONE plate at angle_b and phase_b.\n//   Its tone is the brightest channel, t = max(r, g, b), at the read texel; the colour is rgb / t there (black when t <= 0); the\n//   output is that colour times the coverage. The colour texel is the one the tone came from: the cell centre (displaced when\n//   jittered) for Dot, the centreline point for Line, the pixel's own for Threshold and Bayer.\n// Plates (T028, Matt 2026-11-14; spec US9, FR-017 to FR-021, plan ADR-8): plate_mode 2 screens the module's inlets 1 to 3\n//   (gen in2 to in4) each as Single, plate 1 at the R angle / phase / scale, 2 at G, 3 at B; summed and clamped to 0..1; alpha\n//   the largest of the connected plates' alphas. An unconnected plate is skipped by its connected flag (plate1_on etc., from\n//   vs_inState), never by its value: an unconnected inlet reads black with alpha 1, which would set alpha to 1. Inlet 0 is\n//   ignored except by bypass. The Single path is the function single_path; `src` picks the inlet (0 = in1 ... 3 = in4).\n// screen: 0 = Dot, 1 = Line, 2 = Threshold, 3 = Bayer. Angles in degrees. bypass_gate = 1: the (zapped) source.\n// Non-finite input is zapped to 0: abs(x) < 1e30 with switch() (NaN == NaN is TRUE on this GPU).\n// The render size comes from the Params `width` and `height` (render_dim; the size global reads 1 inside a live Vsynth pix,\n// build/spec.md). A bench job must set both to the output's size.\nzap(xv) {\n    return switch(abs(xv) < 1e30, xv, 0);\n}\n\n// cos and sin of exact quarter turns come out as 1e-8, not 0: snap, so 0 and 90 degrees sit on the pixel grid (G6)\nsnap0(xv) {\n    return switch(abs(xv) < 0.000001, 0, xv);\n}\n\narea_round(rad) {\n    rc = min(rad, 0.70710678);\n    inner = pi * rc * rc;\n    ac = acos(clamp(1 / (2 * max(rc, 0.000001)), 0, 1));\n    seg = rc * rc * ac - 0.5 * sqrt(max(rc * rc - 0.25, 0));\n    area = switch(rc > 0.5, inner - 4 * seg, inner);\n    return switch(rad >= 0.70710678, 1, area);\n}\n\narea_slope(rad) {\n    rc = min(rad, 0.70710678);\n    ac = acos(clamp(1 / (2 * max(rc, 0.000001)), 0, 1));\n    slp = switch(rc <= 0.5, twopi * rc, rc * (twopi - 8 * ac));\n    return switch(rad >= 0.70710678, 0, slp);\n}\n\n// lattice coordinates of the position (px, py)\nlat_xy(px, py, cs, sn, pit, phx, phy) {\n    return (cs * px + sn * py) / pit - phx, (cs * py - sn * px) / pit - phy;\n}\n\n// where the plate's tone is read: normalized coordinates of a texel centre, clamped to the frame\nread_uv(qx, qy, is_line, cs, sn, pit, phx, phy, asp, wd, ht) {\n    xx = switch(is_line > 0.5, qx, floor(qx + 0.5)) + phx;\n    yy = floor(qy + 0.5) + phy;\n    ppx = (cs * xx - sn * yy) * pit;\n    ppy = (sn * xx + cs * yy) * pit;\n    ti = clamp(floor((ppx / asp + 0.5) * wd), 0, wd - 1);\n    tj = clamp(floor((ppy + 0.5) * ht), 0, ht - 1);\n    return (ti + 0.5) / wd, (tj + 0.5) / ht;\n}\n\n// coverage at local lattice coordinates (fx, fy) relative to a mark's centre\ncover_local(fx, fy, is_line, tone, soft, aa, shp) {\n    rad = sqrt(fx * fx + fy * fy);\n    sq = max(abs(fx), abs(fy));\n    thr_dot = mix(area_round(rad), 4 * sq * sq, shp);\n    slp_dot = mix(area_slope(rad), 8 * sq, shp);\n    thr = switch(is_line > 0.5, 2 * abs(fy), thr_dot);\n    slp = switch(is_line > 0.5, 2, slp_dot);\n    wid = max(soft * 0.5, aa) * max(abs(slp), 0.000001);\n    cov = clamp(0.5 + (tone - thr) / wid, 0, 1);\n    return switch(tone <= 0, 0, switch(tone >= 1, 1, cov));\n}\n\ncover(qx, qy, is_line, tone, soft, aa, shp) {\n    return cover_local(qx - floor(qx + 0.5), qy - floor(qy + 0.5), is_line, tone, soft, aa, shp);\n}\n\n// the zapped tone at a texel centre: ch 0 r, 1 g, 2 b, 3 the brightest of the three (Single); src the inlet (0 = in1 ... 3 = in4)\nrd(ru, rv, ch, src) {\n    tx = 0;\n    ty = 0;\n    tz = 0;\n    if (src < 0.5) {\n        tx = zap(nearest(in1, vec(ru, rv)).x);\n        ty = zap(nearest(in1, vec(ru, rv)).y);\n        tz = zap(nearest(in1, vec(ru, rv)).z);\n    } else if (src < 1.5) {\n        tx = zap(nearest(in2, vec(ru, rv)).x);\n        ty = zap(nearest(in2, vec(ru, rv)).y);\n        tz = zap(nearest(in2, vec(ru, rv)).z);\n    } else if (src < 2.5) {\n        tx = zap(nearest(in3, vec(ru, rv)).x);\n        ty = zap(nearest(in3, vec(ru, rv)).y);\n        tz = zap(nearest(in3, vec(ru, rv)).z);\n    } else {\n        tx = zap(nearest(in4, vec(ru, rv)).x);\n        ty = zap(nearest(in4, vec(ru, rv)).y);\n        tz = zap(nearest(in4, vec(ru, rv)).z);\n    }\n    return switch(ch < 0.5, tx, switch(ch < 1.5, ty, switch(ch < 2.5, tz, max(max(tx, ty), tz))));\n}\n\n// T016b: the read texel of the pixel's own cell centre, displaced by the jitter (the Single colour under jitter)\njit_uv(qx, qy, cs, sn, pit, phx, phy, asp, wd, ht, jit, sd) {\n    nx = floor(qx + 0.5);\n    ny = floor(qy + 0.5);\n    hx = fract(sin(nx * 127.1 + ny * 311.7 + sd * 74.7) * 43758.5453);\n    hy = fract(sin(nx * 269.5 + ny * 183.3 + sd * 246.1) * 43758.5453);\n    xx = nx + jit * 0.5 * (hx - 0.5) + phx;\n    yy = ny + jit * 0.5 * (hy - 0.5) + phy;\n    ppx = (cs * xx - sn * yy) * pit;\n    ppy = (sn * xx + cs * yy) * pit;\n    ti = clamp(floor((ppx / asp + 0.5) * wd), 0, wd - 1);\n    tj = clamp(floor((ppy + 0.5) * ht), 0, ht - 1);\n    return (ti + 0.5) / wd, (tj + 0.5) / ht;\n}\n\n// T024: the jittered Dot. ch picks the plate's channel (0 r, 1 g, 2 b, 3 the brightest: Single). Reads inside a function and a loop are exact (T010).\ndot_jit(qx, qy, ch, src, cs, sn, pit, phx, phy, asp, wd, ht, soft, aa, shp, jit, sd) {\n    cx = floor(qx + 0.5);\n    cy = floor(qy + 0.5);\n    best = 0;\n    for (j = 0; j < 3; j += 1) {\n        for (i = 0; i < 3; i += 1) {\n            nx = cx + i - 1;\n            ny = cy + j - 1;\n            hx = fract(sin(nx * 127.1 + ny * 311.7 + sd * 74.7) * 43758.5453);\n            hy = fract(sin(nx * 269.5 + ny * 183.3 + sd * 246.1) * 43758.5453);\n            gx = nx + jit * 0.5 * (hx - 0.5);\n            gy = ny + jit * 0.5 * (hy - 0.5);\n            xx = gx + phx;\n            yy = gy + phy;\n            ppx = (cs * xx - sn * yy) * pit;\n            ppy = (sn * xx + cs * yy) * pit;\n            ti = clamp(floor((ppx / asp + 0.5) * wd), 0, wd - 1);\n            tj = clamp(floor((ppy + 0.5) * ht), 0, ht - 1);\n            ru = (ti + 0.5) / wd;\n            rv = (tj + 0.5) / ht;\n            tone = rd(ru, rv, ch, src);\n            // fix A (Matt, 2026-11-14): a mark lives only in its own displaced unit square (unclipped, a full-tone\n            // neighbour inked the whole 3 x 3 block, since tone >= 1 gives full ink at any distance)\n            inside = step(max(abs(qx - gx), abs(qy - gy)), 0.5);\n            best = max(best, inside * cover_local(qx - gx, qy - gy, 0, tone, soft, aa, shp));\n        }\n    }\n    return best;\n}\n\n// T025: the Threshold and Bayer coverage of one per-pixel tone\nthresh(tone, lvl, soft) {\n    hw = soft * 0.5;\n    return switch(hw > 0, smoothstep(lvl - hw, lvl + hw, tone), switch(tone > lvl, 1, 0));\n}\n\nbayer(tone, ix, iy) {\n    x0 = mod(ix, 2);\n    x1 = mod(floor(ix / 2), 2);\n    x2 = mod(floor(ix / 4), 2);\n    y0 = mod(iy, 2);\n    y1 = mod(floor(iy / 2), 2);\n    y2 = mod(floor(iy / 4), 2);\n    mm = 16 * (2 * abs(x0 - y0) + y0) + 4 * (2 * abs(x1 - y1) + y1) + (2 * abs(x2 - y2) + y2);\n    return switch(tone > (mm + 0.5) / 64, 1, 0);\n}\n\n// T029b (Matt, 2026-11-14; FR-022): Bayer's cell follows the plate's own pitch. Returns the read uv and the cell indices.\nbay_cell(pp, nx, ny, wd, ht, cellmode) {\n    bs = max(floor(pp * ht / 8 + 0.5), 1);\n    ix = floor(floor(nx * wd) / bs);\n    iy = floor(floor(ny * ht) / bs);\n    bx = min(ix * bs + floor(bs / 2), wd - 1);\n    by = min(iy * bs + floor(bs / 2), ht - 1);\n    return switch(cellmode > 0.5, (bx + 0.5) / wd, nx), switch(cellmode > 0.5, (by + 0.5) / ht, ny), ix, iy;\n}\n\n// T028: the Single path (T016b) on one inlet, as a function so Plates can run it per plate. Returns the plate's r, g, b:\n// colour (rgb / brightest, at the texel the tone came from) times coverage. nx, ny: the pixel's norm.\nsingle_path(src, px, py, nx, ny, is_line, is_thr, is_bay, use_jit, cs, sn, pit, phx, phy, asp, wd, ht, soft, aa, shp, jit, sd, lvl, cellmode) {\n    qx, qy = lat_xy(px, py, cs, sn, pit, phx, phy);\n    ru, rv = read_uv(qx, qy, is_line, cs, sn, pit, phx, phy, asp, wd, ht);\n    cov = cover(qx, qy, is_line, rd(ru, rv, 3, src), soft, aa, shp);\n    cu = ru;\n    cv = rv;\n    if (use_jit > 0.5) {\n        cov = dot_jit(qx, qy, 3, src, cs, sn, pit, phx, phy, asp, wd, ht, soft, aa, shp, jit, sd);\n        cu, cv = jit_uv(qx, qy, cs, sn, pit, phx, phy, asp, wd, ht, jit, sd);\n    }\n    bu, bv, ix, iy = bay_cell(pit, nx, ny, wd, ht, cellmode);\n    cov = switch(is_thr > 0.5, thresh(rd(nx, ny, 3, src), lvl, soft), switch(is_bay > 0.5, bayer(rd(bu, bv, 3, src), ix, iy), cov));\n    cu = switch(is_thr > 0.5, nx, switch(is_bay > 0.5, bu, cu));\n    cv = switch(is_thr > 0.5, ny, switch(is_bay > 0.5, bv, cv));\n    cr = rd(cu, cv, 0, src);\n    cg = rd(cu, cv, 1, src);\n    cb = rd(cu, cv, 2, src);\n    ct = max(max(cr, cg), cb);\n    nrm = switch(ct > 0, 1 / max(ct, 0.000000000001), 0) * cov;\n    return cr * nrm, cg * nrm, cb * nrm;\n}\n\nParam screen(0);\nParam pitch(0.012);\nParam scale_r(1);\nParam scale_g(1);\nParam scale_b(1);\nParam angle_r(15);\nParam angle_g(75);\nParam angle_b(45);\nParam phase_r_x(0);\nParam phase_r_y(0);\nParam phase_g_x(0);\nParam phase_g_y(0);\nParam phase_b_x(0);\nParam phase_b_y(0);\nParam softness(0.1);\nParam dot_shape(0);\nParam jitter(0);\nParam seed(1);\nParam level(0.5);\nParam plate_mode(0);\nParam bayer_cell(1);\nParam bypass_gate(0);\nParam plate1_on(0);\nParam plate2_on(0);\nParam plate3_on(0);\nParam width(1920);\nParam height(1080);\n\nzr = zap(sample(in1, norm).x);\nzg = zap(sample(in1, norm).y);\nzb = zap(sample(in1, norm).z);\nza = zap(sample(in1, norm).w);\n\nwd = max(width, 1);\nht = max(height, 1);\nasp = wd / ht;\npx = (norm.x - 0.5) * asp;\npy = norm.y - 0.5;\n// T029b (FR-022): each plate's pitch is pitch * its scale; the lattice, phase, edge ramp, jitter and Bayer cell follow it\npit_r = max(pitch * scale_r, 0.0001);\npit_g = max(pitch * scale_g, 0.0001);\npit_b = max(pitch * scale_b, 0.0001);\naa_r = 1 / (pit_r * ht);\naa_g = 1 / (pit_g * ht);\naa_b = 1 / (pit_b * ht);\nsoft = clamp(softness, 0, 1);\nshp = clamp(dot_shape, 0, 1);\nis_line = switch(abs(screen - 1) < 0.5, 1, 0);\nis_thr = switch(abs(screen - 2) < 0.5, 1, 0);\nis_bay = switch(abs(screen - 3) < 0.5, 1, 0);\njit = clamp(jitter, 0, 1);\nuse_jit = switch(jit > 0, 1, 0) * switch(screen < 0.5, 1, 0);\nd2r = pi / 180;\n\n// red plate\ncsr = snap0(cos(angle_r * d2r));\nsnr = snap0(sin(angle_r * d2r));\nqxr, qyr = lat_xy(px, py, csr, snr, pit_r, phase_r_x, phase_r_y);\nur, vr = read_uv(qxr, qyr, is_line, csr, snr, pit_r, phase_r_x, phase_r_y, asp, wd, ht);\ntone_r = zap(nearest(in1, vec(ur, vr)).x);\ncov_r = cover(qxr, qyr, is_line, tone_r, soft, aa_r, shp);\nif (use_jit > 0.5) {\n    cov_r = dot_jit(qxr, qyr, 0, 0, csr, snr, pit_r, phase_r_x, phase_r_y, asp, wd, ht, soft, aa_r, shp, jit, seed);\n}\n\n// green plate\ncsg = snap0(cos(angle_g * d2r));\nsng = snap0(sin(angle_g * d2r));\nqxg, qyg = lat_xy(px, py, csg, sng, pit_g, phase_g_x, phase_g_y);\nug, vg = read_uv(qxg, qyg, is_line, csg, sng, pit_g, phase_g_x, phase_g_y, asp, wd, ht);\ntone_g = zap(nearest(in1, vec(ug, vg)).y);\ncov_g = cover(qxg, qyg, is_line, tone_g, soft, aa_g, shp);\nif (use_jit > 0.5) {\n    cov_g = dot_jit(qxg, qyg, 1, 0, csg, sng, pit_g, phase_g_x, phase_g_y, asp, wd, ht, soft, aa_g, shp, jit, seed);\n}\n\n// blue plate\ncsb = snap0(cos(angle_b * d2r));\nsnb = snap0(sin(angle_b * d2r));\nqxb, qyb = lat_xy(px, py, csb, snb, pit_b, phase_b_x, phase_b_y);\nub, vb = read_uv(qxb, qyb, is_line, csb, snb, pit_b, phase_b_x, phase_b_y, asp, wd, ht);\ntone_b = zap(nearest(in1, vec(ub, vb)).z);\ncov_b = cover(qxb, qyb, is_line, tone_b, soft, aa_b, shp);\nif (use_jit > 0.5) {\n    cov_b = dot_jit(qxb, qyb, 2, 0, csb, snb, pit_b, phase_b_x, phase_b_y, asp, wd, ht, soft, aa_b, shp, jit, seed);\n}\n\n// T025: Threshold and Bayer replace the lattice, per pixel\nbur, bvr, ixr, iyr = bay_cell(pit_r, norm.x, norm.y, wd, ht, bayer_cell);\nbgu, bvg, ixg, iyg = bay_cell(pit_g, norm.x, norm.y, wd, ht, bayer_cell);\nbu, bv, ixb, iyb = bay_cell(pit_b, norm.x, norm.y, wd, ht, bayer_cell);\ncov_r = switch(is_thr > 0.5, thresh(zr, level, soft), switch(is_bay > 0.5, bayer(rd(bur, bvr, 0, 0), ixr, iyr), cov_r));\ncov_g = switch(is_thr > 0.5, thresh(zg, level, soft), switch(is_bay > 0.5, bayer(rd(bgu, bvg, 1, 0), ixg, iyg), cov_g));\ncov_b = switch(is_thr > 0.5, thresh(zb, level, soft), switch(is_bay > 0.5, bayer(rd(bu, bv, 2, 0), ixb, iyb), cov_b));\n\n// T016b: Single, one plate at the blue plate's angle and phase (single_path on in1)\nis_single = switch(plate_mode > 0.5, 1, 0);\nsr, sg, sb = single_path(0, px, py, norm.x, norm.y, is_line, is_thr, is_bay, use_jit, csb, snb, pit_b, phase_b_x, phase_b_y,\n                         asp, wd, ht, soft, aa_b, shp, jit, seed, level, bayer_cell);\noa = za;\n// T028: Plates, inlets 1 to 3 as Single at the R, G, B sets; summed, clamped; alpha the largest connected plate's\nif (plate_mode > 1.5) {\n    r1, g1, b1 = single_path(1, px, py, norm.x, norm.y, is_line, is_thr, is_bay, use_jit, csr, snr, pit_r, phase_r_x, phase_r_y,\n                             asp, wd, ht, soft, aa_r, shp, jit, seed, level, bayer_cell);\n    r2, g2, b2 = single_path(2, px, py, norm.x, norm.y, is_line, is_thr, is_bay, use_jit, csg, sng, pit_g, phase_g_x, phase_g_y,\n                             asp, wd, ht, soft, aa_g, shp, jit, seed, level, bayer_cell);\n    r3, g3, b3 = single_path(3, px, py, norm.x, norm.y, is_line, is_thr, is_bay, use_jit, csb, snb, pit_b, phase_b_x, phase_b_y,\n                             asp, wd, ht, soft, aa_b, shp, jit, seed, level, bayer_cell);\n    k1 = step(0.5, plate1_on);\n    k2 = step(0.5, plate2_on);\n    k3 = step(0.5, plate3_on);\n    sr = clamp(k1 * r1 + k2 * r2 + k3 * r3, 0, 1);\n    sg = clamp(k1 * g1 + k2 * g2 + k3 * g3, 0, 1);\n    sb = clamp(k1 * b1 + k2 * b2 + k3 * b3, 0, 1);\n    oa = max(max(k1 * zap(nearest(in2, norm).w), k2 * zap(nearest(in3, norm).w)), k3 * zap(nearest(in4, norm).w));\n}\no_r = mix(cov_r, sr, is_single);\no_g = mix(cov_g, sg, is_single);\no_b = mix(cov_b, sb, is_single);\n\nout1 = mix(vec(o_r, o_g, o_b, oa), vec(zr, zg, zb, za), step(0.5, bypass_gate));\n",
+									"id": "gen-obj-13",
+									"maxclass": "newobj",
+									"numinlets": 0,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										254.0,
+										30.0,
+										28.0,
+										22.0
+									],
+									"text": "in 5"
+								}
+							},
+							{
+								"box": {
+									"code": "// codebox_halftone.gen -- f_halftone: the one stage. Tone to marks on a fixed-angle lattice, one plate per color channel.\n// Stateless, per pixel. Float32. Mirror: tests/modules/halftone/halftone_mirror.halftone_stage() (the conventions in its\n// docstring are the ones followed here). T020: Dot and Line, soft edge, exact extremes, zap, bypass, alpha; the per-plate\n// phase (FR-016) is in because it is part of the lattice formula. 2026-11-14: shape (T023), jitter (T024), Threshold and\n// Bayer (T025), the Single plate mode (T016b).\n//\n// Lattice (plan ADR-1): p = ((u - .5) * aspect, v - .5) in frame heights; q = R(-angle) p / pitch - phase;\n//   lattice cell = floor(q + .5), local f = q - that, in [-.5, .5]^2.\n// Spot functions (ADR-2): Dot T = A(r), the area of the radius-r circle inside the unit cell; Line T = 2 |f_y|.\n//   dot_shape (T023, Dot only; a Param named `shape` never received its value on the bench, 2026-11-14) morphs round to square: T = mix(A(r), (2 max(|f_x|, |f_y|))^2, shape), the slope likewise.\n// Soft edge (ADR-3): coverage = clamp(.5 + (tone - T) / w, 0, 1), w = max(softness / 2, aa) * |dT/dd|,\n//   aa = 1 / (pitch in texels); then tone <= 0 gives exactly 0 and tone >= 1 exactly 1.\n// Tone (ADR-4): ONE nearest read per plate at a texel centre: Dot at the lattice cell's centre, Line at the pixel's own\n//   position along its centreline row. The reads are in the main body, the tone is passed to the functions (gate G8).\n// Jitter (ADR-5, Dot only): each cell centre moves by jitter * .5 * (hash - .5) cells (the sin hash, seeded); the nine cells\n//   around the pixel are tested and the largest coverage wins; the tone is read at each displaced centre. jitter 0 takes the\n//   one-cell path, so the regular lattice is exactly the T020 one. Each jittered mark is clipped to its own displaced unit\n//   square (fix A, Matt 2026-11-14), as the mirror does.\n// Threshold (ADR-6): smoothstep(level - w, level + w, tone), w = softness / 2 (a hard step at softness 0), per pixel.\n// Bayer: the 8 x 8 ordered matrix by texel, M = sum over bits b of 4^(2-b) (2 (x_b xor y_b) + y_b); lit where tone > (M + .5) / 64.\n//   The matrix repeats once per pitch (Matt, 2026-11-14): a cell is pitch / 8 frame heights, rounded to whole pixels, at\n//   least 1. bayer_cell 1 (default; Matt, 2026-11-14) reads one tone per cell at its centre pixel, a true ordered dither;\n//   0 reads it per pixel (a threshold at each cell's level). Identical at 1-pixel cells.\n// Per-plate pitch (T029b, Matt 2026-11-14, FR-022): a plate's pitch is pitch * scale_<plate>; every length above that says\n//   \"pitch\" means the plate's own pitch. Single uses scale_b. bay_cell returns four values (inferred to compile; the bench decides).\n// Single plate (T016b, plate_mode 1; spec \"Plates from f_separate\"): the whole texture is ONE plate at angle_b and phase_b.\n//   Its tone is the brightest channel, t = max(r, g, b), at the read texel; the colour is rgb / t there (black when t <= 0); the\n//   output is that colour times the coverage. The colour texel is the one the tone came from: the cell centre (displaced when\n//   jittered) for Dot, the centreline point for Line, the pixel's own for Threshold and Bayer.\n// Plates (T028, Matt 2026-11-14; spec US9, FR-017 to FR-021, plan ADR-8): plate_mode 2 screens the module's inlets 1 to 3\n//   (gen in2 to in4) each as Single, plate 1 at the R angle / phase / scale, 2 at G, 3 at B; summed and clamped to 0..1; alpha\n//   the largest of the connected plates' alphas. An unconnected plate is skipped by its connected flag (plate1_on etc., from\n//   vs_inState), never by its value: an unconnected inlet reads black with alpha 1, which would set alpha to 1. Inlet 0 is\n//   ignored except by bypass. The Single path is the function single_path; `src` picks the inlet (0 = in1 ... 3 = in4).\n// Blue and Random (T035, Matt 2026-11-14; spec US10, FR-023 to FR-026, plan ADR-10): screens 4 and 5, Bayer's grain cell\n//   and Read, the threshold from the void-and-cluster pattern (gen in5: package/media/f_bluenoise64.jxf through the builder's\n//   static mod inlet, 64 x 64, tiled, nearest) or the sin hash of the cell. The cell index is shifted by the plate's offset\n//   ((0, 0), (23, 41), (47, 13) for plates 0 / 1 / 2; Single is plate 2, Plates plate k is k - 1), by the phase in whole\n//   grain cells (8 per pitch, rounded), and for Blue by (61, 29) per seed step; Random hashes the shifted cell with the seed.\n//   All offsets preliminary (Claude, T033 spike); the mirror's dither_threshold is the reference. Inferred, for the bench: that\n//   the one-plane float texture reads its value in .x, and that its row 0 is the smallest norm.y.\n// Levels (T035, FR-027, ADR-11): Bayer, Blue and Random: q = tone (L - 1); out = (floor(q) + [fract(q) > threshold]) / (L - 1),\n//   clamped, tone <= 0 exactly 0, tone >= 1 exactly 1. At L = 2 it is the one-bit dither, bit for bit.\n// screen: 0 = Dot, 1 = Line, 2 = Threshold, 3 = Bayer, 4 = Blue, 5 = Random. Angles in degrees. bypass_gate = 1: the (zapped) source.\n// Non-finite input is zapped to 0: abs(x) < 1e30 with switch() (NaN == NaN is TRUE on this GPU).\n// The render size comes from the Params `width` and `height` (render_dim; the size global reads 1 inside a live Vsynth pix,\n// build/spec.md). A bench job must set both to the output's size.\nzap(xv) {\n    return switch(abs(xv) < 1e30, xv, 0);\n}\n\n// cos and sin of exact quarter turns come out as 1e-8, not 0: snap, so 0 and 90 degrees sit on the pixel grid (G6)\nsnap0(xv) {\n    return switch(abs(xv) < 0.000001, 0, xv);\n}\n\narea_round(rad) {\n    rc = min(rad, 0.70710678);\n    inner = pi * rc * rc;\n    ac = acos(clamp(1 / (2 * max(rc, 0.000001)), 0, 1));\n    seg = rc * rc * ac - 0.5 * sqrt(max(rc * rc - 0.25, 0));\n    area = switch(rc > 0.5, inner - 4 * seg, inner);\n    return switch(rad >= 0.70710678, 1, area);\n}\n\narea_slope(rad) {\n    rc = min(rad, 0.70710678);\n    ac = acos(clamp(1 / (2 * max(rc, 0.000001)), 0, 1));\n    slp = switch(rc <= 0.5, twopi * rc, rc * (twopi - 8 * ac));\n    return switch(rad >= 0.70710678, 0, slp);\n}\n\n// lattice coordinates of the position (px, py)\nlat_xy(px, py, cs, sn, pit, phx, phy) {\n    return (cs * px + sn * py) / pit - phx, (cs * py - sn * px) / pit - phy;\n}\n\n// where the plate's tone is read: normalized coordinates of a texel centre, clamped to the frame\nread_uv(qx, qy, is_line, cs, sn, pit, phx, phy, asp, wd, ht) {\n    xx = switch(is_line > 0.5, qx, floor(qx + 0.5)) + phx;\n    yy = floor(qy + 0.5) + phy;\n    ppx = (cs * xx - sn * yy) * pit;\n    ppy = (sn * xx + cs * yy) * pit;\n    ti = clamp(floor((ppx / asp + 0.5) * wd), 0, wd - 1);\n    tj = clamp(floor((ppy + 0.5) * ht), 0, ht - 1);\n    return (ti + 0.5) / wd, (tj + 0.5) / ht;\n}\n\n// coverage at local lattice coordinates (fx, fy) relative to a mark's centre\ncover_local(fx, fy, is_line, tone, soft, aa, shp) {\n    rad = sqrt(fx * fx + fy * fy);\n    sq = max(abs(fx), abs(fy));\n    thr_dot = mix(area_round(rad), 4 * sq * sq, shp);\n    slp_dot = mix(area_slope(rad), 8 * sq, shp);\n    thr = switch(is_line > 0.5, 2 * abs(fy), thr_dot);\n    slp = switch(is_line > 0.5, 2, slp_dot);\n    wid = max(soft * 0.5, aa) * max(abs(slp), 0.000001);\n    cov = clamp(0.5 + (tone - thr) / wid, 0, 1);\n    return switch(tone <= 0, 0, switch(tone >= 1, 1, cov));\n}\n\ncover(qx, qy, is_line, tone, soft, aa, shp) {\n    return cover_local(qx - floor(qx + 0.5), qy - floor(qy + 0.5), is_line, tone, soft, aa, shp);\n}\n\n// the zapped tone at a texel centre: ch 0 r, 1 g, 2 b, 3 the brightest of the three (Single); src the inlet (0 = in1 ... 3 = in4)\nrd(ru, rv, ch, src) {\n    tx = 0;\n    ty = 0;\n    tz = 0;\n    if (src < 0.5) {\n        tx = zap(nearest(in1, vec(ru, rv)).x);\n        ty = zap(nearest(in1, vec(ru, rv)).y);\n        tz = zap(nearest(in1, vec(ru, rv)).z);\n    } else if (src < 1.5) {\n        tx = zap(nearest(in2, vec(ru, rv)).x);\n        ty = zap(nearest(in2, vec(ru, rv)).y);\n        tz = zap(nearest(in2, vec(ru, rv)).z);\n    } else if (src < 2.5) {\n        tx = zap(nearest(in3, vec(ru, rv)).x);\n        ty = zap(nearest(in3, vec(ru, rv)).y);\n        tz = zap(nearest(in3, vec(ru, rv)).z);\n    } else {\n        tx = zap(nearest(in4, vec(ru, rv)).x);\n        ty = zap(nearest(in4, vec(ru, rv)).y);\n        tz = zap(nearest(in4, vec(ru, rv)).z);\n    }\n    return switch(ch < 0.5, tx, switch(ch < 1.5, ty, switch(ch < 2.5, tz, max(max(tx, ty), tz))));\n}\n\n// T016b: the read texel of the pixel's own cell centre, displaced by the jitter (the Single colour under jitter)\njit_uv(qx, qy, cs, sn, pit, phx, phy, asp, wd, ht, jit, sd) {\n    nx = floor(qx + 0.5);\n    ny = floor(qy + 0.5);\n    hx = fract(sin(nx * 127.1 + ny * 311.7 + sd * 74.7) * 43758.5453);\n    hy = fract(sin(nx * 269.5 + ny * 183.3 + sd * 246.1) * 43758.5453);\n    xx = nx + jit * 0.5 * (hx - 0.5) + phx;\n    yy = ny + jit * 0.5 * (hy - 0.5) + phy;\n    ppx = (cs * xx - sn * yy) * pit;\n    ppy = (sn * xx + cs * yy) * pit;\n    ti = clamp(floor((ppx / asp + 0.5) * wd), 0, wd - 1);\n    tj = clamp(floor((ppy + 0.5) * ht), 0, ht - 1);\n    return (ti + 0.5) / wd, (tj + 0.5) / ht;\n}\n\n// T024: the jittered Dot. ch picks the plate's channel (0 r, 1 g, 2 b, 3 the brightest: Single). Reads inside a function and a loop are exact (T010).\ndot_jit(qx, qy, ch, src, cs, sn, pit, phx, phy, asp, wd, ht, soft, aa, shp, jit, sd) {\n    cx = floor(qx + 0.5);\n    cy = floor(qy + 0.5);\n    best = 0;\n    for (j = 0; j < 3; j += 1) {\n        for (i = 0; i < 3; i += 1) {\n            nx = cx + i - 1;\n            ny = cy + j - 1;\n            hx = fract(sin(nx * 127.1 + ny * 311.7 + sd * 74.7) * 43758.5453);\n            hy = fract(sin(nx * 269.5 + ny * 183.3 + sd * 246.1) * 43758.5453);\n            gx = nx + jit * 0.5 * (hx - 0.5);\n            gy = ny + jit * 0.5 * (hy - 0.5);\n            xx = gx + phx;\n            yy = gy + phy;\n            ppx = (cs * xx - sn * yy) * pit;\n            ppy = (sn * xx + cs * yy) * pit;\n            ti = clamp(floor((ppx / asp + 0.5) * wd), 0, wd - 1);\n            tj = clamp(floor((ppy + 0.5) * ht), 0, ht - 1);\n            ru = (ti + 0.5) / wd;\n            rv = (tj + 0.5) / ht;\n            tone = rd(ru, rv, ch, src);\n            // fix A (Matt, 2026-11-14): a mark lives only in its own displaced unit square (unclipped, a full-tone\n            // neighbour inked the whole 3 x 3 block, since tone >= 1 gives full ink at any distance)\n            inside = step(max(abs(qx - gx), abs(qy - gy)), 0.5);\n            best = max(best, inside * cover_local(qx - gx, qy - gy, 0, tone, soft, aa, shp));\n        }\n    }\n    return best;\n}\n\n// T025: the Threshold and Bayer coverage of one per-pixel tone\nthresh(tone, lvl, soft) {\n    hw = soft * 0.5;\n    return switch(hw > 0, smoothstep(lvl - hw, lvl + hw, tone), switch(tone > lvl, 1, 0));\n}\n\n// T035: the dither screens. kind 0 Bayer, 1 Blue, 2 Random; plt the plate (0, 1, 2); lv the levels.\ndither(tone, ix, iy, kind, plt, sd, phx, phy, lv) {\n    x0 = mod(ix, 2);\n    x1 = mod(floor(ix / 2), 2);\n    x2 = mod(floor(ix / 4), 2);\n    y0 = mod(iy, 2);\n    y1 = mod(floor(iy / 2), 2);\n    y2 = mod(floor(iy / 4), 2);\n    mm = 16 * (2 * abs(x0 - y0) + y0) + 4 * (2 * abs(x1 - y1) + y1) + (2 * abs(x2 - y2) + y2);\n    t_bay = (mm + 0.5) / 64;\n    ox = switch(plt < 0.5, 0, switch(plt < 1.5, 23, 47));\n    oy = switch(plt < 0.5, 0, switch(plt < 1.5, 41, 13));\n    gx = ix + ox - floor(phx * 8 + 0.5);\n    gy = iy + oy - floor(phy * 8 + 0.5);\n    bx = gx + 61 * sd;\n    by = gy + 29 * sd;\n    bx = bx - 64 * floor(bx / 64);\n    by = by - 64 * floor(by / 64);\n    t_blue = nearest(in5, vec((bx + 0.5) / 64, (by + 0.5) / 64)).x;\n    t_rand = fract(sin(gx * 127.1 + gy * 311.7 + sd * 74.7) * 43758.5453);\n    thr = switch(kind < 0.5, t_bay, switch(kind < 1.5, t_blue, t_rand));\n    l1 = max(floor(lv + 0.5) - 1, 1);\n    q = tone * l1;\n    fq = floor(q);\n    o = clamp((fq + switch(q - fq > thr, 1, 0)) / l1, 0, 1);\n    return switch(tone <= 0, 0, switch(tone >= 1, 1, o));\n}\n\n// T029b (Matt, 2026-11-14; FR-022): Bayer's cell follows the plate's own pitch. Returns the read uv and the cell indices.\nbay_cell(pp, nx, ny, wd, ht, cellmode) {\n    bs = max(floor(pp * ht / 8 + 0.5), 1);\n    ix = floor(floor(nx * wd) / bs);\n    iy = floor(floor(ny * ht) / bs);\n    bx = min(ix * bs + floor(bs / 2), wd - 1);\n    by = min(iy * bs + floor(bs / 2), ht - 1);\n    return switch(cellmode > 0.5, (bx + 0.5) / wd, nx), switch(cellmode > 0.5, (by + 0.5) / ht, ny), ix, iy;\n}\n\n// T028: the Single path (T016b) on one inlet, as a function so Plates can run it per plate. Returns the plate's r, g, b:\n// colour (rgb / brightest, at the texel the tone came from) times coverage. nx, ny: the pixel's norm.\nsingle_path(src, px, py, nx, ny, is_line, is_thr, is_bay, dkind, use_jit, cs, sn, pit, phx, phy, asp, wd, ht, soft, aa, shp, jit, sd, lvl, cellmode, lv) {\n    qx, qy = lat_xy(px, py, cs, sn, pit, phx, phy);\n    ru, rv = read_uv(qx, qy, is_line, cs, sn, pit, phx, phy, asp, wd, ht);\n    cov = cover(qx, qy, is_line, rd(ru, rv, 3, src), soft, aa, shp);\n    cu = ru;\n    cv = rv;\n    if (use_jit > 0.5) {\n        cov = dot_jit(qx, qy, 3, src, cs, sn, pit, phx, phy, asp, wd, ht, soft, aa, shp, jit, sd);\n        cu, cv = jit_uv(qx, qy, cs, sn, pit, phx, phy, asp, wd, ht, jit, sd);\n    }\n    bu, bv, ix, iy = bay_cell(pit, nx, ny, wd, ht, cellmode);\n    plt = switch(src < 0.5, 2, src - 1);\n    cov = switch(is_thr > 0.5, thresh(rd(nx, ny, 3, src), lvl, soft),\n                 switch(is_bay > 0.5, dither(rd(bu, bv, 3, src), ix, iy, dkind, plt, sd, phx, phy, lv), cov));\n    cu = switch(is_thr > 0.5, nx, switch(is_bay > 0.5, bu, cu));\n    cv = switch(is_thr > 0.5, ny, switch(is_bay > 0.5, bv, cv));\n    cr = rd(cu, cv, 0, src);\n    cg = rd(cu, cv, 1, src);\n    cb = rd(cu, cv, 2, src);\n    ct = max(max(cr, cg), cb);\n    nrm = switch(ct > 0, 1 / max(ct, 0.000000000001), 0) * cov;\n    return cr * nrm, cg * nrm, cb * nrm;\n}\n\nParam screen(0);\nParam pitch(0.012);\nParam scale_r(1);\nParam scale_g(1);\nParam scale_b(1);\nParam angle_r(15);\nParam angle_g(75);\nParam angle_b(45);\nParam phase_r_x(0);\nParam phase_r_y(0);\nParam phase_g_x(0);\nParam phase_g_y(0);\nParam phase_b_x(0);\nParam phase_b_y(0);\nParam softness(0.1);\nParam dot_shape(0);\nParam jitter(0);\nParam seed(1);\nParam level(0.5);\nParam plate_mode(0);\nParam bayer_cell(1);\nParam levels(2);\nParam bypass_gate(0);\nParam plate1_on(0);\nParam plate2_on(0);\nParam plate3_on(0);\nParam width(1920);\nParam height(1080);\n\nzr = zap(sample(in1, norm).x);\nzg = zap(sample(in1, norm).y);\nzb = zap(sample(in1, norm).z);\nza = zap(sample(in1, norm).w);\n\nwd = max(width, 1);\nht = max(height, 1);\nasp = wd / ht;\npx = (norm.x - 0.5) * asp;\npy = norm.y - 0.5;\n// T029b (FR-022): each plate's pitch is pitch * its scale; the lattice, phase, edge ramp, jitter and Bayer cell follow it\npit_r = max(pitch * scale_r, 0.0001);\npit_g = max(pitch * scale_g, 0.0001);\npit_b = max(pitch * scale_b, 0.0001);\naa_r = 1 / (pit_r * ht);\naa_g = 1 / (pit_g * ht);\naa_b = 1 / (pit_b * ht);\nsoft = clamp(softness, 0, 1);\nshp = clamp(dot_shape, 0, 1);\nis_line = switch(abs(screen - 1) < 0.5, 1, 0);\nis_thr = switch(abs(screen - 2) < 0.5, 1, 0);\nis_bay = switch(screen > 2.5, 1, 0);          // Bayer, Blue, Random: the dither screens (T035)\ndkind = clamp(floor(screen + 0.5) - 3, 0, 2);\njit = clamp(jitter, 0, 1);\nuse_jit = switch(jit > 0, 1, 0) * switch(screen < 0.5, 1, 0);\nd2r = pi / 180;\n\n// red plate\ncsr = snap0(cos(angle_r * d2r));\nsnr = snap0(sin(angle_r * d2r));\nqxr, qyr = lat_xy(px, py, csr, snr, pit_r, phase_r_x, phase_r_y);\nur, vr = read_uv(qxr, qyr, is_line, csr, snr, pit_r, phase_r_x, phase_r_y, asp, wd, ht);\ntone_r = zap(nearest(in1, vec(ur, vr)).x);\ncov_r = cover(qxr, qyr, is_line, tone_r, soft, aa_r, shp);\nif (use_jit > 0.5) {\n    cov_r = dot_jit(qxr, qyr, 0, 0, csr, snr, pit_r, phase_r_x, phase_r_y, asp, wd, ht, soft, aa_r, shp, jit, seed);\n}\n\n// green plate\ncsg = snap0(cos(angle_g * d2r));\nsng = snap0(sin(angle_g * d2r));\nqxg, qyg = lat_xy(px, py, csg, sng, pit_g, phase_g_x, phase_g_y);\nug, vg = read_uv(qxg, qyg, is_line, csg, sng, pit_g, phase_g_x, phase_g_y, asp, wd, ht);\ntone_g = zap(nearest(in1, vec(ug, vg)).y);\ncov_g = cover(qxg, qyg, is_line, tone_g, soft, aa_g, shp);\nif (use_jit > 0.5) {\n    cov_g = dot_jit(qxg, qyg, 1, 0, csg, sng, pit_g, phase_g_x, phase_g_y, asp, wd, ht, soft, aa_g, shp, jit, seed);\n}\n\n// blue plate\ncsb = snap0(cos(angle_b * d2r));\nsnb = snap0(sin(angle_b * d2r));\nqxb, qyb = lat_xy(px, py, csb, snb, pit_b, phase_b_x, phase_b_y);\nub, vb = read_uv(qxb, qyb, is_line, csb, snb, pit_b, phase_b_x, phase_b_y, asp, wd, ht);\ntone_b = zap(nearest(in1, vec(ub, vb)).z);\ncov_b = cover(qxb, qyb, is_line, tone_b, soft, aa_b, shp);\nif (use_jit > 0.5) {\n    cov_b = dot_jit(qxb, qyb, 2, 0, csb, snb, pit_b, phase_b_x, phase_b_y, asp, wd, ht, soft, aa_b, shp, jit, seed);\n}\n\n// T025: Threshold and the dithers (Bayer; Blue and Random, T035) replace the lattice, per pixel\nbur, bvr, ixr, iyr = bay_cell(pit_r, norm.x, norm.y, wd, ht, bayer_cell);\nbgu, bvg, ixg, iyg = bay_cell(pit_g, norm.x, norm.y, wd, ht, bayer_cell);\nbu, bv, ixb, iyb = bay_cell(pit_b, norm.x, norm.y, wd, ht, bayer_cell);\ncov_r = switch(is_thr > 0.5, thresh(zr, level, soft), switch(is_bay > 0.5, dither(rd(bur, bvr, 0, 0), ixr, iyr, dkind, 0, seed, phase_r_x, phase_r_y, levels), cov_r));\ncov_g = switch(is_thr > 0.5, thresh(zg, level, soft), switch(is_bay > 0.5, dither(rd(bgu, bvg, 1, 0), ixg, iyg, dkind, 1, seed, phase_g_x, phase_g_y, levels), cov_g));\ncov_b = switch(is_thr > 0.5, thresh(zb, level, soft), switch(is_bay > 0.5, dither(rd(bu, bv, 2, 0), ixb, iyb, dkind, 2, seed, phase_b_x, phase_b_y, levels), cov_b));\n\n// T016b: Single, one plate at the blue plate's angle and phase (single_path on in1)\nis_single = switch(plate_mode > 0.5, 1, 0);\nsr, sg, sb = single_path(0, px, py, norm.x, norm.y, is_line, is_thr, is_bay, dkind, use_jit, csb, snb, pit_b, phase_b_x, phase_b_y,\n                         asp, wd, ht, soft, aa_b, shp, jit, seed, level, bayer_cell, levels);\noa = za;\n// T028: Plates, inlets 1 to 3 as Single at the R, G, B sets; summed, clamped; alpha the largest connected plate's\nif (plate_mode > 1.5) {\n    r1, g1, b1 = single_path(1, px, py, norm.x, norm.y, is_line, is_thr, is_bay, dkind, use_jit, csr, snr, pit_r, phase_r_x, phase_r_y,\n                             asp, wd, ht, soft, aa_r, shp, jit, seed, level, bayer_cell, levels);\n    r2, g2, b2 = single_path(2, px, py, norm.x, norm.y, is_line, is_thr, is_bay, dkind, use_jit, csg, sng, pit_g, phase_g_x, phase_g_y,\n                             asp, wd, ht, soft, aa_g, shp, jit, seed, level, bayer_cell, levels);\n    r3, g3, b3 = single_path(3, px, py, norm.x, norm.y, is_line, is_thr, is_bay, dkind, use_jit, csb, snb, pit_b, phase_b_x, phase_b_y,\n                             asp, wd, ht, soft, aa_b, shp, jit, seed, level, bayer_cell, levels);\n    k1 = step(0.5, plate1_on);\n    k2 = step(0.5, plate2_on);\n    k3 = step(0.5, plate3_on);\n    sr = clamp(k1 * r1 + k2 * r2 + k3 * r3, 0, 1);\n    sg = clamp(k1 * g1 + k2 * g2 + k3 * g3, 0, 1);\n    sb = clamp(k1 * b1 + k2 * b2 + k3 * b3, 0, 1);\n    oa = max(max(k1 * zap(nearest(in2, norm).w), k2 * zap(nearest(in3, norm).w)), k3 * zap(nearest(in4, norm).w));\n}\no_r = mix(cov_r, sr, is_single);\no_g = mix(cov_g, sg, is_single);\no_b = mix(cov_b, sb, is_single);\n\nout1 = mix(vec(o_r, o_g, o_b, oa), vec(zr, zg, zb, za), step(0.5, bypass_gate));\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
 									"id": "gen-obj-2",
 									"maxclass": "codebox",
-									"numinlets": 4,
+									"numinlets": 5,
 									"numoutlets": 1,
 									"outlettype": [
 										""
@@ -298,6 +317,18 @@
 							{
 								"patchline": {
 									"destination": [
+										"gen-obj-2",
+										4
+									],
+									"source": [
+										"gen-obj-13",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"destination": [
 										"gen-obj-3",
 										0
 									],
@@ -332,7 +363,7 @@
 						""
 					],
 					"patching_rect": [
-						1855.5,
+						1927.5,
 						100.0,
 						56.0,
 						22.0
@@ -364,7 +395,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						1635.5,
+						1707.5,
 						260.0,
 						290.0,
 						164.0
@@ -388,7 +419,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						1855.5,
+						1927.5,
 						200.0,
 						80.0,
 						21.0
@@ -419,7 +450,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						1945.5,
+						2017.5,
 						200.0,
 						60.0,
 						21.0
@@ -451,7 +482,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						1855.5,
+						1927.5,
 						232.0,
 						5.0,
 						5.0
@@ -483,7 +514,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						1875.5,
+						1947.5,
 						232.0,
 						5.0,
 						5.0
@@ -508,7 +539,7 @@
 						""
 					],
 					"patching_rect": [
-						1635.5,
+						1707.5,
 						20.0,
 						60.0,
 						22.0
@@ -526,7 +557,7 @@
 						""
 					],
 					"patching_rect": [
-						1635.5,
+						1707.5,
 						50.0,
 						180.0,
 						22.0
@@ -547,7 +578,7 @@
 						""
 					],
 					"patching_rect": [
-						1635.5,
+						1707.5,
 						110.0,
 						80.0,
 						22.0
@@ -566,7 +597,7 @@
 						""
 					],
 					"patching_rect": [
-						1635.5,
+						1707.5,
 						140.0,
 						60.0,
 						22.0
@@ -584,7 +615,7 @@
 						""
 					],
 					"patching_rect": [
-						1635.5,
+						1707.5,
 						170.0,
 						80.0,
 						22.0
@@ -602,7 +633,7 @@
 						""
 					],
 					"patching_rect": [
-						1635.5,
+						1707.5,
 						200.0,
 						100.0,
 						22.0
@@ -730,6 +761,99 @@
 			},
 			{
 				"box": {
+					"id": "obj-static3-load",
+					"maxclass": "newobj",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						"bang"
+					],
+					"patching_rect": [
+						30.0,
+						552.0,
+						58.0,
+						22.0
+					],
+					"text": "loadbang"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-static3-trig",
+					"maxclass": "newobj",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"bang",
+						"bang"
+					],
+					"patching_rect": [
+						30.0,
+						582.0,
+						40.0,
+						22.0
+					],
+					"text": "t b b"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-static3-msg",
+					"maxclass": "message",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						60.0,
+						612.0,
+						160.0,
+						22.0
+					],
+					"text": "read f_bluenoise64.jxf, bang"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-static3-matrix",
+					"maxclass": "newobj",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"jit_matrix",
+						""
+					],
+					"patching_rect": [
+						60.0,
+						642.0,
+						160.0,
+						22.0
+					],
+					"text": "jit.matrix 1 float32 64 64"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-static3-tex",
+					"maxclass": "newobj",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"jit_gl_texture",
+						""
+					],
+					"patching_rect": [
+						30.0,
+						672.0,
+						240.0,
+						22.0
+					],
+					"text": "jit.gl.texture vsynth @type float32 @adapt 1 @filter nearest"
+				}
+			},
+			{
+				"box": {
 					"id": "obj-102",
 					"maxclass": "newobj",
 					"numinlets": 1,
@@ -787,7 +911,7 @@
 					"id": "obj-20",
 					"maxclass": "live.menu",
 					"fontname": "Ableton Sans Light",
-					"hint": "Dot: a lattice of dots, each sized by the tone at its center. Line: parallel lines whose width follows the tone. Threshold: ink where the tone is above Level. Bayer: an ordered dither, one pixel per mark",
+					"hint": "Dot: a lattice of dots, each sized by the tone at its center. Line: parallel lines whose width follows the tone. Threshold: ink where the tone is above Level. Bayer: an ordered dither. Blue: an even, grainy dither with no visible grid. Random: a coarse, clumpy dither",
 					"numinlets": 1,
 					"numoutlets": 3,
 					"outlettype": [
@@ -816,7 +940,9 @@
 								"Dot",
 								"Line",
 								"Threshold",
-								"Bayer"
+								"Bayer",
+								"Blue",
+								"Random"
 							],
 							"parameter_initial": [
 								0.0
@@ -824,7 +950,7 @@
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
 							"parameter_longname": "screen",
-							"parameter_mmax": 3.0,
+							"parameter_mmax": 5.0,
 							"parameter_mmin": 0.0,
 							"parameter_modmode": 0,
 							"parameter_shortname": "screen",
@@ -990,7 +1116,7 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "Lattice period in frame heights, for all three plates (each plate's Scale multiplies it). Below about 10 pixels the inked area stops tracking the tone. Bayer: the dither repeats once per pitch, in whole pixels",
+					"hint": "Lattice period in frame heights, for all three plates (each plate's Scale multiplies it). Below about 10 pixels the inked area stops tracking the tone. Bayer, Blue, Random: the grain cell is Pitch / 8, in whole pixels",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
@@ -1676,7 +1802,7 @@
 					"id": "obj-47",
 					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
-					"hint": "Which random jitter pattern",
+					"hint": "Which random pattern: the jitter, and the Blue and Random grain",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
@@ -1694,7 +1820,7 @@
 					"presentation": 1,
 					"presentation_rect": [
 						197.0,
-						52.0,
+						36.0,
 						34.0,
 						15.0
 					],
@@ -1753,7 +1879,7 @@
 					"presentation": 1,
 					"presentation_rect": [
 						195.0,
-						34.0,
+						20.0,
 						38.0,
 						18.0
 					],
@@ -1765,6 +1891,97 @@
 			{
 				"box": {
 					"id": "obj-50",
+					"maxclass": "live.numbox",
+					"fontname": "Ableton Sans Light",
+					"hint": "Bayer, Blue and Random: how many output values per channel. 2 is black and white; more steps between them, dithered",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						"int"
+					],
+					"param_connect": "#0_halftone_pix::levels",
+					"parameter_enable": 1,
+					"patching_rect": [
+						758.0,
+						250.0,
+						44.0,
+						15.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						197.0,
+						67.0,
+						34.0,
+						15.0
+					],
+					"saved_attribute_attributes": {
+						"valueof": {
+							"parameter_initial": [
+								2.0
+							],
+							"parameter_initial_enable": 1,
+							"parameter_linknames": 1,
+							"parameter_longname": "levels",
+							"parameter_mmax": 16.0,
+							"parameter_mmin": 2.0,
+							"parameter_modmode": 0,
+							"parameter_shortname": "levels",
+							"parameter_type": 1,
+							"parameter_unitstyle": 0
+						}
+					},
+					"varname": "levels"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-51",
+					"maxclass": "attrui",
+					"attr": "levels",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						746.0,
+						310.0,
+						68.0,
+						22.0
+					],
+					"style": ""
+				}
+			},
+			{
+				"box": {
+					"id": "obj-52",
+					"maxclass": "comment",
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.5,
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						755.0,
+						180.0,
+						50.0,
+						18.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						195.0,
+						51.0,
+						38.0,
+						16.0
+					],
+					"text": "Levels",
+					"textjustification": 1,
+					"varname": "lbl_levels"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-53",
 					"maxclass": "live.dial",
 					"activedialcolor": [
 						0.8,
@@ -1783,7 +2000,7 @@
 					"param_connect": "#0_halftone_pix::level",
 					"parameter_enable": 1,
 					"patching_rect": [
-						766.5,
+						838.5,
 						250.0,
 						27.0,
 						43.0
@@ -1823,7 +2040,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-51",
+					"id": "obj-54",
 					"maxclass": "attrui",
 					"attr": "level",
 					"numinlets": 1,
@@ -1832,7 +2049,7 @@
 						""
 					],
 					"patching_rect": [
-						746.0,
+						818.0,
 						310.0,
 						68.0,
 						22.0
@@ -1842,14 +2059,14 @@
 			},
 			{
 				"box": {
-					"id": "obj-52",
+					"id": "obj-55",
 					"maxclass": "comment",
 					"fontname": "Ableton Sans Light",
 					"fontsize": 9.5,
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						755.0,
+						827.0,
 						180.0,
 						50.0,
 						18.0
@@ -1868,11 +2085,11 @@
 			},
 			{
 				"box": {
-					"id": "obj-53",
+					"id": "obj-56",
 					"maxclass": "live.text",
 					"fontname": "Ableton Sans Light",
 					"fontsize": 9.5,
-					"hint": "Bayer only. Cell: one tone per dither cell, so each cell is wholly lit or dark (an ordered dither). Pixel: the tone per pixel, so the image cuts through each cell. The same at 1-pixel cells",
+					"hint": "Bayer, Blue and Random. Cell: one tone per dither cell, so each cell is wholly lit or dark (an ordered dither). Pixel: the tone per pixel, so the image cuts through each cell. The same at 1-pixel cells",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
@@ -1882,7 +2099,7 @@
 					"param_connect": "#0_halftone_pix::bayer_cell",
 					"parameter_enable": 1,
 					"patching_rect": [
-						832.0,
+						904.0,
 						250.0,
 						40.5,
 						17.0
@@ -1936,7 +2153,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-54",
+					"id": "obj-57",
 					"maxclass": "attrui",
 					"attr": "bayer_cell",
 					"numinlets": 1,
@@ -1945,7 +2162,7 @@
 						""
 					],
 					"patching_rect": [
-						818.0,
+						890.0,
 						310.0,
 						68.0,
 						22.0
@@ -1955,7 +2172,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-56",
+					"id": "obj-59",
 					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "Screen angle of the red plate, in degrees",
@@ -1968,7 +2185,7 @@
 					"param_connect": "#0_halftone_pix::angle_r",
 					"parameter_enable": 1,
 					"patching_rect": [
-						902.0,
+						974.0,
 						250.0,
 						44.0,
 						15.0
@@ -2001,101 +2218,9 @@
 			},
 			{
 				"box": {
-					"id": "obj-57",
-					"maxclass": "attrui",
-					"attr": "angle_r",
-					"numinlets": 1,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						890.0,
-						310.0,
-						68.0,
-						22.0
-					],
-					"style": ""
-				}
-			},
-			{
-				"box": {
-					"id": "obj-58",
-					"maxclass": "comment",
-					"fontname": "Ableton Sans Light",
-					"fontsize": 9.5,
-					"numinlets": 1,
-					"numoutlets": 0,
-					"patching_rect": [
-						899.0,
-						180.0,
-						50.0,
-						18.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						66.5,
-						144.0,
-						50.0,
-						18.0
-					],
-					"text": "Angle R",
-					"textjustification": 1,
-					"varname": "lbl_angle_r",
-					"hidden": 1
-				}
-			},
-			{
-				"box": {
-					"id": "obj-59",
-					"maxclass": "live.numbox",
-					"fontname": "Ableton Sans Light",
-					"hint": "Screen angle of the green plate, in degrees",
-					"numinlets": 1,
-					"numoutlets": 2,
-					"outlettype": [
-						"",
-						"float"
-					],
-					"param_connect": "#0_halftone_pix::angle_g",
-					"parameter_enable": 1,
-					"patching_rect": [
-						974.0,
-						250.0,
-						44.0,
-						15.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						44.0,
-						122.0,
-						46.0,
-						15.0
-					],
-					"saved_attribute_attributes": {
-						"valueof": {
-							"parameter_initial": [
-								75.0
-							],
-							"parameter_initial_enable": 1,
-							"parameter_linknames": 1,
-							"parameter_longname": "angle_g",
-							"parameter_mmax": 180.0,
-							"parameter_mmin": 0.0,
-							"parameter_modmode": 3,
-							"parameter_shortname": "angle_g",
-							"parameter_type": 0,
-							"parameter_unitstyle": 1
-						}
-					},
-					"varname": "angle_g"
-				}
-			},
-			{
-				"box": {
 					"id": "obj-60",
 					"maxclass": "attrui",
-					"attr": "angle_g",
+					"attr": "angle_r",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -2131,9 +2256,9 @@
 						50.0,
 						18.0
 					],
-					"text": "Angle G",
+					"text": "Angle R",
 					"textjustification": 1,
-					"varname": "lbl_angle_g",
+					"varname": "lbl_angle_r",
 					"hidden": 1
 				}
 			},
@@ -2142,14 +2267,14 @@
 					"id": "obj-62",
 					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
-					"hint": "Screen angle of the blue plate, in degrees",
+					"hint": "Screen angle of the green plate, in degrees",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
 						"",
 						"float"
 					],
-					"param_connect": "#0_halftone_pix::angle_b",
+					"param_connect": "#0_halftone_pix::angle_g",
 					"parameter_enable": 1,
 					"patching_rect": [
 						1046.0,
@@ -2160,34 +2285,34 @@
 					"presentation": 1,
 					"presentation_rect": [
 						44.0,
-						142.0,
+						122.0,
 						46.0,
 						15.0
 					],
 					"saved_attribute_attributes": {
 						"valueof": {
 							"parameter_initial": [
-								45.0
+								75.0
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
-							"parameter_longname": "angle_b",
+							"parameter_longname": "angle_g",
 							"parameter_mmax": 180.0,
 							"parameter_mmin": 0.0,
 							"parameter_modmode": 3,
-							"parameter_shortname": "angle_b",
+							"parameter_shortname": "angle_g",
 							"parameter_type": 0,
 							"parameter_unitstyle": 1
 						}
 					},
-					"varname": "angle_b"
+					"varname": "angle_g"
 				}
 			},
 			{
 				"box": {
 					"id": "obj-63",
 					"maxclass": "attrui",
-					"attr": "angle_b",
+					"attr": "angle_g",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -2223,9 +2348,9 @@
 						50.0,
 						18.0
 					],
-					"text": "Angle B",
+					"text": "Angle G",
 					"textjustification": 1,
-					"varname": "lbl_angle_b",
+					"varname": "lbl_angle_g",
 					"hidden": 1
 				}
 			},
@@ -2234,14 +2359,14 @@
 					"id": "obj-65",
 					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
-					"hint": "Shifts the red plate's lattice along its own x, in pitches. The marks stay whole and sharp",
+					"hint": "Screen angle of the blue plate, in degrees",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
 						"",
 						"float"
 					],
-					"param_connect": "#0_halftone_pix::phase_r_x",
+					"param_connect": "#0_halftone_pix::angle_b",
 					"parameter_enable": 1,
 					"patching_rect": [
 						1118.0,
@@ -2251,35 +2376,35 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						160.0,
-						102.0,
+						44.0,
+						142.0,
 						46.0,
 						15.0
 					],
 					"saved_attribute_attributes": {
 						"valueof": {
 							"parameter_initial": [
-								0.0
+								45.0
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
-							"parameter_longname": "phase_r_x",
-							"parameter_mmax": 1.0,
-							"parameter_mmin": -1.0,
+							"parameter_longname": "angle_b",
+							"parameter_mmax": 180.0,
+							"parameter_mmin": 0.0,
 							"parameter_modmode": 3,
-							"parameter_shortname": "phase_r_x",
+							"parameter_shortname": "angle_b",
 							"parameter_type": 0,
 							"parameter_unitstyle": 1
 						}
 					},
-					"varname": "phase_r_x"
+					"varname": "angle_b"
 				}
 			},
 			{
 				"box": {
 					"id": "obj-66",
 					"maxclass": "attrui",
-					"attr": "phase_r_x",
+					"attr": "angle_b",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -2315,9 +2440,9 @@
 						50.0,
 						18.0
 					],
-					"text": "R x",
+					"text": "Angle B",
 					"textjustification": 1,
-					"varname": "lbl_phase_r_x",
+					"varname": "lbl_angle_b",
 					"hidden": 1
 				}
 			},
@@ -2326,14 +2451,14 @@
 					"id": "obj-68",
 					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
-					"hint": "Shifts the red plate's lattice along its own y, in pitches",
+					"hint": "Shifts the red plate's lattice along its own x, in pitches. The marks stay whole and sharp",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
 						"",
 						"float"
 					],
-					"param_connect": "#0_halftone_pix::phase_r_y",
+					"param_connect": "#0_halftone_pix::phase_r_x",
 					"parameter_enable": 1,
 					"patching_rect": [
 						1190.0,
@@ -2343,7 +2468,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						218.0,
+						160.0,
 						102.0,
 						46.0,
 						15.0
@@ -2355,23 +2480,23 @@
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
-							"parameter_longname": "phase_r_y",
+							"parameter_longname": "phase_r_x",
 							"parameter_mmax": 1.0,
 							"parameter_mmin": -1.0,
 							"parameter_modmode": 3,
-							"parameter_shortname": "phase_r_y",
+							"parameter_shortname": "phase_r_x",
 							"parameter_type": 0,
 							"parameter_unitstyle": 1
 						}
 					},
-					"varname": "phase_r_y"
+					"varname": "phase_r_x"
 				}
 			},
 			{
 				"box": {
 					"id": "obj-69",
 					"maxclass": "attrui",
-					"attr": "phase_r_y",
+					"attr": "phase_r_x",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -2407,9 +2532,9 @@
 						50.0,
 						18.0
 					],
-					"text": "R y",
+					"text": "R x",
 					"textjustification": 1,
-					"varname": "lbl_phase_r_y",
+					"varname": "lbl_phase_r_x",
 					"hidden": 1
 				}
 			},
@@ -2418,14 +2543,14 @@
 					"id": "obj-71",
 					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
-					"hint": "Shifts the green plate's lattice along its own x, in pitches",
+					"hint": "Shifts the red plate's lattice along its own y, in pitches",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
 						"",
 						"float"
 					],
-					"param_connect": "#0_halftone_pix::phase_g_x",
+					"param_connect": "#0_halftone_pix::phase_r_y",
 					"parameter_enable": 1,
 					"patching_rect": [
 						1262.0,
@@ -2435,8 +2560,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						160.0,
-						122.0,
+						218.0,
+						102.0,
 						46.0,
 						15.0
 					],
@@ -2447,23 +2572,23 @@
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
-							"parameter_longname": "phase_g_x",
+							"parameter_longname": "phase_r_y",
 							"parameter_mmax": 1.0,
 							"parameter_mmin": -1.0,
 							"parameter_modmode": 3,
-							"parameter_shortname": "phase_g_x",
+							"parameter_shortname": "phase_r_y",
 							"parameter_type": 0,
 							"parameter_unitstyle": 1
 						}
 					},
-					"varname": "phase_g_x"
+					"varname": "phase_r_y"
 				}
 			},
 			{
 				"box": {
 					"id": "obj-72",
 					"maxclass": "attrui",
-					"attr": "phase_g_x",
+					"attr": "phase_r_y",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -2499,9 +2624,9 @@
 						50.0,
 						18.0
 					],
-					"text": "G x",
+					"text": "R y",
 					"textjustification": 1,
-					"varname": "lbl_phase_g_x",
+					"varname": "lbl_phase_r_y",
 					"hidden": 1
 				}
 			},
@@ -2510,14 +2635,14 @@
 					"id": "obj-74",
 					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
-					"hint": "Shifts the green plate's lattice along its own y, in pitches",
+					"hint": "Shifts the green plate's lattice along its own x, in pitches",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
 						"",
 						"float"
 					],
-					"param_connect": "#0_halftone_pix::phase_g_y",
+					"param_connect": "#0_halftone_pix::phase_g_x",
 					"parameter_enable": 1,
 					"patching_rect": [
 						1334.0,
@@ -2527,7 +2652,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						218.0,
+						160.0,
 						122.0,
 						46.0,
 						15.0
@@ -2539,23 +2664,23 @@
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
-							"parameter_longname": "phase_g_y",
+							"parameter_longname": "phase_g_x",
 							"parameter_mmax": 1.0,
 							"parameter_mmin": -1.0,
 							"parameter_modmode": 3,
-							"parameter_shortname": "phase_g_y",
+							"parameter_shortname": "phase_g_x",
 							"parameter_type": 0,
 							"parameter_unitstyle": 1
 						}
 					},
-					"varname": "phase_g_y"
+					"varname": "phase_g_x"
 				}
 			},
 			{
 				"box": {
 					"id": "obj-75",
 					"maxclass": "attrui",
-					"attr": "phase_g_y",
+					"attr": "phase_g_x",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -2591,9 +2716,9 @@
 						50.0,
 						18.0
 					],
-					"text": "G y",
+					"text": "G x",
 					"textjustification": 1,
-					"varname": "lbl_phase_g_y",
+					"varname": "lbl_phase_g_x",
 					"hidden": 1
 				}
 			},
@@ -2602,14 +2727,14 @@
 					"id": "obj-77",
 					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
-					"hint": "Shifts the blue plate's lattice along its own x, in pitches",
+					"hint": "Shifts the green plate's lattice along its own y, in pitches",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
 						"",
 						"float"
 					],
-					"param_connect": "#0_halftone_pix::phase_b_x",
+					"param_connect": "#0_halftone_pix::phase_g_y",
 					"parameter_enable": 1,
 					"patching_rect": [
 						1406.0,
@@ -2619,8 +2744,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						160.0,
-						142.0,
+						218.0,
+						122.0,
 						46.0,
 						15.0
 					],
@@ -2631,23 +2756,23 @@
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
-							"parameter_longname": "phase_b_x",
+							"parameter_longname": "phase_g_y",
 							"parameter_mmax": 1.0,
 							"parameter_mmin": -1.0,
 							"parameter_modmode": 3,
-							"parameter_shortname": "phase_b_x",
+							"parameter_shortname": "phase_g_y",
 							"parameter_type": 0,
 							"parameter_unitstyle": 1
 						}
 					},
-					"varname": "phase_b_x"
+					"varname": "phase_g_y"
 				}
 			},
 			{
 				"box": {
 					"id": "obj-78",
 					"maxclass": "attrui",
-					"attr": "phase_b_x",
+					"attr": "phase_g_y",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -2683,9 +2808,9 @@
 						50.0,
 						18.0
 					],
-					"text": "B x",
+					"text": "G y",
 					"textjustification": 1,
-					"varname": "lbl_phase_b_x",
+					"varname": "lbl_phase_g_y",
 					"hidden": 1
 				}
 			},
@@ -2694,14 +2819,14 @@
 					"id": "obj-80",
 					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
-					"hint": "Shifts the blue plate's lattice along its own y, in pitches",
+					"hint": "Shifts the blue plate's lattice along its own x, in pitches",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
 						"",
 						"float"
 					],
-					"param_connect": "#0_halftone_pix::phase_b_y",
+					"param_connect": "#0_halftone_pix::phase_b_x",
 					"parameter_enable": 1,
 					"patching_rect": [
 						1478.0,
@@ -2711,7 +2836,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						218.0,
+						160.0,
 						142.0,
 						46.0,
 						15.0
@@ -2723,23 +2848,23 @@
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
-							"parameter_longname": "phase_b_y",
+							"parameter_longname": "phase_b_x",
 							"parameter_mmax": 1.0,
 							"parameter_mmin": -1.0,
 							"parameter_modmode": 3,
-							"parameter_shortname": "phase_b_y",
+							"parameter_shortname": "phase_b_x",
 							"parameter_type": 0,
 							"parameter_unitstyle": 1
 						}
 					},
-					"varname": "phase_b_y"
+					"varname": "phase_b_x"
 				}
 			},
 			{
 				"box": {
 					"id": "obj-81",
 					"maxclass": "attrui",
-					"attr": "phase_b_y",
+					"attr": "phase_b_x",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -2775,6 +2900,98 @@
 						50.0,
 						18.0
 					],
+					"text": "B x",
+					"textjustification": 1,
+					"varname": "lbl_phase_b_x",
+					"hidden": 1
+				}
+			},
+			{
+				"box": {
+					"id": "obj-83",
+					"maxclass": "live.numbox",
+					"fontname": "Ableton Sans Light",
+					"hint": "Shifts the blue plate's lattice along its own y, in pitches",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						"float"
+					],
+					"param_connect": "#0_halftone_pix::phase_b_y",
+					"parameter_enable": 1,
+					"patching_rect": [
+						1550.0,
+						250.0,
+						44.0,
+						15.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						218.0,
+						142.0,
+						46.0,
+						15.0
+					],
+					"saved_attribute_attributes": {
+						"valueof": {
+							"parameter_initial": [
+								0.0
+							],
+							"parameter_initial_enable": 1,
+							"parameter_linknames": 1,
+							"parameter_longname": "phase_b_y",
+							"parameter_mmax": 1.0,
+							"parameter_mmin": -1.0,
+							"parameter_modmode": 3,
+							"parameter_shortname": "phase_b_y",
+							"parameter_type": 0,
+							"parameter_unitstyle": 1
+						}
+					},
+					"varname": "phase_b_y"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-84",
+					"maxclass": "attrui",
+					"attr": "phase_b_y",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						1538.0,
+						310.0,
+						68.0,
+						22.0
+					],
+					"style": ""
+				}
+			},
+			{
+				"box": {
+					"id": "obj-85",
+					"maxclass": "comment",
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.5,
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						1547.0,
+						180.0,
+						50.0,
+						18.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						29.5,
+						268.0,
+						50.0,
+						18.0
+					],
 					"text": "B y",
 					"textjustification": 1,
 					"varname": "lbl_phase_b_y",
@@ -2783,7 +3000,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-83",
+					"id": "obj-86",
 					"maxclass": "jsui",
 					"filename": "bypass_toggle.js",
 					"hint": "Bypass",
@@ -2794,7 +3011,7 @@
 					],
 					"presentation": 1,
 					"patching_rect": [
-						1855.5,
+						1927.5,
 						130.0,
 						18.0,
 						12.0
@@ -2811,7 +3028,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-84",
+					"id": "obj-87",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 1,
@@ -2819,7 +3036,7 @@
 						""
 					],
 					"patching_rect": [
-						1855.5,
+						1927.5,
 						160.0,
 						131.0,
 						22.0
@@ -2832,7 +3049,7 @@
 					"id": "obj-rd-0",
 					"maxclass": "newobj",
 					"patching_rect": [
-						30.0,
+						240.0,
 						842.0,
 						40.0,
 						22.0
@@ -2850,7 +3067,7 @@
 					"id": "obj-rd-5",
 					"maxclass": "newobj",
 					"patching_rect": [
-						170.0,
+						380.0,
 						842.0,
 						60.0,
 						22.0
@@ -2868,7 +3085,7 @@
 					"id": "obj-rd-6",
 					"maxclass": "newobj",
 					"patching_rect": [
-						170.0,
+						380.0,
 						872.0,
 						70.0,
 						22.0
@@ -2884,7 +3101,7 @@
 					"id": "obj-rd-1",
 					"maxclass": "newobj",
 					"patching_rect": [
-						80.0,
+						290.0,
 						842.0,
 						60.0,
 						22.0
@@ -2903,7 +3120,7 @@
 					"id": "obj-rd-2",
 					"maxclass": "newobj",
 					"patching_rect": [
-						80.0,
+						290.0,
 						872.0,
 						60.0,
 						22.0
@@ -2922,7 +3139,7 @@
 					"id": "obj-rd-3",
 					"maxclass": "newobj",
 					"patching_rect": [
-						30.0,
+						240.0,
 						902.0,
 						120.0,
 						22.0
@@ -2940,7 +3157,7 @@
 					"id": "obj-rd-4",
 					"maxclass": "newobj",
 					"patching_rect": [
-						160.0,
+						370.0,
 						902.0,
 						120.0,
 						22.0
@@ -2959,7 +3176,7 @@
 					"maxclass": "comment",
 					"text": "Angle",
 					"patching_rect": [
-						170.0,
+						380.0,
 						542.0,
 						50.0,
 						18.0
@@ -2985,7 +3202,7 @@
 					"maxclass": "comment",
 					"text": "Scale",
 					"patching_rect": [
-						170.0,
+						380.0,
 						564.0,
 						50.0,
 						18.0
@@ -3011,7 +3228,7 @@
 					"maxclass": "comment",
 					"text": "X",
 					"patching_rect": [
-						170.0,
+						380.0,
 						586.0,
 						50.0,
 						18.0
@@ -3037,7 +3254,7 @@
 					"maxclass": "comment",
 					"text": "Y",
 					"patching_rect": [
-						170.0,
+						380.0,
 						608.0,
 						50.0,
 						18.0
@@ -3064,7 +3281,7 @@
 					"text": "R",
 					"varname": "lbl_plate_r",
 					"patching_rect": [
-						230.0,
+						440.0,
 						542.0,
 						30.0,
 						18.0
@@ -3091,7 +3308,7 @@
 					"text": "G",
 					"varname": "lbl_plate_g",
 					"patching_rect": [
-						230.0,
+						440.0,
 						564.0,
 						30.0,
 						18.0
@@ -3118,7 +3335,7 @@
 					"text": "B",
 					"varname": "lbl_plate_b",
 					"patching_rect": [
-						230.0,
+						440.0,
 						586.0,
 						30.0,
 						18.0
@@ -3150,7 +3367,7 @@
 						""
 					],
 					"patching_rect": [
-						290.0,
+						500.0,
 						542.0,
 						40.0,
 						22.0
@@ -3168,7 +3385,7 @@
 						""
 					],
 					"patching_rect": [
-						290.0,
+						500.0,
 						572.0,
 						50.0,
 						22.0
@@ -3186,7 +3403,7 @@
 						""
 					],
 					"patching_rect": [
-						290.0,
+						500.0,
 						602.0,
 						50.0,
 						22.0
@@ -3204,7 +3421,7 @@
 						""
 					],
 					"patching_rect": [
-						350.0,
+						560.0,
 						572.0,
 						50.0,
 						22.0
@@ -3222,7 +3439,7 @@
 						""
 					],
 					"patching_rect": [
-						350.0,
+						560.0,
 						602.0,
 						50.0,
 						22.0
@@ -3240,7 +3457,7 @@
 						""
 					],
 					"patching_rect": [
-						410.0,
+						620.0,
 						572.0,
 						50.0,
 						22.0
@@ -3258,7 +3475,7 @@
 						""
 					],
 					"patching_rect": [
-						410.0,
+						620.0,
 						602.0,
 						50.0,
 						22.0
@@ -3462,11 +3679,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-83",
+						"obj-static3-load",
 						0
 					],
 					"destination": [
-						"obj-84",
+						"obj-static3-trig",
 						0
 					]
 				}
@@ -3474,7 +3691,79 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-84",
+						"obj-static3-trig",
+						1
+					],
+					"destination": [
+						"obj-static3-msg",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-static3-msg",
+						0
+					],
+					"destination": [
+						"obj-static3-matrix",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-static3-matrix",
+						0
+					],
+					"destination": [
+						"obj-static3-tex",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-static3-trig",
+						0
+					],
+					"destination": [
+						"obj-static3-tex",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-static3-tex",
+						0
+					],
+					"destination": [
+						"obj-5",
+						4
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-86",
+						0
+					],
+					"destination": [
+						"obj-87",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-87",
 						0
 					],
 					"destination": [
@@ -4302,6 +4591,42 @@
 			{
 				"patchline": {
 					"source": [
+						"obj-4",
+						21
+					],
+					"destination": [
+						"obj-83",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-83",
+						0
+					],
+					"destination": [
+						"obj-84",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-84",
+						0
+					],
+					"destination": [
+						"obj-5",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
 						"obj-rd-5",
 						0
 					],
@@ -4604,56 +4929,61 @@
 				0
 			],
 			"obj-50": [
-				"level",
-				"level",
+				"levels",
+				"levels",
 				0
 			],
 			"obj-53": [
-				"bayer_cell",
-				"bayer_cell",
+				"level",
+				"level",
 				0
 			],
 			"obj-56": [
-				"angle_r",
-				"angle_r",
+				"bayer_cell",
+				"bayer_cell",
 				0
 			],
 			"obj-59": [
-				"angle_g",
-				"angle_g",
+				"angle_r",
+				"angle_r",
 				0
 			],
 			"obj-62": [
-				"angle_b",
-				"angle_b",
+				"angle_g",
+				"angle_g",
 				0
 			],
 			"obj-65": [
-				"phase_r_x",
-				"phase_r_x",
+				"angle_b",
+				"angle_b",
 				0
 			],
 			"obj-68": [
-				"phase_r_y",
-				"phase_r_y",
+				"phase_r_x",
+				"phase_r_x",
 				0
 			],
 			"obj-71": [
-				"phase_g_x",
-				"phase_g_x",
+				"phase_r_y",
+				"phase_r_y",
 				0
 			],
 			"obj-74": [
-				"phase_g_y",
-				"phase_g_y",
+				"phase_g_x",
+				"phase_g_x",
 				0
 			],
 			"obj-77": [
+				"phase_g_y",
+				"phase_g_y",
+				0
+			],
+			"obj-80": [
 				"phase_b_x",
 				"phase_b_x",
 				0
 			],
-			"obj-80": [
+			"obj-83": [
 				"phase_b_y",
 				"phase_b_y",
 				0
