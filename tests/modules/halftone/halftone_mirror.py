@@ -95,6 +95,21 @@ def bayer8_bits(x, y):
     return m
 
 
+_BLUE = None
+
+
+def bluenoise64():
+    """The Blue screen's thresholds, (64, 64) float32 indexed [y, x], read from the shipped file (T033b; G14 decided by Matt
+    2026-11-14). Made by build/generate_bluenoise.py; the module reads the same file through codebox input 5 (plan ADR-10)."""
+    global _BLUE
+    if _BLUE is None:
+        import os
+        import jxf
+        root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+        _BLUE = jxf.read_jxf(os.path.join(root, "package", "media", "f_bluenoise64.jxf"))[..., 0]
+    return _BLUE
+
+
 def hash2(nx, ny, seed):
     """Two hashes in 0..1 from a cell (the sin hash: noise() is black on this path)."""
     def h(a, b, c):
