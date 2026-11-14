@@ -2,6 +2,13 @@
 
 Entries moved out of `HANDOFF.md` on 2026-10-31, 2026-11-04, 2026-11-08, 2026-11-10, 2026-11-11, 2026-11-12, 2026-11-13 and 2026-11-14 (twice) (newest first, as they were). Not read at session start: grep it for history. The full pre-trim `HANDOFF.md` is also in git (commit 76c2ab8).
 
+## 2026-11-14 (evening): `f_halftone` Plates mode and the jitter bloom fix
+
+- **Done and committed (Claude, with Matt's go):** T027 mirror and tier 1 (`cb37ef4`); T028 codebox, inlets, Plates menu, row-label switching (`ff08ba0`); fix A, jittered marks clipped to their own cell (`6565f4c`, Matt chose A over clipping full tone only); bench results and the harness read retry (this commit).
+- **Benched:** codebox 16/16 (`tests/logs/20261114-094020-bench.log`), module 8/8 (`tests/logs/20261114-094257-bench.log`).
+- **Harness:** `benchclient.run_pass` retries an output read up to 2 s; two runs had raced Max's write of out.jxf (zero FORM size).
+- **Not run:** the 1080p cost; the contract bench; `test_gates.py`. **Not touched:** Matt's `ideas/INDEX.md` edit and `ideas/f_util_row_engine.md`.
+
 ## 2026-11-14 (later): `f_halftone` per-plate pitch and the plate table; Bayer work benched (moved out of HANDOFF.md 2026-11-14, evening)
 
 - **Done and committed (Claude, with Matt's go), `ef5a3ae` to this commit:** P5 reversed (Matt): Pitch is a master with `scale_r/g/b` per plate (spec FR-022, plan ADR-9); T029a mirror and T029b codebox built; the panel is now a row of global dials over a plate table (Angle, Scale, X, Y number boxes per plate, row labels `lbl_plate_r/g/b`), Matt's layout ask.
