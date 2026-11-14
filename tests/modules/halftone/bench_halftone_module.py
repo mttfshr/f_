@@ -12,7 +12,7 @@ fed every frame at the render size, 640 x 640 (bench_modules.RENDER_DIM_SIZE); e
 Asserted:
   - load, no messages: the output is the render size and matches the mirror at the definition's defaults. This is the row that
     proves `width` and `height` arrive: at the codebox defaults (1920 x 1080) the lattice would be a different one.
-  - the Screen menu (Line, Threshold, Bayer), pitch, softness, shape, level, jitter, seed (T023-T025, 2026-11-14), the three angles and the six phase dials each reach the pix: the frame matches the
+  - the Screen menu (Line, Threshold, Bayer), the Plate menu (Single, T016b), pitch, softness, shape, level, jitter, seed (T023-T025, 2026-11-14), the three angles and the six phase dials each reach the pix: the frame matches the
     mirror with that value, and differs from the frame before it.
 A picture is compared as a fraction of values within TOL (bench_halftone.py explains why edge pixels can flip cells).
 
@@ -41,7 +41,7 @@ N = 640
 SETTLE = 30            # frames after a control message
 TOL = 2e-3
 FRAC_BAD = 5e-3
-DEFAULTS = {"screen": 0, "pitch": 0.012, "softness": 0.1, "dot_shape": 0.0, "jitter": 0.0, "seed": 1, "level": 0.5, "angle_r": 15.0, "angle_g": 75.0, "angle_b": 45.0,
+DEFAULTS = {"screen": 0, "pitch": 0.012, "softness": 0.1, "dot_shape": 0.0, "jitter": 0.0, "seed": 1, "level": 0.5, "plate_mode": 0, "angle_r": 15.0, "angle_g": 75.0, "angle_b": 45.0,
             "phase_r_x": 0.0, "phase_r_y": 0.0, "phase_g_x": 0.0, "phase_g_y": 0.0, "phase_b_x": 0.0, "phase_b_y": 0.0}
 SCREENS = {0: "dot", 1: "line", 2: "threshold", 3: "bayer"}
 
@@ -96,7 +96,8 @@ def matches(got, label, **deltas):
                           phases=((p["phase_r_x"], p["phase_r_y"]), (p["phase_g_x"], p["phase_g_y"]),
                                   (p["phase_b_x"], p["phase_b_y"])),
                           softness=p["softness"], shape=p["dot_shape"], jitter=p["jitter"],
-                          seed=int(p["seed"]), level=p["level"])
+                          seed=int(p["seed"]), level=p["level"],
+                          plate_mode="single" if p["plate_mode"] > 0.5 else "channels")
     err = np.abs(got[..., :3].astype(np.float64) - want[..., :3].astype(np.float64))
     bad = float((err > TOL).mean())
     note(f"{label}: worst rgb error (edge pixels may flip cells)", float(err.max()))
@@ -159,6 +160,17 @@ def test_types_jitter_seed_level():
         check(f"{label}: mean coverage is the mirror's", dmean, 0.04)   # the seed-to-seed spread: bench_halftone.py JIT_MEAN
     differs(jit, base, "Jitter")
     differs(sd, jit, "Seed")
+
+
+def test_plate_menu():
+    """T016b (2026-11-14): the Plate menu's Single reaches the pix, and back to Channels gives the frame before it exactly."""
+    f = job([{"params": [["pitch", 0.03]], "wait": 60, "snap": "base"},
+             {"params": [["plate_mode", 1]], "wait": SETTLE, "snap": "single"},
+             {"params": [["plate_mode", 0]], "wait": SETTLE, "snap": "back"}])
+    base, single, back = (snap(f, t) for t in ("base", "single", "back"))
+    matches(single, "Plate menu: Single", pitch=0.03, plate_mode=1)
+    differs(single, base, "Plate menu")
+    check("Plate back to Channels: the frame before, exactly", float(np.abs(back - base).max()), 0.0)
 
 
 def test_angles_reach_their_own_plate():

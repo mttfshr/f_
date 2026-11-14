@@ -28,8 +28,7 @@ Tolerances:
 Gates measured here: G8 / T010 (reads inside a function and a loop; sample() against nearest() at texel centres) and G5 / T007
 (the area law against pitch in texels, GPU beside the mirror).
 
-Not here: non-finite input (the bench's input path for NaN is unproven, and the mirror tests the zap); Single (not in the
-codebox yet); the shipped patcher (bench_halftone_module.py).
+Not here: non-finite input (the bench's input path for NaN is unproven, and the mirror tests the zap); the shipped patcher (bench_halftone_module.py).
 
 Needs Max with tests/bench/bench.maxpat open.
 Run:  tests/bench.sh -q tests/modules/halftone/bench_halftone.py       (ask Matt first: CLAUDE.md)
@@ -53,7 +52,7 @@ FRAC_BAD = 5e-3
 PITCH = 16.0 / H       # 16 texels
 PINNED = {"screen": 0.0, "pitch": PITCH, "angle_r": 15.0, "angle_g": 75.0, "angle_b": 45.0,
           "phase_r_x": 0.0, "phase_r_y": 0.0, "phase_g_x": 0.0, "phase_g_y": 0.0, "phase_b_x": 0.0, "phase_b_y": 0.0,
-          "softness": 0.0, "dot_shape": 0.0, "jitter": 0.0, "seed": 1.0, "level": 0.5, "bypass_gate": 0.0}
+          "softness": 0.0, "dot_shape": 0.0, "jitter": 0.0, "seed": 1.0, "level": 0.5, "plate_mode": 0.0, "bypass_gate": 0.0}
 SCREENS = {0: "dot", 1: "line", 2: "threshold", 3: "bayer"}
 LATTICE = {0: "dot", 1: "line"}
 
@@ -107,7 +106,8 @@ def mirror(src, **deltas):
                           phases=((p["phase_r_x"], p["phase_r_y"]), (p["phase_g_x"], p["phase_g_y"]),
                                   (p["phase_b_x"], p["phase_b_y"])),
                           softness=p["softness"], shape=p["dot_shape"], jitter=p["jitter"], seed=int(p["seed"]),
-                          level=p["level"], bypass=bool(p["bypass_gate"]))
+                          level=p["level"], plate_mode="single" if p["plate_mode"] > 0.5 else "channels",
+                          bypass=bool(p["bypass_gate"]))
 
 
 def mx(a, b):
@@ -277,6 +277,34 @@ def test_bayer():
         got = gpu(flat(tone, tone, tone), screen=3.0)
         note(f"bayer, flat {tone}: lit fraction minus tone", float(got[..., :3].mean()) - tone)
         check(f"bayer, flat {tone}: lit fraction within 1/64 of the tone", abs(float(got[..., :3].mean()) - tone), 1 / 64)
+
+
+def spot(w=W, h=H):
+    """T016b: a spot-colour plate as f_separate makes one: a tone field times teal on the left half, times orange on the right."""
+    t = photo(w, h)
+    tone = t[..., 0].copy()
+    col = np.where(np.arange(w)[None, :, None] < w // 2, np.array([0.0, 0.6, 0.6], np.float32), np.array([1.0, 0.4, 0.0], np.float32))
+    t[..., :3] = tone[..., None] * col
+    return t
+
+
+def test_single_plate():
+    """T016b: Single reads the texture as one plate at angle_b and phase_b, tone max(r, g, b), colour rgb / tone."""
+    teal = flat(0.0, 0.3, 0.3)
+    got = everywhere("single, dot, flat teal", teal, plate_mode=1.0)
+    check("single, flat teal: red stays exactly 0", float(np.abs(got[..., 0]).max()), 0.0)
+    check("single, flat teal: green and blue are one pattern", mx(got[..., 1], got[..., 2]), 0.0)
+    check("single: black stays black", float(np.abs(gpu(flat(0.0, 0.0, 0.0), plate_mode=1.0)[..., :3]).max()), 0.0)
+    p = spot()
+    mostly("single, dot, spot plates", p, plate_mode=1.0)
+    mostly("single, dot, spot plates, shape 1, phase b (0.3, 0.2)", p, plate_mode=1.0, dot_shape=1.0, phase_b_x=0.3, phase_b_y=0.2)
+    mostly("single, line, spot plates", p, plate_mode=1.0, screen=1.0)
+    everywhere("single, threshold, spot plates", p, plate_mode=1.0, screen=2.0, level=0.3, softness=0.2)
+    everywhere("single, bayer, spot plates", p, plate_mode=1.0, screen=3.0)
+    jittered("single, dot, spot plates, jitter 1", p, plate_mode=1.0, jitter=1.0)
+    a, b = gpu(p, plate_mode=1.0), gpu(p, plate_mode=1.0, angle_r=33.0, angle_g=5.0, phase_r_x=0.4)
+    check("single: the R and G angle and phase change nothing", mx(a, b), 0.0)
+    check("single: the B angle does", float(mx(a, gpu(p, plate_mode=1.0, angle_b=10.0)) < 0.5), 0.0)
 
 
 def test_bypass():

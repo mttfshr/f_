@@ -2,7 +2,7 @@
 f_halftone -- definition.py
 
 Tone to marks: a fixed-angle halftone screen, one plate per color channel (R, G, B), each with its own angle and lattice
-phase. Dot, Line, Threshold and Bayer, shape and jitter (T020-T025); the Single plate mode is a later task (T016b).
+phase. Dot, Line, Threshold and Bayer, shape and jitter (T020-T025), and the Single plate mode (T016b).
 Stateless, one stage. A texture processor: one inlet, one outlet; the output follows the render size (render_dim: Params
 `width` and `height`). Spec, plan and tasks: .specify/f_halftone/{spec,plan,tasks}.md.
 Mirror: tests/modules/halftone/halftone_mirror.py.
@@ -34,6 +34,8 @@ patcher = {
     "params": [
         {"name": "screen", "type": "menu", "options": ["Dot", "Line", "Threshold", "Bayer"], "default": 0, "label": "Screen",
          "hint": "Dot: a lattice of dots, each sized by the tone at its center. Line: parallel lines whose width follows the tone. Threshold: ink where the tone is above Level. Bayer: an ordered dither, one pixel per mark"},
+        {"name": "plate_mode", "type": "menu", "options": ["Channels", "Single"], "default": 0, "label": "Plate",
+         "hint": "Channels: red, green and blue are three plates, each at its own angle. Single: the texture is one spot-color plate, screened once at the B angle and phase, in its own color (for f_separate's plates)"},
         {"name": "pitch", "type": "float", "min": 0.003, "max": 0.2, "default": 0.012, "label": "Pitch",
          "hint": "Lattice period in frame heights. Below about 10 pixels the inked area stops tracking the tone"},
         {"name": "softness", "type": "float", "min": 0.0, "max": 1.0, "default": 0.1, "label": "Soft",
@@ -92,6 +94,8 @@ _ov = {
     "title":        {"presentation_rect": [10.5, 0.0, 50.0, 21.0]},
     "screen.ctl":   {"presentation_rect": [64.0, 3.0, 52.0, 15.0]},
     "screen.label": {"hidden": 1},
+    "plate_mode.ctl":   {"presentation_rect": [120.0, 3.0, 60.0, 15.0]},     # T016b: beside the Screen menu
+    "plate_mode.label": {"hidden": 1},
 }
 _ov.update(_dial_at("pitch", _COL_LEFT, _ROW_TOP))
 _ov.update(_dial_at("softness", _COL_LEFT, _ROW_LOW))

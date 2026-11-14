@@ -2,7 +2,7 @@
 // Stateless, per pixel. Float32. Mirror: tests/modules/halftone/halftone_mirror.halftone_stage() (the conventions in its
 // docstring are the ones followed here). T020: Dot and Line, soft edge, exact extremes, zap, bypass, alpha; the per-plate
 // phase (FR-016) is in because it is part of the lattice formula. 2026-11-14: shape (T023), jitter (T024), Threshold and
-// Bayer (T025). Not here yet: the Single plate mode (T016b).
+// Bayer (T025), the Single plate mode (T016b).
 //
 // Lattice (plan ADR-1): p = ((u - .5) * aspect, v - .5) in frame heights; q = R(-angle) p / pitch - phase;
 //   lattice cell = floor(q + .5), local f = q - that, in [-.5, .5]^2.
@@ -17,6 +17,10 @@
 //   one-cell path, so the regular lattice is exactly the T020 one.
 // Threshold (ADR-6): smoothstep(level - w, level + w, tone), w = softness / 2 (a hard step at softness 0), per pixel.
 // Bayer: the 8 x 8 ordered matrix by texel, M = sum over bits b of 4^(2-b) (2 (x_b xor y_b) + y_b); lit where tone > (M + .5) / 64.
+// Single plate (T016b, plate_mode 1; spec "Plates from f_separate"): the whole texture is ONE plate at angle_b and phase_b.
+//   Its tone is the brightest channel, t = max(r, g, b), at the read texel; the colour is rgb / t there (black when t <= 0); the
+//   output is that colour times the coverage. The colour texel is the one the tone came from: the cell centre (displaced when
+//   jittered) for Dot, the centreline point for Line, the pixel's own for Threshold and Bayer.
 // screen: 0 = Dot, 1 = Line, 2 = Threshold, 3 = Bayer. Angles in degrees. bypass_gate = 1: the (zapped) source.
 // Non-finite input is zapped to 0: abs(x) < 1e30 with switch() (NaN == NaN is TRUE on this GPU).
 // The render size comes from the Params `width` and `height` (render_dim; the size global reads 1 inside a live Vsynth pix,
@@ -79,7 +83,30 @@ cover(qx, qy, is_line, tone, soft, aa, shp) {
     return cover_local(qx - floor(qx + 0.5), qy - floor(qy + 0.5), is_line, tone, soft, aa, shp);
 }
 
-// T024: the jittered Dot. ch picks the plate's channel (0 r, 1 g, 2 b). Reads inside a function and a loop are exact (T010).
+// the zapped tone at a texel centre: ch 0 r, 1 g, 2 b, 3 the brightest of the three (Single)
+rd(ru, rv, ch) {
+    tx = zap(nearest(in1, vec(ru, rv)).x);
+    ty = zap(nearest(in1, vec(ru, rv)).y);
+    tz = zap(nearest(in1, vec(ru, rv)).z);
+    return switch(ch < 0.5, tx, switch(ch < 1.5, ty, switch(ch < 2.5, tz, max(max(tx, ty), tz))));
+}
+
+// T016b: the read texel of the pixel's own cell centre, displaced by the jitter (the Single colour under jitter)
+jit_uv(qx, qy, cs, sn, pit, phx, phy, asp, wd, ht, jit, sd) {
+    nx = floor(qx + 0.5);
+    ny = floor(qy + 0.5);
+    hx = fract(sin(nx * 127.1 + ny * 311.7 + sd * 74.7) * 43758.5453);
+    hy = fract(sin(nx * 269.5 + ny * 183.3 + sd * 246.1) * 43758.5453);
+    xx = nx + jit * 0.5 * (hx - 0.5) + phx;
+    yy = ny + jit * 0.5 * (hy - 0.5) + phy;
+    ppx = (cs * xx - sn * yy) * pit;
+    ppy = (sn * xx + cs * yy) * pit;
+    ti = clamp(floor((ppx / asp + 0.5) * wd), 0, wd - 1);
+    tj = clamp(floor((ppy + 0.5) * ht), 0, ht - 1);
+    return (ti + 0.5) / wd, (tj + 0.5) / ht;
+}
+
+// T024: the jittered Dot. ch picks the plate's channel (0 r, 1 g, 2 b, 3 the brightest: Single). Reads inside a function and a loop are exact (T010).
 dot_jit(qx, qy, ch, cs, sn, pit, phx, phy, asp, wd, ht, soft, aa, shp, jit, sd) {
     cx = floor(qx + 0.5);
     cy = floor(qy + 0.5);
@@ -100,8 +127,7 @@ dot_jit(qx, qy, ch, cs, sn, pit, phx, phy, asp, wd, ht, soft, aa, shp, jit, sd) 
             tj = clamp(floor((ppy + 0.5) * ht), 0, ht - 1);
             ru = (ti + 0.5) / wd;
             rv = (tj + 0.5) / ht;
-            tone = zap(switch(ch < 0.5, nearest(in1, vec(ru, rv)).x,
-                       switch(ch < 1.5, nearest(in1, vec(ru, rv)).y, nearest(in1, vec(ru, rv)).z)));
+            tone = rd(ru, rv, ch);
             best = max(best, cover_local(qx - gx, qy - gy, 0, tone, soft, aa, shp));
         }
     }
@@ -141,6 +167,7 @@ Param dot_shape(0);
 Param jitter(0);
 Param seed(1);
 Param level(0.5);
+Param plate_mode(0);
 Param bypass_gate(0);
 Param width(1920);
 Param height(1080);
@@ -206,4 +233,29 @@ cov_r = switch(is_thr > 0.5, thresh(zr, level, soft), switch(is_bay > 0.5, bayer
 cov_g = switch(is_thr > 0.5, thresh(zg, level, soft), switch(is_bay > 0.5, bayer(zg, ixb, iyb), cov_g));
 cov_b = switch(is_thr > 0.5, thresh(zb, level, soft), switch(is_bay > 0.5, bayer(zb, ixb, iyb), cov_b));
 
-out1 = mix(vec(cov_r, cov_g, cov_b, za), vec(zr, zg, zb, za), step(0.5, bypass_gate));
+// T016b: Single, one plate at the blue plate's angle and phase
+is_single = switch(plate_mode > 0.5, 1, 0);
+tone_s = rd(ub, vb, 3);
+cov_s = cover(qxb, qyb, is_line, tone_s, soft, aa, shp);
+cu = ub;
+cv = vb;
+if (use_jit > 0.5) {
+    cov_s = dot_jit(qxb, qyb, 3, csb, snb, pit, phase_b_x, phase_b_y, asp, wd, ht, soft, aa, shp, jit, seed);
+    cu, cv = jit_uv(qxb, qyb, csb, snb, pit, phase_b_x, phase_b_y, asp, wd, ht, jit, seed);
+}
+tone_p = max(max(zr, zg), zb);
+cov_s = switch(is_thr > 0.5, thresh(tone_p, level, soft), switch(is_bay > 0.5, bayer(tone_p, ixb, iyb), cov_s));
+cu = switch(is_thr + is_bay > 0.5, norm.x, cu);
+cv = switch(is_thr + is_bay > 0.5, norm.y, cv);
+cr = zap(nearest(in1, vec(cu, cv)).x);
+cg = zap(nearest(in1, vec(cu, cv)).y);
+cb = zap(nearest(in1, vec(cu, cv)).z);
+ct = max(max(cr, cg), cb);
+sr = switch(ct > 0, cr / max(ct, 0.000000000001), 0) * cov_s;
+sg = switch(ct > 0, cg / max(ct, 0.000000000001), 0) * cov_s;
+sb = switch(ct > 0, cb / max(ct, 0.000000000001), 0) * cov_s;
+o_r = mix(cov_r, sr, is_single);
+o_g = mix(cov_g, sg, is_single);
+o_b = mix(cov_b, sb, is_single);
+
+out1 = mix(vec(o_r, o_g, o_b, za), vec(zr, zg, zb, za), step(0.5, bypass_gate));
