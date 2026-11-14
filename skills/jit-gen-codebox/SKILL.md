@@ -86,15 +86,29 @@ out1 = myHelperFunc(in1);
 
 ---
 
-## `boundmode` Attribute — GPU Status Unknown
+## Out-of-range coordinates and the `boundmode` keyword — bench-verified 2026-11-14
 
-The docs show `sample(in, norm, boundmode="mirror")` as valid GenExpr syntax. Our skill previously documented this as silently ignored on GPU. **This needs empirical verification on jit.gl.pix** — may work for some values and not others, or may be a CPU-only feature. Until verified, use manual coordinate wrapping:
+Measured on the codebox bench, Max 9, input fed pix-to-pix (how modules chain); probes
+`tests/records/bench_boundmode_probes.py` (B1, B2), log `tests/logs/20261114-141112-bench.log`, plus the
+2026-10-20 probes P2/P6/P7/P9 in `bench_mirror_findings_probes.py`. **A matrix-fed input (jit.matrix or
+jit.movie into the pix) is untested**; the 2026-06-21 "defaults to clamp" observation was probably that case.
 
-```
-// Safe wrap — verified GPU-working
-uv_wrapped = vec(fract(uv.x + offset), fract(uv.y));
-out1 = sample(in1, uv_wrapped);
-```
+- **Default (no keyword): both `sample()` and `nearest()` WRAP**, on both axes: -0.2 reads 0.8, 1.3 reads 0.3.
+- **Exactly 0.0 or 1.0 is a seam, not an edge:** on x both read the FIRST texel; on y both read the LAST row
+  (`1 - fract(1 - v)`). Same for `sample()` and `nearest()`. So `clamp(coord, 0, 1)` before a bare `sample()`
+  protects only two of the four edges (x = 1.0 reads the first column, y = 0.0 the last row). To clamp by hand,
+  clamp to texel-centre bounds (e.g. 0.999 on x, 0.001 on y), not exactly 0.0 / 1.0.
+- **The `boundmode` keyword works** (`sample(in1, c, boundmode="clamp")`, also on `nearest()`); it is NOT
+  silently ignored, as this skill used to say:
+  - `"clamp"`: clamps on x and y. The simplest way to get clamp-to-edge. (Its behavior at exactly 0.0 / 1.0
+    was not probed; inferred, not verified, that it fixes the seam above.)
+  - `"wrap"`: wraps on x and y (same as the default).
+  - `"mirror"`: mirrors on **x only**. On y it read as WRAP (coordinates below 0; above 1 not probed). Cause
+    unknown. Mirror y by hand: `v_m = 1.0 - abs(1.0 - mod(abs(v), 2.0))`.
+  - An unknown value (`"bogus"`) compiles silently and behaves as the default. A typo gives no error.
+- **`nearest()` at a literal coordinate returned an interpolated value** (`nearest(in1, vec(-0.2, ...))`
+  read 0.79999, not the texel centre 0.8047); at run-time coordinates it returned texel centres. Observed once;
+  cause not investigated.
 
 ---
 
@@ -148,9 +162,8 @@ diffing GPU output must wrap-compare at that line.
 `dim` — pixel dimensions as vec2 (e.g. vec(640, 480) — NOT normalized). **In the test bench it is the FIRST INPUT's size, not the job's output size** (bench-verified 2026-10-26, "f_quasi codebox bench" below): a 4x4 stand-in first input reads as square.
 
 ### Sampling
-`sample(inN, coord)` — bilinear sample inN at normalized coord vec2; **default boundmode is CLAMP** (empirically verified 2026-06-21 with literal OOB coordinate — sampling at u=1.3 produces solid stripe of u=1.0 edge color)
-**Update (2026-10-20):** probes P2 and P6 and a scratch patch (`scratch/boundmode_probe.maxpat`, pix-to-pix path) show a bare `sample()` WRAPS the coordinate modulo 1 (1.3 reads 0.3, -0.2 reads 0.8, exactly 1.0 or 0.0 reads the first texel, no seam blend) with edge-clamped taps, when its input is another pix's output texture, which is how modules chain. The CLAMP observation above was probably made with a matrix-fed texture (untested). In chains, treat out-of-range reads as wrapping, and clamp or `fract()` explicitly. Vertical (probe P7): wraps too, but exactly 0.0 and exactly 1.0 both read the LAST row (1 - fract(1 - v)), the mirror image of x. An explicit clamp before `sample()` protects only TWO of the four edges (probe P9): clamped to exactly x = 1.0 reads the FIRST column, clamped to y = 0.0 reads the LAST row; x = 0.0 and y = 1.0 read the intended edge. To protect an edge, clamp to a texel-centre bound (for example 0.999 on x, 0.001 on y) instead of exactly 0.0 or 1.0.
-`nearest(inN, coord)` — nearest-neighbor sample
+`sample(inN, coord)` — bilinear sample inN at normalized coord vec2. Out-of-range coordinates **wrap** by default in a pix-to-pix chain; `boundmode="clamp"` / `"wrap"` / `"mirror"` (x only) change that. See "Out-of-range coordinates and the `boundmode` keyword" above (bench-verified 2026-11-14; superseded the 2026-06-21 "default is CLAMP" entry, probably a matrix-fed input).
+`nearest(inN, coord)` — nearest-neighbor sample; same out-of-range rules as `sample()`
 
 **`uv.x` / `uv.y` silent failure in ring offset code (empirically verified 2026-06-21):**
 When computing per-sample ring positions, do NOT store `norm` in a variable and then access `.x`/`.y` — that's the stored-variable component access silent failure. Use `norm.x` and `norm.y` directly:
@@ -165,10 +178,11 @@ su0 = norm.x + dx0 * reach;
 
 **Clamp artifact in ring-accumulation modules (empirically verified 2026-06-21):**
 When a module samples a ring of positions around each pixel (e.g. `f_vf_repulse`), pixels
-within `reach` distance of any frame edge have some ring positions going OOB. Because
-`sample()` default boundmode is CLAMP, those OOB positions read the nearest edge pixel,
-introducing that edge value into the field accumulation asymmetrically. Result: visible
-bands along all four edges, with band width proportional to `reach`. Fix: zero-gate any
+within `reach` distance of any frame edge have some ring positions going OOB. Those
+positions read a value from elsewhere in the frame (the edge pixel when this was found, which
+assumed clamp; in a pix-to-pix chain the opposite side, since the default wraps: see
+"Out-of-range coordinates"), introducing it into the field accumulation asymmetrically. Result: visible
+bands along all four edges, with band width proportional to `reach`. Fix (valid either way): zero-gate any
 OOB sample using:
 ```
 in_bounds = step(0., su) * step(su, 1.) * step(0., sv) * step(sv, 1.);
@@ -234,13 +248,10 @@ r = sample(in1, uv).x;
 
 This is the single most common silent failure pattern. Always access components inline on the `sample()` call, never on a stored intermediate variable.
 
-### `boundmode` attribute in GenExpr syntax
-The docs show `sample(in1, coord, boundmode="wrap")`. This compiles but is **silently ignored** in jit.gl.pix — defaults to clamp regardless. To get wrap behavior, use `fract()` or `wrap()` on the coordinate before sampling:
-```
-// wrap manually
-uv_wrapped = vec(fract(uv.x + 0.3), uv.y);
-out1 = sample(in1, uv_wrapped);
-```
+### `boundmode` value typos, and `"mirror"` on y
+`boundmode=` works (see "Out-of-range coordinates" above; an earlier version of this skill wrongly said it was
+silently ignored). Two silent traps remain: an unknown value (`boundmode="mirorr"`) compiles and falls back to
+the default (wrap), and `"mirror"` mirrors x but wraps y. Bench-verified 2026-11-14.
 
 ### `swiz`
 Documented operator for component remapping. Silently fails in jit.gl.pix GPU path regardless of argument syntax. Use manual `vec()` construction instead:
@@ -579,9 +590,8 @@ uv = norm;
 // Basic sample — store result as vec4, access channels inline only
 luma = sample(in1, uv).x;
 
-// Wrap behavior (manual, since boundmode GenExpr syntax is broken)
-uv_wrapped = vec(fract(uv.x + offset), fract(uv.y));
-col = sample(in1, uv_wrapped);
+// Explicit edge behavior: say what you want rather than rely on the default
+col = sample(in1, vec(uv.x + offset, uv.y), boundmode="clamp");   // or "wrap"
 
 // Aspect-correct UV for generators
 aspect = dim.x / dim.y;
@@ -1105,7 +1115,7 @@ When reviewing any codebox, scan for these in order:
 - [ ] **`snoise()` or `cycle()`** — replace with sin hash or `sin(x * twopi)` respectively
 - [ ] **`cell` used as an integer index** — it is `norm * (dim - 1)` on jit.gl.pix; use `floor(norm.x * dim.x)` for integer indices
 - [ ] **Variable names shadowing operators** — `cell`, `in`, `norm`, `snorm`, `dim` as variable names produce silent wrong output; rename with suffix (e.g. `cell_idx`, `band_idx`)
-- [ ] **`boundmode` in GenExpr syntax** — silently ignored; use `fract()` or `wrap()` on coordinate before sampling
+- [ ] **Out-of-range `sample()`/`nearest()` coordinates** — wrap by default (pix-to-pix); exact 0.0/1.0 is a seam (x reads the first texel, y the last row); want an edge, pass `boundmode="clamp"`; check `boundmode` spelling (a typo is silent) and that `"mirror"` is not relied on for y (2026-11-14)
 - [ ] **`dim` used for normalized sizing** — `dim` returns pixel dimensions, not [0,1]; use `norm` for normalized coords
 - [ ] **`sqrt()` on potentially negative values** — valid but returns NaN for negative input; guard with `max(x, 0.0)` before `sqrt()`
 - [ ] **User-defined functions declared after main body** — functions must come before `Param` declarations and all statements; move them to the top

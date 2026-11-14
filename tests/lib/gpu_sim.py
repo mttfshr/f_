@@ -26,7 +26,9 @@ no seam blend. Vertical (y) wraps too but with the seam flipped (probe P7): -0.2
 while exactly 0.0 and exactly 1.0 both read the LAST row; that is 1 - fract(1 - v). A coordinate exactly on a
 seam is a knife edge (stereo's pole texel on odd sizes is 1 ulp from the other column): avoid it in tests.
 OOB_DEFAULT = (x, y) sets it; sample(..., oob=) overrides per call; wrap=True is a different, manual thing
-(periodic taps, a codebox that fract()s its own coordinate). nearest() is unchanged (clamp, not probed).
+(periodic taps, a codebox that fract()s its own coordinate). nearest() wraps the same way (probe B2, tests/records/bench_boundmode_probes.py, 2026-11-14) but this sim's
+nearest() still clamps: not yet updated. The codebox keyword boundmode="clamp"/"wrap" works on both axes;
+"mirror" mirrors x only (B1).
 
 What this can't tell you: compile limits (loop unrolling, instruction counts),
 fps, GPU trig precision, @adapt/@dim behavior. Those stay Max questions.
