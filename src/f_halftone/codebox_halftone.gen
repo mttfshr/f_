@@ -13,8 +13,8 @@
 //   position along its centreline row. The reads are in the main body, the tone is passed to the functions (gate G8).
 // screen: 0 = Dot, 1 = Line. Angles in degrees. bypass_gate = 1: the (zapped) source.
 // Non-finite input is zapped to 0: abs(x) < 1e30 with switch() (NaN == NaN is TRUE on this GPU).
-// The render size is read from the first inlet's size, which is the render size in a chain; a bench job must feed a
-// first input of the output's size.
+// The render size comes from the Params `width` and `height` (render_dim; the size global reads 1 inside a live Vsynth pix,
+// build/spec.md). A bench job must set both to the output's size.
 zap(xv) {
     return switch(abs(xv) < 1e30, xv, 0);
 }
@@ -80,14 +80,16 @@ Param phase_b_x(0);
 Param phase_b_y(0);
 Param softness(0.1);
 Param bypass_gate(0);
+Param width(1920);
+Param height(1080);
 
 zr = zap(sample(in1, norm).x);
 zg = zap(sample(in1, norm).y);
 zb = zap(sample(in1, norm).z);
 za = zap(sample(in1, norm).w);
 
-wd = dim.x;
-ht = dim.y;
+wd = max(width, 1);
+ht = max(height, 1);
 asp = wd / ht;
 px = (norm.x - 0.5) * asp;
 py = norm.y - 0.5;
