@@ -778,6 +778,45 @@ def mod_instate_obj_id(i):
     """vs_inState for modulation inlet i."""
     return f"obj-{100 + i * 3 + 1}"
 
+# mod_inlets "static" (2026-11-14, f_halftone T035; plan ADR-10 "Blue texture load", design approved by Matt): a pix inlet fed
+# from a file shipped with the package (in package/media/, found by name on Max's search path) instead of from an outer inlet.
+# The entry gets no outer inlet and no vs_inState; at load, loadbang -> t b b reads the file into a jit.matrix (right outlet:
+# `read <file>, bang`), the matrix goes into a jit.gl.texture, then the left outlet bangs the texture so it sends its name to the
+# pix inlet.  NOT YET VERIFIED IN MAX (inferred): that the texture's name reaches the pix when the GL context does not exist
+# yet at load, and that the texture keeps its data across a context rebuild.
+STATIC_KEYS = {"file", "planes", "type", "dim"}
+
+
+def static_obj_id(i, part):
+    """Boxes of a static mod inlet i: part in ("load", "trig", "msg", "matrix", "tex")."""
+    return f"obj-static{i}-{part}"
+
+
+def static_texture_boxes(i, st):
+    x, y = 30.0 + (i + 1) * 60.0, 30.0
+    planes, typ, dim = st.get("planes", 4), st.get("type", "char"), st["dim"]
+    return [
+        box(static_obj_id(i, "load"), maxclass="newobj", numinlets=1, numoutlets=1, outlettype=["bang"],
+            patching_rect=[x, y, 58.0, 22.0], text="loadbang"),
+        box(static_obj_id(i, "trig"), maxclass="newobj", numinlets=1, numoutlets=2, outlettype=["bang", "bang"],
+            patching_rect=[x, y + 30.0, 40.0, 22.0], text="t b b"),
+        box(static_obj_id(i, "msg"), maxclass="message", numinlets=2, numoutlets=1, outlettype=[""],
+            patching_rect=[x + 30.0, y + 60.0, 160.0, 22.0], text=f"read {st['file']}, bang"),
+        box(static_obj_id(i, "matrix"), maxclass="newobj", numinlets=1, numoutlets=2, outlettype=["jit_matrix", ""],
+            patching_rect=[x + 30.0, y + 90.0, 160.0, 22.0], text=f"jit.matrix {planes} {typ} {dim[0]} {dim[1]}"),
+        box(static_obj_id(i, "tex"), maxclass="newobj", numinlets=1, numoutlets=2, outlettype=["jit_gl_texture", ""],
+            patching_rect=[x, y + 120.0, 240.0, 22.0], text=f"jit.gl.texture vsynth @type {typ} @adapt 1 @filter nearest"),
+    ]
+
+
+def static_texture_lines(i):
+    return [wire(static_obj_id(i, "load"), 0, static_obj_id(i, "trig"), 0),
+            wire(static_obj_id(i, "trig"), 1, static_obj_id(i, "msg"), 0),
+            wire(static_obj_id(i, "msg"), 0, static_obj_id(i, "matrix"), 0),
+            wire(static_obj_id(i, "matrix"), 0, static_obj_id(i, "tex"), 0),
+            wire(static_obj_id(i, "trig"), 0, static_obj_id(i, "tex"), 0)]
+
+
 def mod_inlet_boxes(mod_inlets, driving_inlet=False):
     """Generate inlet + optional vs_inState boxes for each modulation inlet.
     If vs_instate is False, no vs_inState box is generated (inlet routes directly to pix).
@@ -794,6 +833,9 @@ def mod_inlet_boxes(mod_inlets, driving_inlet=False):
     """
     boxes = []
     for i, mi in enumerate(mod_inlets):
+        if "static" in mi:                     # fed from a shipped file: no outer inlet, no vs_inState
+            boxes.extend(static_texture_boxes(i, mi["static"]))
+            continue
         instate_id  = mod_instate_obj_id(i)
         label       = mi.get("label", f"mod {i+1}")
         use_instate = mi.get("vs_instate", True)
@@ -843,6 +885,10 @@ def mod_inlet_lines(mod_inlets, driving_inlet=False, fan=None):
     # a tagged entry is fed by the tag demux (TAG_DEMUX), one demux outlet per tag in declaration order
     tag_k = {i_: k_ for k_, i_ in enumerate(i2 for i2, m2 in enumerate(mod_inlets) if m2.get("tag"))}
     for i, mi in enumerate(mod_inlets):
+        if "static" in mi:                     # the file's texture -> pix inlet i + offset
+            lines.extend(static_texture_lines(i))
+            lines.append(wire(static_obj_id(i, "tex"), 0, OBJ_PIX, i + offset))
+            continue
         instate_id  = mod_instate_obj_id(i)
         use_instate = mi.get("vs_instate", True)
         # mod_inlets[0] under driving_inlet has no dedicated inlet object
@@ -1932,9 +1978,30 @@ def build(defn, debug=None, side_files=None):
     mod_fan = {}
     for i_, mi_ in enumerate(mod_inlets or []):
         what = f"mod_inlets[{i_}]"
-        unknown = set(mi_) - {"label", "vs_instate", "state_param", "fanout", "state_nodes", "tag"}
+        unknown = set(mi_) - {"label", "vs_instate", "state_param", "fanout", "state_nodes", "tag", "static"}
         if unknown:
             raise ValueError(f"{what}: unknown key(s) {sorted(unknown)}")
+        if "static" in mi_:
+            st = mi_["static"]
+            others = sorted(set(mi_) - {"label", "static"})
+            if others:
+                raise ValueError(f"{what}: a static entry takes only label and static, not {others}")
+            if defn.get("driving_inlet", False) and i_ == 0:
+                raise ValueError(f"{what}: the driving texture cannot be static")
+            if not isinstance(st, dict) or set(st) - STATIC_KEYS or "file" not in st or "dim" not in st:
+                raise ValueError(f"{what}.static must be a dict with file and dim (and optional planes, type), not {st!r}")
+            f_ = st["file"]
+            if not isinstance(f_, str) or not f_ or len(f_.split()) != 1 or "/" in f_:
+                raise ValueError(f"{what}.static.file must be a bare file name without spaces, not {f_!r}")
+            d_ = st["dim"]
+            if not (isinstance(d_, (list, tuple)) and len(d_) == 2 and all(isinstance(v, int) and v > 0 for v in d_)):
+                raise ValueError(f"{what}.static.dim must be two positive ints, not {d_!r}")
+            if st.get("type", "char") not in ("char", "long", "float32", "float64"):
+                raise ValueError(f"{what}.static.type must be char, long, float32 or float64, not {st.get('type')!r}")
+            if st.get("planes", 4) not in (1, 2, 3, 4):
+                raise ValueError(f"{what}.static.planes must be 1 to 4, not {st.get('planes')!r}")
+            if not (Path(__file__).parent.parent / "package" / "media" / f_).exists():
+                raise ValueError(f"{what}.static.file {f_!r} is not in package/media/")
         if "fanout" in mi_:
             fo = mi_["fanout"]
             if (not isinstance(fo, list) or not fo
