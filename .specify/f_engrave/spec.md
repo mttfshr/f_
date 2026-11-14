@@ -17,6 +17,7 @@ _Origin: `ideas/f_print_styles.md` (stage 2, the form-following line module for 
 - **Plates are RGB channels, up to three;** alpha is not a plate. Each plate carries one ink's tone.
 - **Fixed-angle screens belong to `f_halftone`.** Marks that follow the image's form belong here (the tentative decision in the idea file).
 - **Dot-stretching is not this module's job;** the continuous, evenly spaced line field is.
+- **Angle from a texture belongs here, not in `f_halftone` (Matt, 2026-11-14).** Lines whose angle follows an incoming texture (an angle map, not a structure tensor) are this module's problem: modulating `f_halftone`'s lattice angle per pixel tears it away from the frame centre, since a rotation by d moves a pixel |p| d / pitch cells (about 1.3 cells per degree at the frame edge at pitch 0.012; inferred from the lattice formula, not measured), which is the same tear `G-engrave-method` must solve for a tensor. An angle map is a constant-coherence tensor with that axis, so it can enter as a converter upstream (angle texture to raw tensor) or as a second direction mode on in0; which one is open, and waits on the method (Phase 0). The method candidates should be judged on an angle-map input as well as a tensor. Dots following a field are not covered by either module: a dot lattice needs two continuous phases, which a varying field generally cannot keep (lattice defects; inferred).
 
 ### Preliminary decisions taken by Claude (Matt, 2026-11-08: "accept your own recommendations for preliminary gates")
 
