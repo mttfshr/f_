@@ -117,8 +117,9 @@ def matches(got, label, **deltas):
     check(f"{label}: alpha is the source's", float(np.abs(got[..., 3] - SRC[..., 3]).max()), 1e-6)
 
 
-def differs(a, b, label):
-    check(f"{label}: the frame changed", float(np.abs(a[..., :3] - b[..., :3]).max() < 0.5), 0.0)
+def differs(a, b, label, step=0.5):
+    """step: the smallest change that counts; at Levels L the output moves in steps of 1 / (L - 1)."""
+    check(f"{label}: the frame changed", float(np.abs(a[..., :3] - b[..., :3]).max() < step), 0.0)
 
 
 def test_load_touching_nothing():
@@ -199,7 +200,7 @@ def test_blue_random_levels():
         dmean = max(abs(float(got[..., c].mean()) - float(want[..., c].mean())) for c in range(3))
         note(f"{label}: worst channel mean minus the mirror's", dmean)
         check(f"{label}: mean output is the mirror's", dmean, 0.02)
-    differs(rnd4, blue4, "Random")
+    differs(rnd4, blue4, "Random", step=0.3)   # Levels 4: steps of 1/3
 
 
 def test_plate_menu():
