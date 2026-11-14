@@ -2,6 +2,14 @@
 
 Entries moved out of `HANDOFF.md` on 2026-10-31, 2026-11-04, 2026-11-08, 2026-11-10, 2026-11-11, 2026-11-12, 2026-11-13 and 2026-11-14 (twice) (newest first, as they were). Not read at session start: grep it for history. The full pre-trim `HANDOFF.md` is also in git (commit 76c2ab8).
 
+## 2026-11-14 (later): `f_halftone` per-plate pitch and the plate table; Bayer work benched (moved out of HANDOFF.md 2026-11-14, evening)
+
+- **Done and committed (Claude, with Matt's go), `ef5a3ae` to this commit:** P5 reversed (Matt): Pitch is a master with `scale_r/g/b` per plate (spec FR-022, plan ADR-9); T029a mirror and T029b codebox built; the panel is now a row of global dials over a plate table (Angle, Scale, X, Y number boxes per plate, row labels `lbl_plate_r/g/b`), Matt's layout ask.
+- **Benched:** codebox 15/15 (`tests/logs/20261114-085944-bench.log`), module 7/7 (`tests/logs/20261114-090015-bench.log`): Bayer follows Pitch, the Read button and the scales all match the mirror; a codebox function returning four values compiles.
+- **Matt, live:** the plate table passes; Bayer Cell mode "looks great".
+- **Held (Matt):** pitch modulated by a texture; Claude's notes (octave crossfade) are in spec G12.
+- **Not run:** the 1080p cost; `test_gates.py` this session. **Not touched:** Matt's `ideas/INDEX.md` edit and `ideas/f_util_row_engine.md`.
+
 ## 2026-11-14: `f_halftone` finished its build tasks; Bayer reworked; plate inlets specified (moved out of HANDOFF.md 2026-11-14, later)
 
 - **Done and committed (Claude, with Matt's go), `cbe4492` to `5b34ad8`:** T030 ticked (Matt's look); T002 decided (straight screens); T023-T025 and T016b built and benched (shape, jitter, Threshold, Bayer, Single); a Bayer scale dial added then dropped for Pitch (Matt); the Bayer Cell / Pixel button; the plate-inlet feature written into spec, plan and tasks with Matt's answers (T026 closed).

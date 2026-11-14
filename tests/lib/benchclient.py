@@ -324,6 +324,20 @@ def _cleanup_genjits(keep):
             old.unlink()
 
 
+def _read_settled(read, path, tries=40, wait_s=0.05):
+    """Read an output .jxf, waiting up to tries * wait_s for Max to finish writing it. 2026-11-14 (f_halftone T028 bench):
+    result.json said ok while out.jxf still had a zero FORM size (the header is written last), so the read raced the write.
+    Any JxfError (an incomplete file is one) is retried; the last attempt raises as before, so a bad file still fails."""
+    import time
+    import jxf
+    for _ in range(tries - 1):
+        try:
+            return read(path)
+        except jxf.JxfError:
+            time.sleep(wait_s)
+    return read(path)
+
+
 def run_pass(code, inputs, dim=None, params=None, warmup=5, timeout_ms=10000,
              compile=False, raw=False, keep_genjit=False, pix_type="float32",
              all_outputs=False):
@@ -355,7 +369,7 @@ def run_pass(code, inputs, dim=None, params=None, warmup=5, timeout_ms=10000,
     outs = []
     for k in range(1, 5):
         path = job_dir / ("out.jxf" if k == 1 else f"out{k}.jxf")
-        outs.append(read(path) if path.exists() else None)
+        outs.append(_read_settled(read, path) if path.exists() else None)
     result["job_dir"] = str(job_dir)
     return (outs if all_outputs else outs[0]), result
 
