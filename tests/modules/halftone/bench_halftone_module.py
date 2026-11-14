@@ -42,7 +42,8 @@ SETTLE = 30            # frames after a control message
 TOL = 2e-3
 FRAC_BAD = 5e-3
 DEFAULTS = {"screen": 0, "pitch": 0.012, "softness": 0.1, "dot_shape": 0.0, "jitter": 0.0, "seed": 1, "level": 0.5, "plate_mode": 0, "bayer_cell": 1, "angle_r": 15.0, "angle_g": 75.0, "angle_b": 45.0,
-            "phase_r_x": 0.0, "phase_r_y": 0.0, "phase_g_x": 0.0, "phase_g_y": 0.0, "phase_b_x": 0.0, "phase_b_y": 0.0}
+            "phase_r_x": 0.0, "phase_r_y": 0.0, "phase_g_x": 0.0, "phase_g_y": 0.0, "phase_b_x": 0.0, "phase_b_y": 0.0,
+            "scale_r": 1.0, "scale_g": 1.0, "scale_b": 1.0}
 SCREENS = {0: "dot", 1: "line", 2: "threshold", 3: "bayer"}
 
 
@@ -95,6 +96,7 @@ def matches(got, label, **deltas):
                           angles=(p["angle_r"], p["angle_g"], p["angle_b"]),
                           phases=((p["phase_r_x"], p["phase_r_y"]), (p["phase_g_x"], p["phase_g_y"]),
                                   (p["phase_b_x"], p["phase_b_y"])),
+                          scales=(p["scale_r"], p["scale_g"], p["scale_b"]),
                           softness=p["softness"], shape=p["dot_shape"], jitter=p["jitter"],
                           seed=int(p["seed"]), level=p["level"], bayer_read="cell" if p["bayer_cell"] > 0.5 else "pixel",
                           plate_mode="single" if p["plate_mode"] > 0.5 else "channels")
@@ -209,6 +211,23 @@ def test_phase_dials_reach_their_own_plate():
         sent[name] = val
         before = after
     matches(before, "all six phases moved", **sent)
+
+
+def test_scale_boxes_reach_their_own_plate():
+    """T029b (added 2026-11-14): each Scale number box changes its own plate only."""
+    moves = [("scale_r", 0, 2.0), ("scale_g", 1, 0.5), ("scale_b", 2, 1.5)]
+    segs = [{"params": [["pitch", 0.03]], "wait": 60, "snap": "base"}]
+    segs += [{"params": [[name, val]], "wait": SETTLE, "snap": name} for name, _, val in moves]
+    f = job(segs)
+    before, sent = snap(f, "base"), {"pitch": 0.03}
+    for name, c, val in moves:
+        after = snap(f, name)
+        others = [k for k in range(3) if k != c]
+        check(f"{name}: its plate changed", float(np.abs(after[..., c] - before[..., c]).max() < 0.5), 0.0)
+        check(f"{name}: the other plates exactly unchanged", float(np.abs(after[..., others] - before[..., others]).max()), 0.0)
+        sent[name] = val
+        before = after
+    matches(before, "all three scales moved", **sent)
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-"""test_halftone.py -- tier-1 tests for the not-yet-built f_halftone module (T017, T016c, T016a, T018 in part; SC-001 to SC-007).
+"""test_halftone.py -- tier-1 tests for the not-yet-built f_halftone module (T017, T016c, T016a, T018 in part, T029a; SC-001 to SC-007, FR-022).
 
 Ground truth is independent of the mirror where it can be: the area law (mean coverage of a flat patch = its tone), a
 Monte Carlo area for the round-dot function A(r), the recursive Bayer matrix, the FFT of the output for the lattice's
@@ -251,6 +251,33 @@ def test_phase():
     check("line at tone 0.5: a half-pitch shift is the complement", err(line0 + line5, 1), 1e-3)
 
 
+def test_pitch_scale():
+    """FR-022, T029a: each plate's pitch is pitch * its scale; scale 1 is today's output; Single uses scale B."""
+    rng = np.random.default_rng(11)
+    pic = rng.uniform(0, 1, (96, 128, 4)).astype(F32)
+    check("scales (1, 1, 1) = the default exactly", err(halftone_stage(pic, pitch=0.09, scales=(1, 1, 1)), halftone_stage(pic, pitch=0.09)), 0)
+    for screen in ("dot", "line", "bayer"):
+        for jit in ((0.0, 0.6) if screen == "dot" else (0.0,)):
+            kw = dict(screen=screen, jitter=jit, softness=0.05)
+            a = halftone_stage(pic, pitch=0.06, scales=(2, 1, 0.5), **kw)
+            check(f"{screen} jitter {jit}: R at scale 2 = R at pitch doubled", err(a[..., 0], halftone_stage(pic, pitch=0.12, **kw)[..., 0]), 0)
+            check(f"{screen} jitter {jit}: B at scale 0.5 = B at pitch halved", err(a[..., 2], halftone_stage(pic, pitch=0.03, **kw)[..., 2]), 0)
+            check(f"{screen} jitter {jit}: G at scale 1 unchanged", err(a[..., 1], halftone_stage(pic, pitch=0.06, **kw)[..., 1]), 0)
+    k_r, _ = _peak(halftone_stage(flat(0.5, 256, 256), screen="line", pitch=1 / 16, angles=(0, 0, 0), softness=0.0, scales=(2, 1, 1))[..., 0])
+    k_g, _ = _peak(halftone_stage(flat(0.5, 256, 256), screen="line", pitch=1 / 16, angles=(0, 0, 0), softness=0.0, scales=(2, 1, 1))[..., 1])
+    check("SC-004: R at scale 2 has 8 cycles per frame", abs(k_r - 8), 0)
+    check("SC-004: G at scale 1 keeps 16", abs(k_g - 16), 0)
+    for sc in (0.5, 2.0):
+        o = halftone_stage(flat(0.4), pitch=0.06, softness=0.0, scales=(sc, sc, sc))
+        check(f"area law at scale {sc}: mean coverage = tone", abs(float(o[..., :3].mean()) - 0.4), 0.02)
+    teal = flat((0.0, 0.3, 0.6), 192, 192)
+    s_b = halftone_stage(teal, plate_mode="single", pitch=0.07, softness=0.0, scales=(1, 1, 2))
+    ref = halftone_stage(flat(0.6, 192, 192), pitch=0.14, softness=0.0)[..., 2]
+    check("Single at scale B 2 = the blue plate at pitch doubled", err(s_b[..., 2], ref), 1e-6)
+    s_rg = halftone_stage(teal, plate_mode="single", pitch=0.07, softness=0.0, scales=(3, 0.5, 1))
+    check("Single ignores scales R and G", err(s_rg, halftone_stage(teal, plate_mode="single", pitch=0.07, softness=0.0)), 0)
+
+
 def test_single_plate():
     """T016a: Single reads the texture as one plate: one set of marks, in the plate's colour at full brightness."""
     teal = flat((0.0, 0.3, 0.6), 192, 192)
@@ -340,6 +367,8 @@ def test_mutations():
         "ignore_alpha": (al, dict(pitch=0.1)),
         "single_reads_r": (flat((0.0, 0.3, 0.6), 64, 64), dict(pitch=0.1, plate_mode="single")),
         "line_centre_tone": (ramp(256, 64), dict(pitch=0.3, screen="line", angles=(0, 0, 0), softness=0.0)),
+        "ignore_scale": (flat(0.4, 64, 64), dict(pitch=0.1, scales=(2, 1, 0.5))),
+        "shared_scale": (flat(0.4, 64, 64), dict(pitch=0.1, scales=(1, 2, 0.5))),
     }
     for bug, (src, kw) in cases.items():
         a = halftone_stage(src, **kw)

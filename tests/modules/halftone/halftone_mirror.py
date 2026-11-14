@@ -27,7 +27,11 @@ Alpha is the source's. Non-finite input is zapped to 0 first (FR-011). Bypass pa
 connected) returns None: the build supplies black with alpha 0 (vs_black), which then screens to black.
 
 `bug` values are mutations the tests must catch: "no_extremes", "no_zap", "wrong_area" ((2r)^2 instead of A(r)), "per_pixel_tone",
-"ignore_phase", "shared_phase", "ignore_alpha", "single_reads_r", "line_centre_tone".
+"ignore_phase", "shared_phase", "ignore_alpha", "single_reads_r", "line_centre_tone", "ignore_scale", "shared_scale".
+
+Per-plate pitch scale (Matt, 2026-11-14; spec FR-022, T029a): each plate's pitch is pitch * scale (scales R, G, B; Single uses
+scale B), formed in float32 as the codebox does; everything that follows the pitch (lattice, phase, edge ramp, jitter, Bayer
+cell) follows the plate's own pitch.
 """
 import numpy as np
 
@@ -218,7 +222,15 @@ def plate(read, W, H, *, kind, pitch, theta, phase, softness, shape, jitter, see
     return best.astype(F32), out_i, out_j
 
 
-def halftone_stage(src, *, screen="dot", pitch=0.012, angles=(15.0, 75.0, 45.0), phases=((0, 0), (0, 0), (0, 0)),
+def _plate_pitch(pitch, scales, ch, bug=None):
+    """The plate's own pitch (FR-022): pitch * scale in float32, as the codebox forms it."""
+    if bug == "ignore_scale":
+        return F32(pitch)
+    sc = scales[0] if bug == "shared_scale" else scales[ch]
+    return F32(F32(pitch) * F32(sc))
+
+
+def halftone_stage(src, *, screen="dot", pitch=0.012, angles=(15.0, 75.0, 45.0), phases=((0, 0), (0, 0), (0, 0)), scales=(1.0, 1.0, 1.0),
                    softness=0.1, shape=0.0, jitter=0.0, seed=1, level=0.5, bayer_read="cell", plate_mode="channels",
                    tone_mode="center", bypass=False, bug=None):
     """src: (H, W, 4) float32 (R, G, B, A) or None. Returns (H, W, 4) float32."""
@@ -231,13 +243,13 @@ def halftone_stage(src, *, screen="dot", pitch=0.012, angles=(15.0, 75.0, 45.0),
         return z.astype(F32)
     out = np.zeros((H, W, 4), dtype=F32)
     kind = {"dot": "dot", "line": "line", "threshold": "threshold", "bayer": "bayer"}[screen]
-    kw = dict(kind=kind, pitch=pitch, softness=softness, shape=shape, jitter=jitter, seed=seed, level=level, bayer_read=bayer_read,
+    kw = dict(kind=kind, softness=softness, shape=shape, jitter=jitter, seed=seed, level=level, bayer_read=bayer_read,
               tone_mode=tone_mode, bug=bug)
     if plate_mode == "single":
         ch = 0 if bug == "single_reads_r" else 2
         th, ph = angles[ch], phases[ch]
         read = lambda i, j: np.max(z[j, i, :3], axis=-1)   # noqa: E731
-        cov, ti, tj = plate(read, W, H, theta=th, phase=ph, **kw)
+        cov, ti, tj = plate(read, W, H, theta=th, phase=ph, pitch=_plate_pitch(pitch, scales, ch, bug), **kw)
         t = np.max(z[tj, ti, :3], axis=-1)
         col = np.where(t[..., None] > 0, z[tj, ti, :3] / np.maximum(t, F32(1e-12))[..., None], F32(0))
         out[..., :3] = (col * cov[..., None]).astype(F32)
@@ -245,7 +257,7 @@ def halftone_stage(src, *, screen="dot", pitch=0.012, angles=(15.0, 75.0, 45.0),
         for ch in range(3):
             ph = phases[0] if bug == "shared_phase" else phases[ch]
             read = lambda i, j, ch=ch: z[j, i, ch]   # noqa: E731
-            cov, _, _ = plate(read, W, H, theta=angles[ch], phase=ph, **kw)
+            cov, _, _ = plate(read, W, H, theta=angles[ch], phase=ph, pitch=_plate_pitch(pitch, scales, ch, bug), **kw)
             out[..., ch] = cov
     out[..., 3] = F32(1) if bug == "ignore_alpha" else z[..., 3]
     return out.astype(F32)

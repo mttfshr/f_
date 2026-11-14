@@ -52,7 +52,8 @@ FRAC_BAD = 5e-3
 PITCH = 16.0 / H       # 16 texels
 PINNED = {"screen": 0.0, "pitch": PITCH, "angle_r": 15.0, "angle_g": 75.0, "angle_b": 45.0,
           "phase_r_x": 0.0, "phase_r_y": 0.0, "phase_g_x": 0.0, "phase_g_y": 0.0, "phase_b_x": 0.0, "phase_b_y": 0.0,
-          "softness": 0.0, "dot_shape": 0.0, "jitter": 0.0, "seed": 1.0, "level": 0.5, "plate_mode": 0.0, "bayer_cell": 1.0, "bypass_gate": 0.0}
+          "softness": 0.0, "dot_shape": 0.0, "jitter": 0.0, "seed": 1.0, "level": 0.5, "plate_mode": 0.0, "bayer_cell": 1.0, "bypass_gate": 0.0,
+          "scale_r": 1.0, "scale_g": 1.0, "scale_b": 1.0}
 SCREENS = {0: "dot", 1: "line", 2: "threshold", 3: "bayer"}
 LATTICE = {0: "dot", 1: "line"}
 
@@ -105,6 +106,7 @@ def mirror(src, **deltas):
                           angles=(p["angle_r"], p["angle_g"], p["angle_b"]),
                           phases=((p["phase_r_x"], p["phase_r_y"]), (p["phase_g_x"], p["phase_g_y"]),
                                   (p["phase_b_x"], p["phase_b_y"])),
+                          scales=(p["scale_r"], p["scale_g"], p["scale_b"]),
                           softness=p["softness"], shape=p["dot_shape"], jitter=p["jitter"], seed=int(p["seed"]),
                           level=p["level"], bayer_read="cell" if p["bayer_cell"] > 0.5 else "pixel", plate_mode="single" if p["plate_mode"] > 0.5 else "channels",
                           bypass=bool(p["bypass_gate"]))
@@ -194,6 +196,23 @@ def test_phase_and_plate_independence():
     a, b = gpu(p), gpu(p, angle_r=33.0)
     check("angle r: green and blue exactly unchanged", mx(a[..., 1:3], b[..., 1:3]), 0.0)
     check("angle r: red changes", float(mx(a[..., 0], b[..., 0]) < 0.5), 0.0)
+
+
+def test_pitch_scale():
+    """T029b (added 2026-11-14, FR-022): each plate's pitch is pitch * its scale; the scale reaches the lattice, the edge ramp,
+    jitter and Bayer's cell. Bayer goes through bay_cell, a function returning four values (inferred to compile)."""
+    t, p = flat(0.3, 0.5, 0.8), photo()
+    sc = dict(scale_r=2.0, scale_g=0.5, scale_b=1.5)
+    everywhere("dot, flat, scales (2, 0.5, 1.5)", t, **sc)
+    mostly("dot, picture, scales (2, 0.5, 1.5)", p, **sc)
+    mostly("line, picture, scales (2, 0.5, 1.5)", p, screen=1.0, **sc)
+    everywhere("bayer, picture, scales (2, 0.5, 1.5) at pitch 24 pixels", p, screen=3.0, pitch=24.0 / H, **sc)
+    jittered("dot, picture, jitter 1, scales (2, 0.5, 1.5)", p, jitter=1.0, **sc)
+    mostly("single, dot, spot plates, scale b 2", spot(), plate_mode=1.0, scale_b=2.0)
+    base, r2 = gpu(p), gpu(p, scale_r=2.0)
+    check("scale r: green and blue exactly unchanged", mx(r2[..., 1:3], base[..., 1:3]), 0.0)
+    check("scale r: red changes", float(mx(r2[..., 0], base[..., 0]) < 0.5), 0.0)
+    check("scales 1: the frame is the unscaled one", mx(gpu(p, scale_r=1.0, scale_g=1.0, scale_b=1.0), base), 0.0)
 
 
 def test_shape():

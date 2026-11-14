@@ -171,7 +171,7 @@ A performer connects `f_separate`'s three plate outlets to `f_halftone`'s plate 
 - **FR-019**: In Plates mode the output MUST be the sum of the three screened plates, clamped to 0..1 (preliminary, Claude: as `f_separate`'s preview outlet sums its plates, the additive-light model of `f_separate`'s spec; P7 keeps the output bounded).
 - **FR-021** *(Matt, 2026-11-14)*: In Plates mode: Plates is chosen from the menu only (connecting a plate inlet does not switch modes); inlet 0 is ignored; alpha is the largest of the three plates' alphas; bypass passes inlet 0 (P12), so with nothing on inlet 0 a bypassed Plates module shows black.
 - **FR-020**: An unconnected plate inlet MUST contribute nothing (an unconnected `jit.gl.pix` inlet reads black with alpha 1: `skills/jit-gen-codebox`, verified 2026-10-07; Vsynth's own unconnected handling to be checked on the bench).
-- **FR-022** *(Matt, 2026-11-14; not built)*: Each plate's lattice period MUST be `pitch × scale_<plate>` (`scale_r`, `scale_g`, `scale_b`, 0.25 to 4, default 1, so the defaults give today's output exactly). The plate's phase stays in units of its own pitch (FR-016), jitter displaces by its own cells, and Bayer's cell follows its own pitch. Single uses `scale_b` (as FR-016 uses `phase_b`). In Plates mode the three scales serve plates 1 to 3 and their labels switch with the angle and phase labels (FR-018). The smallest usable pitch (G5, about 10 texels) applies to each plate's own pitch.
+- **FR-022** *(Matt, 2026-11-14; not built)*: Each plate's lattice period MUST be `pitch × scale_<plate>` (`scale_r`, `scale_g`, `scale_b`, 0.25 to 4, default 1, so the defaults give today's output exactly). The plate's phase stays in units of its own pitch (FR-016), jitter displaces by its own cells, and Bayer's cell follows its own pitch. Single uses `scale_b` (as FR-016 uses `phase_b`). In Plates mode the three scales serve plates 1 to 3. Panel (Matt, 2026-11-14): one table row per plate (Angle, Scale, X, Y number boxes), so the plate's row label is the one label that reads R / G / B or 1 / 2 / 3 (FR-018). The smallest usable pitch (G5, about 10 texels) applies to each plate's own pitch.
 - **FR-015**: Standard behaviour: `#0_`-scoped names, `routepass` / `route` / `autopattr` with `varname`, `definition.py` as the source of truth.
 
 ### Non-Functional Requirements
@@ -186,7 +186,7 @@ A performer connects `f_separate`'s three plate outlets to `f_halftone`'s plate 
 |---|---|---|---|
 | `screen` | Dot / Line / Threshold / Bayer | Dot | Threshold and Bayer are P2 |
 | `pitch` | frame units | 0.012 | lattice period; the smallest usable value is G5 |
-| `scale_r`, `scale_g`, `scale_b` | 0.25-4 | 1 | per-plate multiplier on `pitch` (FR-022, Matt 2026-11-14; not built); dial curve exponent 2 puts ×1 near the middle (Claude, preliminary) |
+| `scale_r`, `scale_g`, `scale_b` | 0.25-4 | 1 | per-plate multiplier on `pitch` (FR-022, Matt 2026-11-14; not built); a number box in the plate table, linear |
 | `angle_r`, `angle_g`, `angle_b` | degrees | 15, 75, 45 | per plate (P6) |
 | `phase_r_x`, `phase_r_y`, `phase_g_x`, `phase_g_y`, `phase_b_x`, `phase_b_y` | -1 to 1 pitches | 0 | per-plate lattice shift (FR-016); six dials, so a candidate for a compact pair control (`G-ui-density`) |
 | `softness` | 0-1 | 0.1 | edge ramp width |

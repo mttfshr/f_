@@ -7,8 +7,10 @@ Stateless, one stage. A texture processor: one inlet, one outlet; the output fol
 `width` and `height`). Spec, plan and tasks: .specify/f_halftone/{spec,plan,tasks}.md.
 Mirror: tests/modules/halftone/halftone_mirror.py.
 
-The panel below is a first placement by Claude (2026-11-13), not Matt's layout (tasks T013, gate G-ui-density): the type menu
-in the title bar, Pitch over Soft on the left, then one pair of columns per plate with the angle above its x / y phase.
+The panel (Matt, 2026-11-14: "put x, y, angle and scale for each plate together", in the row style of f_util_vary; sizes
+are Claude's): the Screen and Plate menus in the title bar, one row of global dials (Pitch, Soft, Shape, Jitter, Level, then
+Seed and the Bayer Read button), and below it a plate table, one row per plate (R, G, B) of number boxes: Angle, Scale, X, Y.
+The row labels are comments with varnames `lbl_plate_r/g/b`, so Plates mode (T028) can set them to 1 / 2 / 3.
 """
 
 patcher = {
@@ -27,7 +29,7 @@ patcher = {
     "bypass_mode":         "param",
 
     "presentation_width":  290,
-    "presentation_height": 212,
+    "presentation_height": 164,
 
     "outlets": [{"comment": "texture"}],
 
@@ -37,7 +39,13 @@ patcher = {
         {"name": "plate_mode", "type": "menu", "options": ["Channels", "Single"], "default": 0, "label": "Plate",
          "hint": "Channels: red, green and blue are three plates, each at its own angle. Single: the texture is one spot-color plate, screened once at the B angle and phase, in its own color (for f_separate's plates)"},
         {"name": "pitch", "type": "float", "min": 0.003, "max": 0.2, "default": 0.012, "label": "Pitch",
-         "hint": "Lattice period in frame heights. Below about 10 pixels the inked area stops tracking the tone. Bayer: the dither repeats once per pitch, in whole pixels"},
+         "hint": "Lattice period in frame heights, for all three plates (each plate's Scale multiplies it). Below about 10 pixels the inked area stops tracking the tone. Bayer: the dither repeats once per pitch, in whole pixels"},
+        {"name": "scale_r", "type": "float", "min": 0.25, "max": 4.0, "default": 1.0, "label": "Scale R", "widget": "numbox",
+         "hint": "Multiplies Pitch for the red plate alone, so the plates can run at different rulings (1 = Pitch)"},
+        {"name": "scale_g", "type": "float", "min": 0.25, "max": 4.0, "default": 1.0, "label": "Scale G", "widget": "numbox",
+         "hint": "Multiplies Pitch for the green plate alone (1 = Pitch)"},
+        {"name": "scale_b", "type": "float", "min": 0.25, "max": 4.0, "default": 1.0, "label": "Scale B", "widget": "numbox",
+         "hint": "Multiplies Pitch for the blue plate alone (1 = Pitch). Single uses this one"},
         {"name": "softness", "type": "float", "min": 0.0, "max": 1.0, "default": 0.1, "label": "Soft",
          "hint": "Width of the edge between ink and no ink. 0 is as sharp as one pixel allows"},
         {"name": "dot_shape", "type": "float", "min": 0.0, "max": 1.0, "default": 0.0, "label": "Shape",
@@ -50,23 +58,23 @@ patcher = {
          "hint": "Threshold only: the tone above which there is ink. Soft widens the cut"},
         {"name": "bayer_cell", "type": "text_button", "options": ["Pixel", "Cell"], "default": 1, "label": "Read",
          "hint": "Bayer only. Cell: one tone per dither cell, so each cell is wholly lit or dark (an ordered dither). Pixel: the tone per pixel, so the image cuts through each cell. The same at 1-pixel cells"},
-        {"name": "angle_r", "type": "float", "min": 0.0, "max": 180.0, "default": 15.0, "label": "Angle R",
+        {"name": "angle_r", "type": "float", "min": 0.0, "max": 180.0, "default": 15.0, "label": "Angle R", "widget": "numbox",
          "hint": "Screen angle of the red plate, in degrees"},
-        {"name": "angle_g", "type": "float", "min": 0.0, "max": 180.0, "default": 75.0, "label": "Angle G",
+        {"name": "angle_g", "type": "float", "min": 0.0, "max": 180.0, "default": 75.0, "label": "Angle G", "widget": "numbox",
          "hint": "Screen angle of the green plate, in degrees"},
-        {"name": "angle_b", "type": "float", "min": 0.0, "max": 180.0, "default": 45.0, "label": "Angle B",
+        {"name": "angle_b", "type": "float", "min": 0.0, "max": 180.0, "default": 45.0, "label": "Angle B", "widget": "numbox",
          "hint": "Screen angle of the blue plate, in degrees"},
-        {"name": "phase_r_x", "type": "float", "min": -1.0, "max": 1.0, "default": 0.0, "label": "R x",
+        {"name": "phase_r_x", "type": "float", "min": -1.0, "max": 1.0, "default": 0.0, "label": "R x", "widget": "numbox",
          "hint": "Shifts the red plate's lattice along its own x, in pitches. The marks stay whole and sharp"},
-        {"name": "phase_r_y", "type": "float", "min": -1.0, "max": 1.0, "default": 0.0, "label": "R y",
+        {"name": "phase_r_y", "type": "float", "min": -1.0, "max": 1.0, "default": 0.0, "label": "R y", "widget": "numbox",
          "hint": "Shifts the red plate's lattice along its own y, in pitches"},
-        {"name": "phase_g_x", "type": "float", "min": -1.0, "max": 1.0, "default": 0.0, "label": "G x",
+        {"name": "phase_g_x", "type": "float", "min": -1.0, "max": 1.0, "default": 0.0, "label": "G x", "widget": "numbox",
          "hint": "Shifts the green plate's lattice along its own x, in pitches"},
-        {"name": "phase_g_y", "type": "float", "min": -1.0, "max": 1.0, "default": 0.0, "label": "G y",
+        {"name": "phase_g_y", "type": "float", "min": -1.0, "max": 1.0, "default": 0.0, "label": "G y", "widget": "numbox",
          "hint": "Shifts the green plate's lattice along its own y, in pitches"},
-        {"name": "phase_b_x", "type": "float", "min": -1.0, "max": 1.0, "default": 0.0, "label": "B x",
+        {"name": "phase_b_x", "type": "float", "min": -1.0, "max": 1.0, "default": 0.0, "label": "B x", "widget": "numbox",
          "hint": "Shifts the blue plate's lattice along its own x, in pitches"},
-        {"name": "phase_b_y", "type": "float", "min": -1.0, "max": 1.0, "default": 0.0, "label": "B y",
+        {"name": "phase_b_y", "type": "float", "min": -1.0, "max": 1.0, "default": 0.0, "label": "B y", "widget": "numbox",
          "hint": "Shifts the blue plate's lattice along its own y, in pitches"},
         {"name": "bypass", "type": "bypass"},
 
@@ -81,15 +89,20 @@ patcher = {
 }
 
 
-# ---- the panel (Claude's first placement, 2026-11-13; T013) ----------------------------------------------------------
-_ROW_TOP, _ROW_LOW = 38.0, 100.0    # dial tops; a label sits 18 px above
-_COL_LEFT = 24.0                    # Pitch over Soft over Shape
-_PLATE_X = {"r": 70.0, "g": 151.0, "b": 232.0}   # center of each plate's x-phase column; y-phase is 37 px right
+# ---- the panel (Matt, 2026-11-14: a plate table in f_util_vary's row style; sizes and positions are Claude's) ------------
+_DIAL_TOP = 38.0                    # the global dials; a label sits 18 px above
+_GLOBAL_X = {"pitch": 22.0, "softness": 60.0, "dot_shape": 98.0, "jitter": 136.0, "level": 174.0}   # dial centers
+_SEED_X, _READ_X = 214.0, 258.0     # Seed numbox and the Bayer Read button centers
+_HEAD_Y = 86.0                      # the table's column headers
+_ROW_Y = {"r": 102.0, "g": 122.0, "b": 142.0}
+_ROW_LABEL_X = 22.0
+_COL_X = {"angle": 42.0, "scale": 100.0, "x": 158.0, "y": 216.0}       # left edge of each 50 px column
+_COL_W = 50.0
 
 
-def _dial_at(name, centre, y):
+def _dial_at(name, centre, y, lw=38.0):
     return {f"{name}.ctl":   {"presentation_rect": [centre - 13.5, y, 27.0, 43.0]},
-            f"{name}.label": {"presentation_rect": [centre - 25.0, y - 18.0, 50.0, 18.0]}}
+            f"{name}.label": {"presentation_rect": [centre - lw / 2, y - 18.0, lw, 18.0]}}
 
 
 _ov = {
@@ -99,22 +112,32 @@ _ov = {
     "plate_mode.ctl":   {"presentation_rect": [120.0, 3.0, 60.0, 15.0]},     # T016b: beside the Screen menu
     "plate_mode.label": {"hidden": 1},
 }
-_ov.update(_dial_at("pitch", _COL_LEFT, _ROW_TOP))
-_ov.update(_dial_at("softness", _COL_LEFT, _ROW_LOW))
-_ov.update(_dial_at("dot_shape", _COL_LEFT, _ROW_LOW + 62.0))     # T023: a third row on the left, under Soft
-for _c, _x in _PLATE_X.items():
-    _ov.update(_dial_at(f"angle_{_c}", _x + 18.5, _ROW_TOP))
-    _ov.update(_dial_at(f"phase_{_c}_x", _x, _ROW_LOW))
-    _ov.update(_dial_at(f"phase_{_c}_y", _x + 37.0, _ROW_LOW))
-# T024, T025 (2026-11-14): Jitter, Seed and Level on the third row, under the red and green plates
-_ov.update(_dial_at("jitter", _PLATE_X["r"], _ROW_LOW + 62.0))
-_ov.update(_dial_at("level", _PLATE_X["g"], _ROW_LOW + 62.0))
-_ov["seed.ctl"] = {"presentation_rect": [_PLATE_X["r"] + 37.0 - 17.0, _ROW_LOW + 62.0 + 14.0, 34.0, 15.0], "outlettype": ["", "int"],
+for _n, _x in _GLOBAL_X.items():
+    _ov.update(_dial_at(_n, _x, _DIAL_TOP))
+_ov["seed.ctl"] = {"presentation_rect": [_SEED_X - 17.0, _DIAL_TOP + 14.0, 34.0, 15.0], "outlettype": ["", "int"],
                    "saved_attribute_attributes": {"valueof": {
                        "parameter_initial": [1.0], "parameter_initial_enable": 1, "parameter_linknames": 1,
                        "parameter_longname": "seed", "parameter_mmax": 999.0, "parameter_mmin": 1.0, "parameter_modmode": 0,
                        "parameter_shortname": "seed", "parameter_type": 1, "parameter_unitstyle": 0}}}
-_ov["seed.label"] = {"presentation_rect": [_PLATE_X["r"] + 37.0 - 25.0, _ROW_LOW + 62.0 - 4.0, 50.0, 18.0]}
-# Matt, 2026-11-14: the Bayer Cell / Pixel button, third row right of Level
-_ov["bayer_cell.ctl"] = {"presentation_rect": [_PLATE_X["g"] + 37.0 - 22.0, _ROW_LOW + 62.0 + 13.0, 44.0, 17.0]}   # shows Cell / Pixel itself
+_ov["seed.label"] = {"presentation_rect": [_SEED_X - 19.0, _DIAL_TOP - 4.0, 38.0, 18.0]}
+_ov["bayer_cell.ctl"] = {"presentation_rect": [_READ_X - 20.0, _DIAL_TOP + 13.0, 40.0, 17.0]}   # shows Cell / Pixel itself
+
+# the plate table: one row per plate; the per-cell labels are hidden, the headers and row labels are comments
+_CELL = {"angle": "angle_{c}", "scale": "scale_{c}", "x": "phase_{c}_x", "y": "phase_{c}_y"}
+for _c, _y in _ROW_Y.items():
+    for _col, _tmpl in _CELL.items():
+        _n = _tmpl.format(c=_c)
+        _ov[f"{_n}.ctl"] = {"presentation_rect": [_COL_X[_col] + 2.0, _y, _COL_W - 4.0, 15.0]}
+        _ov[f"{_n}.label"] = {"hidden": 1}
+
+_LBL = dict(fontname="Ableton Sans Light", fontsize=9.5, textjustification=1, numinlets=1, numoutlets=0, outlettype=[], presentation=1)
+RAW_BOXES = []
+for _k, (_col, _txt) in enumerate((("angle", "Angle"), ("scale", "Scale"), ("x", "X"), ("y", "Y"))):
+    RAW_BOXES.append({"box": dict(id=f"obj-raw-head{_k}", maxclass="comment", text=_txt, patching_rect=[620.0, 20.0 + 22.0 * _k, 50.0, 18.0],
+                                  presentation_rect=[_COL_X[_col], _HEAD_Y, _COL_W, 16.0], **_LBL)})
+for _k, (_c, _y) in enumerate(_ROW_Y.items()):
+    RAW_BOXES.append({"box": dict(id=f"obj-raw-row{_c}", maxclass="comment", text=_c.upper(), varname=f"lbl_plate_{_c}",
+                                  patching_rect=[680.0, 20.0 + 22.0 * _k, 30.0, 18.0],
+                                  presentation_rect=[_ROW_LABEL_X - 12.0, _y - 1.0, 24.0, 16.0], **_LBL)})
+patcher["raw_boxes"] = RAW_BOXES
 patcher["overrides"] = _ov

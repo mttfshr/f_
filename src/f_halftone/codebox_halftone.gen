@@ -20,6 +20,8 @@
 //   The matrix repeats once per pitch (Matt, 2026-11-14): a cell is pitch / 8 frame heights, rounded to whole pixels, at
 //   least 1. bayer_cell 1 (default; Matt, 2026-11-14) reads one tone per cell at its centre pixel, a true ordered dither;
 //   0 reads it per pixel (a threshold at each cell's level). Identical at 1-pixel cells.
+// Per-plate pitch (T029b, Matt 2026-11-14, FR-022): a plate's pitch is pitch * scale_<plate>; every length above that says
+//   "pitch" means the plate's own pitch. Single uses scale_b. bay_cell returns four values (inferred to compile; the bench decides).
 // Single plate (T016b, plate_mode 1; spec "Plates from f_separate"): the whole texture is ONE plate at angle_b and phase_b.
 //   Its tone is the brightest channel, t = max(r, g, b), at the read texel; the colour is rgb / t there (black when t <= 0); the
 //   output is that colour times the coverage. The colour texel is the one the tone came from: the cell centre (displaced when
@@ -154,8 +156,21 @@ bayer(tone, ix, iy) {
     return switch(tone > (mm + 0.5) / 64, 1, 0);
 }
 
+// T029b (Matt, 2026-11-14; FR-022): Bayer's cell follows the plate's own pitch. Returns the read uv and the cell indices.
+bay_cell(pp, nx, ny, wd, ht, cellmode) {
+    bs = max(floor(pp * ht / 8 + 0.5), 1);
+    ix = floor(floor(nx * wd) / bs);
+    iy = floor(floor(ny * ht) / bs);
+    bx = min(ix * bs + floor(bs / 2), wd - 1);
+    by = min(iy * bs + floor(bs / 2), ht - 1);
+    return switch(cellmode > 0.5, (bx + 0.5) / wd, nx), switch(cellmode > 0.5, (by + 0.5) / ht, ny), ix, iy;
+}
+
 Param screen(0);
 Param pitch(0.012);
+Param scale_r(1);
+Param scale_g(1);
+Param scale_b(1);
 Param angle_r(15);
 Param angle_g(75);
 Param angle_b(45);
@@ -186,8 +201,13 @@ ht = max(height, 1);
 asp = wd / ht;
 px = (norm.x - 0.5) * asp;
 py = norm.y - 0.5;
-pit = max(pitch, 0.0001);
-aa = 1 / (pit * ht);
+// T029b (FR-022): each plate's pitch is pitch * its scale; the lattice, phase, edge ramp, jitter and Bayer cell follow it
+pit_r = max(pitch * scale_r, 0.0001);
+pit_g = max(pitch * scale_g, 0.0001);
+pit_b = max(pitch * scale_b, 0.0001);
+aa_r = 1 / (pit_r * ht);
+aa_g = 1 / (pit_g * ht);
+aa_b = 1 / (pit_b * ht);
 soft = clamp(softness, 0, 1);
 shp = clamp(dot_shape, 0, 1);
 is_line = switch(abs(screen - 1) < 0.5, 1, 0);
@@ -200,57 +220,53 @@ d2r = pi / 180;
 // red plate
 csr = snap0(cos(angle_r * d2r));
 snr = snap0(sin(angle_r * d2r));
-qxr, qyr = lat_xy(px, py, csr, snr, pit, phase_r_x, phase_r_y);
-ur, vr = read_uv(qxr, qyr, is_line, csr, snr, pit, phase_r_x, phase_r_y, asp, wd, ht);
+qxr, qyr = lat_xy(px, py, csr, snr, pit_r, phase_r_x, phase_r_y);
+ur, vr = read_uv(qxr, qyr, is_line, csr, snr, pit_r, phase_r_x, phase_r_y, asp, wd, ht);
 tone_r = zap(nearest(in1, vec(ur, vr)).x);
-cov_r = cover(qxr, qyr, is_line, tone_r, soft, aa, shp);
+cov_r = cover(qxr, qyr, is_line, tone_r, soft, aa_r, shp);
 if (use_jit > 0.5) {
-    cov_r = dot_jit(qxr, qyr, 0, csr, snr, pit, phase_r_x, phase_r_y, asp, wd, ht, soft, aa, shp, jit, seed);
+    cov_r = dot_jit(qxr, qyr, 0, csr, snr, pit_r, phase_r_x, phase_r_y, asp, wd, ht, soft, aa_r, shp, jit, seed);
 }
 
 // green plate
 csg = snap0(cos(angle_g * d2r));
 sng = snap0(sin(angle_g * d2r));
-qxg, qyg = lat_xy(px, py, csg, sng, pit, phase_g_x, phase_g_y);
-ug, vg = read_uv(qxg, qyg, is_line, csg, sng, pit, phase_g_x, phase_g_y, asp, wd, ht);
+qxg, qyg = lat_xy(px, py, csg, sng, pit_g, phase_g_x, phase_g_y);
+ug, vg = read_uv(qxg, qyg, is_line, csg, sng, pit_g, phase_g_x, phase_g_y, asp, wd, ht);
 tone_g = zap(nearest(in1, vec(ug, vg)).y);
-cov_g = cover(qxg, qyg, is_line, tone_g, soft, aa, shp);
+cov_g = cover(qxg, qyg, is_line, tone_g, soft, aa_g, shp);
 if (use_jit > 0.5) {
-    cov_g = dot_jit(qxg, qyg, 1, csg, sng, pit, phase_g_x, phase_g_y, asp, wd, ht, soft, aa, shp, jit, seed);
+    cov_g = dot_jit(qxg, qyg, 1, csg, sng, pit_g, phase_g_x, phase_g_y, asp, wd, ht, soft, aa_g, shp, jit, seed);
 }
 
 // blue plate
 csb = snap0(cos(angle_b * d2r));
 snb = snap0(sin(angle_b * d2r));
-qxb, qyb = lat_xy(px, py, csb, snb, pit, phase_b_x, phase_b_y);
-ub, vb = read_uv(qxb, qyb, is_line, csb, snb, pit, phase_b_x, phase_b_y, asp, wd, ht);
+qxb, qyb = lat_xy(px, py, csb, snb, pit_b, phase_b_x, phase_b_y);
+ub, vb = read_uv(qxb, qyb, is_line, csb, snb, pit_b, phase_b_x, phase_b_y, asp, wd, ht);
 tone_b = zap(nearest(in1, vec(ub, vb)).z);
-cov_b = cover(qxb, qyb, is_line, tone_b, soft, aa, shp);
+cov_b = cover(qxb, qyb, is_line, tone_b, soft, aa_b, shp);
 if (use_jit > 0.5) {
-    cov_b = dot_jit(qxb, qyb, 2, csb, snb, pit, phase_b_x, phase_b_y, asp, wd, ht, soft, aa, shp, jit, seed);
+    cov_b = dot_jit(qxb, qyb, 2, csb, snb, pit_b, phase_b_x, phase_b_y, asp, wd, ht, soft, aa_b, shp, jit, seed);
 }
 
 // T025: Threshold and Bayer replace the lattice, per pixel
-bsc = max(floor(pit * ht / 8 + 0.5), 1);
-ixb = floor(floor(norm.x * wd) / bsc);
-iyb = floor(floor(norm.y * ht) / bsc);
-bcx = min(ixb * bsc + floor(bsc / 2), wd - 1);
-bcy = min(iyb * bsc + floor(bsc / 2), ht - 1);
-bu = switch(bayer_cell > 0.5, (bcx + 0.5) / wd, norm.x);
-bv = switch(bayer_cell > 0.5, (bcy + 0.5) / ht, norm.y);
-cov_r = switch(is_thr > 0.5, thresh(zr, level, soft), switch(is_bay > 0.5, bayer(rd(bu, bv, 0), ixb, iyb), cov_r));
-cov_g = switch(is_thr > 0.5, thresh(zg, level, soft), switch(is_bay > 0.5, bayer(rd(bu, bv, 1), ixb, iyb), cov_g));
+bur, bvr, ixr, iyr = bay_cell(pit_r, norm.x, norm.y, wd, ht, bayer_cell);
+bgu, bvg, ixg, iyg = bay_cell(pit_g, norm.x, norm.y, wd, ht, bayer_cell);
+bu, bv, ixb, iyb = bay_cell(pit_b, norm.x, norm.y, wd, ht, bayer_cell);
+cov_r = switch(is_thr > 0.5, thresh(zr, level, soft), switch(is_bay > 0.5, bayer(rd(bur, bvr, 0), ixr, iyr), cov_r));
+cov_g = switch(is_thr > 0.5, thresh(zg, level, soft), switch(is_bay > 0.5, bayer(rd(bgu, bvg, 1), ixg, iyg), cov_g));
 cov_b = switch(is_thr > 0.5, thresh(zb, level, soft), switch(is_bay > 0.5, bayer(rd(bu, bv, 2), ixb, iyb), cov_b));
 
 // T016b: Single, one plate at the blue plate's angle and phase
 is_single = switch(plate_mode > 0.5, 1, 0);
 tone_s = rd(ub, vb, 3);
-cov_s = cover(qxb, qyb, is_line, tone_s, soft, aa, shp);
+cov_s = cover(qxb, qyb, is_line, tone_s, soft, aa_b, shp);
 cu = ub;
 cv = vb;
 if (use_jit > 0.5) {
-    cov_s = dot_jit(qxb, qyb, 3, csb, snb, pit, phase_b_x, phase_b_y, asp, wd, ht, soft, aa, shp, jit, seed);
-    cu, cv = jit_uv(qxb, qyb, csb, snb, pit, phase_b_x, phase_b_y, asp, wd, ht, jit, seed);
+    cov_s = dot_jit(qxb, qyb, 3, csb, snb, pit_b, phase_b_x, phase_b_y, asp, wd, ht, soft, aa_b, shp, jit, seed);
+    cu, cv = jit_uv(qxb, qyb, csb, snb, pit_b, phase_b_x, phase_b_y, asp, wd, ht, jit, seed);
 }
 tone_p = max(max(zr, zg), zb);
 cov_s = switch(is_thr > 0.5, thresh(tone_p, level, soft), switch(is_bay > 0.5, bayer(rd(bu, bv, 3), ixb, iyb), cov_s));
