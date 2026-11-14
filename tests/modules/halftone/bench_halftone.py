@@ -563,11 +563,13 @@ def test_reads_in_functions_and_loops():
 def test_cost_at_1080p():
     """ms per pass for Dot and Line at 1920 x 1080. As bench_separate.py: when the pass hides inside the bench's own per-frame
     work, 4K is run instead and its figure / 4 is the 1080p equivalent. Each later slot of the chain reads the previous slot's
-    output; the codebox has no per-pixel loop, so that should not change the cost (inferred)."""
+    output (inferred not to change the cost). 2026-11-14: Dot at jitter 1 added, the worst case (a nine-cell loop per
+    plate). Not covered: Plates mode and Blue (extra inputs)."""
     src = photo()
-    for s, name in LATTICE.items():
+    cases = [(s, name, 0.0) for s, name in LATTICE.items()] + [(0, "dot jitter 1", 1.0)]
+    for s, name, jit in cases:
         for dim in ((1920, 1080), (3840, 2160)):
-            params = {**PINNED, "screen": float(s), "width": float(dim[0]), "height": float(dim[1])}
+            params = {**PINNED, "screen": float(s), "jitter": jit, "width": float(dim[0]), "height": float(dim[1])}
             r = bc.measure(CODE, [src], dim=dim, chain=8, params=params)
             k = int(r.get("chain") or 8)
             scale = 1 if dim[0] == 1920 else 4
