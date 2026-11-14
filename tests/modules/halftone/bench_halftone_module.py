@@ -12,7 +12,7 @@ fed every frame at the render size, 640 x 640 (bench_modules.RENDER_DIM_SIZE); e
 Asserted:
   - load, no messages: the output is the render size and matches the mirror at the definition's defaults. This is the row that
     proves `width` and `height` arrive: at the codebox defaults (1920 x 1080) the lattice would be a different one.
-  - the Screen menu (Line, Threshold, Bayer), the Plate menu (Single, T016b), pitch, softness, shape, level, jitter, seed (T023-T025, 2026-11-14), the three angles and the six phase dials each reach the pix: the frame matches the
+  - the Screen menu (Line, Threshold, Bayer), the Plate menu (Single, T016b), Plates (T028, inlets 2-3 cabled), pitch, softness, shape, level, jitter, seed (T023-T025, 2026-11-14), the three angles and the six phase dials each reach the pix: the frame matches the
     mirror with that value, and differs from the frame before it.
 A picture is compared as a fraction of values within TOL (bench_halftone.py explains why edge pixels can flip cells).
 
@@ -66,15 +66,20 @@ def photo(seed=6, n=N):
 SRC = photo()
 
 
-def job(segments, warmup=30):
+def job(segments, warmup=30, plates=()):
+    """plates (T028): textures for the module's inlets 1, 2, ... in order; the wrapper cables only those, so the rest are
+    really unconnected and their vs_inState flags stay 0."""
     bc.reopen(ports=bc.MODULE_PORTS, patch="bench_module.maxpat")
     j, job_dir = bc.new_job("module", warmup=warmup, settle=6, timeout_ms=60000)
     j["wrapper"] = f"mjob_{j['id']}.maxpat"
     j["inputs"] = ["in1.jxf"]
     jxf.write_rgba(job_dir / "in1.jxf", SRC)
+    for k, p in enumerate(plates):
+        j["inputs"].append(f"in{k + 2}.jxf")
+        jxf.write_rgba(job_dir / f"in{k + 2}.jxf", p)
     j["segments"] = segments
     wrapper = bc.BENCH_DIR / j["wrapper"]
-    wrapper.write_text(json.dumps(mb.make_wrapper("f_halftone.maxpat", 1, 1), indent=2))
+    wrapper.write_text(json.dumps(mb.make_wrapper("f_halftone.maxpat", 1 + len(plates), 1), indent=2))
     r = bc.run_job(j, job_dir, ports=bc.MODULE_PORTS)
     for old in bc.BENCH_DIR.glob("mjob_*.maxpat"):
         if old != wrapper:
@@ -179,6 +184,26 @@ def test_plate_menu():
     base, single, back = (snap(f, t) for t in ("base", "single", "back"))
     matches(single, "Plate menu: Single", pitch=0.03, plate_mode=1)
     differs(single, base, "Plate menu")
+    check("Plate back to Channels: the frame before, exactly", float(np.abs(back - base).max()), 0.0)
+
+
+def test_plates_mode():
+    """T028 (spec US9, FR-017 to FR-021): Plates from the menu screens inlets 2-4 through the shipped patcher, so the
+    vs_inState connected flags are the real ones. Two plates cabled (inlets 2 and 3), the third left uncabled: it must add
+    nothing. Back to Channels gives the frame before, exactly."""
+    pl = [photo(seed=21), photo(seed=22)]
+    f = job([{"params": [["pitch", 0.03]], "wait": 60, "snap": "base"},
+             {"params": [["plate_mode", 2]], "wait": SETTLE, "snap": "plates"},
+             {"params": [["plate_mode", 0]], "wait": SETTLE, "snap": "back"}], plates=pl)
+    base, plates, back = (snap(f, t) for t in ("base", "plates", "back"))
+    want = halftone_stage(SRC, pitch=0.03, plate_mode="plates", plates=(pl[0], pl[1], None))
+    err = np.abs(plates[..., :3].astype(np.float64) - want[..., :3].astype(np.float64))
+    note("Plates (two cabled): worst rgb error", float(err.max()))
+    note(f"Plates (two cabled): fraction beyond {TOL}", float((err > TOL).mean()))
+    check("Plates (two cabled, plate 3 uncabled): fraction beyond tolerance", float((err > TOL).mean()), FRAC_BAD)
+    check("Plates: alpha the larger of the two plates' (plate 3's flag keeps its alpha 1 out)",
+          float(np.abs(plates[..., 3] - want[..., 3]).max()), 1e-6)
+    differs(plates, base, "Plate menu: Plates")
     check("Plate back to Channels: the frame before, exactly", float(np.abs(back - base).max()), 0.0)
 
 

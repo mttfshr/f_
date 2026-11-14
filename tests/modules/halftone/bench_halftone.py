@@ -28,6 +28,8 @@ Tolerances:
 Gates measured here: G8 / T010 (reads inside a function and a loop; sample() against nearest() at texel centres) and G5 / T007
 (the area law against pitch in texels, GPU beside the mirror).
 
+T028 (2026-11-14, offline Claude, not run): test_plates, the Plates mode on inputs 2-4 with the connected flags pinned.
+
 Not here: non-finite input (the bench's input path for NaN is unproven, and the mirror tests the zap); the shipped patcher (bench_halftone_module.py).
 
 Needs Max with tests/bench/bench.maxpat open.
@@ -53,7 +55,7 @@ PITCH = 16.0 / H       # 16 texels
 PINNED = {"screen": 0.0, "pitch": PITCH, "angle_r": 15.0, "angle_g": 75.0, "angle_b": 45.0,
           "phase_r_x": 0.0, "phase_r_y": 0.0, "phase_g_x": 0.0, "phase_g_y": 0.0, "phase_b_x": 0.0, "phase_b_y": 0.0,
           "softness": 0.0, "dot_shape": 0.0, "jitter": 0.0, "seed": 1.0, "level": 0.5, "plate_mode": 0.0, "bayer_cell": 1.0, "bypass_gate": 0.0,
-          "scale_r": 1.0, "scale_g": 1.0, "scale_b": 1.0}
+          "scale_r": 1.0, "scale_g": 1.0, "scale_b": 1.0, "plate1_on": 0.0, "plate2_on": 0.0, "plate3_on": 0.0}
 SCREENS = {0: "dot", 1: "line", 2: "threshold", 3: "bayer"}
 LATTICE = {0: "dot", 1: "line"}
 
@@ -84,7 +86,7 @@ def photo(w=W, h=H, seed=4):
     return t
 
 
-def gpu(src, code=CODE, probe=None, **deltas):
+def gpu(src, code=CODE, probe=None, plates=None, **deltas):
     """probe: the whole Param dict for a codebox that is not the module's (a Param it does not declare is an invalid message
     and fails the job: first run, 2026-11-13)."""
     h, w = src.shape[:2]
@@ -93,13 +95,16 @@ def gpu(src, code=CODE, probe=None, **deltas):
     params["width"], params["height"] = float(w), float(h)
     if probe is not None:
         params = dict(probe)
-    outs, r = bc.run_pass(code, [src], dim=(w, h), params=params, timeout_ms=30000, all_outputs=True)
+    outs, r = bc.run_pass(code, [src] + list(plates or []), dim=(w, h), params=params, timeout_ms=30000, all_outputs=True)
     if r["status"] != "ok" or outs[0] is None:
         raise AssertionError(f"bench job failed: {r['status']} {r['errors']} ({r['job_dir']})")
     return outs[0]
 
 
-def mirror(src, **deltas):
+PLATE_MODES = {0: "channels", 1: "single", 2: "plates"}
+
+
+def mirror(src, plates=(None, None, None), **deltas):
     p = dict(PINNED)
     p.update(deltas)
     return halftone_stage(src, screen=SCREENS[int(p["screen"])], pitch=p["pitch"],
@@ -108,8 +113,8 @@ def mirror(src, **deltas):
                                   (p["phase_b_x"], p["phase_b_y"])),
                           scales=(p["scale_r"], p["scale_g"], p["scale_b"]),
                           softness=p["softness"], shape=p["dot_shape"], jitter=p["jitter"], seed=int(p["seed"]),
-                          level=p["level"], bayer_read="cell" if p["bayer_cell"] > 0.5 else "pixel", plate_mode="single" if p["plate_mode"] > 0.5 else "channels",
-                          bypass=bool(p["bypass_gate"]))
+                          level=p["level"], bayer_read="cell" if p["bayer_cell"] > 0.5 else "pixel", plate_mode=PLATE_MODES[int(round(p["plate_mode"]))],
+                          bypass=bool(p["bypass_gate"]), plates=plates)
 
 
 def mx(a, b):
@@ -327,6 +332,68 @@ def test_single_plate():
     a, b = gpu(p, plate_mode=1.0), gpu(p, plate_mode=1.0, angle_r=33.0, angle_g=5.0, phase_r_x=0.4)
     check("single: the R and G angle and phase change nothing", mx(a, b), 0.0)
     check("single: the B angle does", float(mx(a, gpu(p, plate_mode=1.0, angle_b=10.0)) < 0.5), 0.0)
+
+
+def _plates_on(plates, on):
+    """The three inputs (an unconnected plate still gets a texture, so its flag alone must keep it out) and the mirror's view."""
+    flags = {f"plate{k + 1}_on": float(o) for k, o in enumerate(on)}
+    return flags, tuple(p if o else None for p, o in zip(plates, on))
+
+
+def plates_row(label, src, plates, on=(1, 1, 1), exact=True, **deltas):
+    """T028: Plates mode against the mirror. rgb at every pixel (flat plates) or as a fraction (pictures); alpha the largest
+    connected plate alpha, exactly."""
+    flags, mplates = _plates_on(plates, on)
+    got = gpu(src, plates=list(plates), plate_mode=2.0, **flags, **deltas)
+    want = mirror(src, plates=mplates, plate_mode=2.0, **deltas)
+    err = np.abs(got[..., :3].astype(np.float64) - want[..., :3].astype(np.float64))
+    note(f"{label}: worst rgb error", float(err.max()))
+    if exact:
+        check(f"{label}: rgb vs mirror at every pixel", float(err.max()), TOL)
+    else:
+        note(f"{label}: fraction of values beyond {TOL}", float((err > TOL).mean()))
+        check(f"{label}: fraction beyond tolerance", float((err > TOL).mean()), FRAC_BAD)
+    check(f"{label}: alpha is the largest connected plate alpha", mx(got[..., 3], want[..., 3]), 1e-6)
+    return got
+
+
+def test_plates():
+    """T028 (spec US9, FR-017 to FR-021): inlets 2-4 each screened as Single at the R / G / B sets, summed and clamped; an
+    unconnected plate (flag 0, though its input holds a texture) adds nothing; inlet 0 ignored; bypass passes inlet 0."""
+    src = photo(seed=9)
+    fl = [flat(0.0, 0.5, 0.7, seed=11), flat(0.6, 0.0, 0.4, seed=12), flat(0.5, 0.5, 0.0, seed=13)]
+    got = plates_row("plates, dot, flat plates", src, fl)
+    note("plates, flat: share of values at the clamp (1.0)", float((got[..., :3] >= 1.0).mean()))
+    plates_row("plates, dot, flat plates, plate 2 unconnected", src, fl, on=(1, 0, 1))
+    plates_row("plates, dot, flat plates, plate 1 only", src, fl, on=(1, 0, 0))
+    none = gpu(src, plates=fl, plate_mode=2.0)
+    check("plates, nothing connected: black, alpha 0", float(np.abs(none).max()), 0.0)
+    pics = [photo(seed=21), photo(seed=22), photo(seed=23)]
+    plates_row("plates, dot, picture plates", src, pics, exact=False)
+    plates_row("plates, dot, picture plates, scales and phases", src, pics, exact=False,
+               scale_g=1.5, scale_b=0.75, phase_r_x=0.3, phase_g_y=0.2)
+    plates_row("plates, line, picture plates", src, pics, exact=False, screen=1.0)
+    plates_row("plates, threshold, picture plates", src, pics, screen=2.0, level=0.4, softness=0.2)
+    plates_row("plates, bayer, picture plates", src, pics, screen=3.0)
+    a = gpu(src, plates=pics, plate_mode=2.0, plate1_on=1.0, plate2_on=1.0, plate3_on=1.0)
+    b = gpu(flat(0.1, 0.9, 0.3), plates=pics, plate_mode=2.0, plate1_on=1.0, plate2_on=1.0, plate3_on=1.0)
+    check("plates: inlet 0 is ignored", mx(a, b), 0.0)
+    c = gpu(src, plates=pics, plate_mode=2.0, plate1_on=1.0, plate2_on=1.0, plate3_on=1.0, bypass_gate=1.0)
+    check("plates: bypass passes inlet 0", mx(c, src), 1e-6)
+    j = gpu(src, plates=pics, plate_mode=2.0, plate1_on=1.0, plate2_on=1.0, plate3_on=1.0, jitter=1.0)
+    m = mirror(src, plates=tuple(pics), plate_mode=2.0, jitter=1.0)
+    # the sin hash cannot match the mirror per pixel (HANDOFF findings): compare means, as the jitter rows do
+    check("plates, jitter 1: worst channel mean minus the mirror's",
+          max(abs(float(j[..., c].mean()) - float(m[..., c].mean())) for c in range(3)), JIT_MEAN)
+    flags1 = dict(plate1_on=1.0, plate2_on=1.0, plate3_on=1.0)
+    single = [flat(0.5, 0, 0, seed=31), flat(0, 0.5, 0, seed=32), flat(0, 0, 0.5, seed=33)]
+    x = gpu(src, plates=single, plate_mode=2.0, **flags1)
+    y = gpu(src, plates=single, plate_mode=2.0, angle_r=40.0, **flags1)
+    check("plates: plate 1's angle leaves plates 2 and 3 unchanged", mx(x[..., 1:3], y[..., 1:3]), 0.0)
+    check("plates: plate 1's angle moves plate 1", float(mx(x[..., 0], y[..., 0]) < 0.5), 0.0)
+    t = photo()
+    check("Channels: the plate inputs change nothing", mx(gpu(t), gpu(t, plates=pics, **flags1)), 0.0)
+    check("Single: the plate inputs change nothing", mx(gpu(t, plate_mode=1.0), gpu(t, plates=pics, plate_mode=1.0, **flags1)), 0.0)
 
 
 def test_bypass():

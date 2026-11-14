@@ -2,8 +2,9 @@
 f_halftone -- definition.py
 
 Tone to marks: a fixed-angle halftone screen, one plate per color channel (R, G, B), each with its own angle and lattice
-phase. Dot, Line, Threshold and Bayer, shape and jitter (T020-T025), and the Single plate mode (T016b).
-Stateless, one stage. A texture processor: one inlet, one outlet; the output follows the render size (render_dim: Params
+phase. Dot, Line, Threshold and Bayer, shape and jitter (T020-T025), the Single plate mode (T016b), and the Plates mode
+(T028): inlets 1 to 3 take f_separate's plates, each screened as Single at the R / G / B angle, phase and scale, summed.
+Stateless, one stage. A texture processor: four inlets (0 the texture, 1-3 the plates), one outlet; the output follows the render size (render_dim: Params
 `width` and `height`). Spec, plan and tasks: .specify/f_halftone/{spec,plan,tasks}.md.
 Mirror: tests/modules/halftone/halftone_mirror.py.
 
@@ -33,11 +34,19 @@ patcher = {
 
     "outlets": [{"comment": "texture"}],
 
+    # T028 (Matt, 2026-11-14; spec FR-017 to FR-021): the plate inlets, read only in Plates mode. Each connected flag lets the
+    # codebox skip an unconnected plate (an unconnected inlet reads black with alpha 1, which would set the output alpha to 1).
+    "mod_inlets": [
+        {"label": "plate 1 (Plates mode: screened at the R angle, phase and scale)", "state_param": "plate1_on"},
+        {"label": "plate 2 (Plates mode: screened at the G angle, phase and scale)", "state_param": "plate2_on"},
+        {"label": "plate 3 (Plates mode: screened at the B angle, phase and scale)", "state_param": "plate3_on"},
+    ],
+
     "params": [
         {"name": "screen", "type": "menu", "options": ["Dot", "Line", "Threshold", "Bayer"], "default": 0, "label": "Screen",
          "hint": "Dot: a lattice of dots, each sized by the tone at its center. Line: parallel lines whose width follows the tone. Threshold: ink where the tone is above Level. Bayer: an ordered dither, one pixel per mark"},
-        {"name": "plate_mode", "type": "menu", "options": ["Channels", "Single"], "default": 0, "label": "Plate",
-         "hint": "Channels: red, green and blue are three plates, each at its own angle. Single: the texture is one spot-color plate, screened once at the B angle and phase, in its own color (for f_separate's plates)"},
+        {"name": "plate_mode", "type": "menu", "options": ["Channels", "Single", "Plates"], "default": 0, "label": "Plate",
+         "hint": "Channels: red, green and blue are three plates, each at its own angle. Single: the texture is one spot-color plate, screened at the B row, in its own color. Plates: inlets 2-4 take f_separate's plates, screened at rows 1, 2, 3 and added (the main inlet is ignored)"},
         {"name": "pitch", "type": "float", "min": 0.003, "max": 0.2, "default": 0.012, "label": "Pitch",
          "hint": "Lattice period in frame heights, for all three plates (each plate's Scale multiplies it). Below about 10 pixels the inked area stops tracking the tone. Bayer: the dither repeats once per pitch, in whole pixels"},
         {"name": "scale_r", "type": "float", "min": 0.25, "max": 4.0, "default": 1.0, "label": "Scale R", "widget": "numbox",
@@ -80,6 +89,10 @@ patcher = {
 
         # Driven by the bypass jsui (`prepend param bypass_gate`), never by a dial
         {"name": "bypass_gate", "type": "internal"},
+        # Connected flags of the plate inlets (T028), from vs_inState
+        {"name": "plate1_on", "type": "internal"},
+        {"name": "plate2_on", "type": "internal"},
+        {"name": "plate3_on", "type": "internal"},
         # Render size, driven by render_dim
         {"name": "width", "type": "internal"},
         {"name": "height", "type": "internal"},
@@ -139,5 +152,28 @@ for _k, (_c, _y) in enumerate(_ROW_Y.items()):
     RAW_BOXES.append({"box": dict(id=f"obj-raw-row{_c}", maxclass="comment", text=_c.upper(), varname=f"lbl_plate_{_c}",
                                   patching_rect=[680.0, 20.0 + 22.0 * _k, 30.0, 18.0],
                                   presentation_rect=[_ROW_LABEL_X - 12.0, _y - 1.0, 24.0, 16.0], **_LBL)})
+
+# T028 (Matt, 2026-11-14; spec FR-018, plan ADR-8): the plate rows read 1 / 2 / 3 in Plates mode, R / G / B otherwise.
+# The Plate menu's index -> sel 2 -> `set` messages to the three row labels.
+PLATE_MENU = "obj-23"      # the plate_mode live.menu (checked against the built patcher)
+RAW_LINES = []
+
+
+def _line(a, ao, b, bi):
+    RAW_LINES.append({"patchline": {"source": [a, ao], "destination": [b, bi]}})
+
+
+RAW_BOXES.append({"box": dict(id="obj-raw-platesel", maxclass="newobj", text="sel 2", numinlets=2, numoutlets=2,
+                              outlettype=["bang", ""], patching_rect=[740.0, 20.0, 40.0, 22.0])})
+_line(PLATE_MENU, 0, "obj-raw-platesel", 0)
+for _k, _c in enumerate("rgb"):
+    for _o, (_tag, _txt) in enumerate((("num", str(_k + 1)), ("let", _c.upper()))):
+        _mid = f"obj-raw-set{_tag}{_c}"
+        RAW_BOXES.append({"box": dict(id=_mid, maxclass="message", text=f"set {_txt}", numinlets=2, numoutlets=1, outlettype=[""],
+                                      patching_rect=[740.0 + 60.0 * _k, 50.0 + 30.0 * _o, 50.0, 22.0])})
+        _line("obj-raw-platesel", _o, _mid, 0)
+        _line(_mid, 0, f"obj-raw-row{_c}", 0)
+
 patcher["raw_boxes"] = RAW_BOXES
+patcher["raw_lines"] = RAW_LINES
 patcher["overrides"] = _ov

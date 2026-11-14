@@ -26,6 +26,11 @@
 //   Its tone is the brightest channel, t = max(r, g, b), at the read texel; the colour is rgb / t there (black when t <= 0); the
 //   output is that colour times the coverage. The colour texel is the one the tone came from: the cell centre (displaced when
 //   jittered) for Dot, the centreline point for Line, the pixel's own for Threshold and Bayer.
+// Plates (T028, Matt 2026-11-14; spec US9, FR-017 to FR-021, plan ADR-8): plate_mode 2 screens the module's inlets 1 to 3
+//   (gen in2 to in4) each as Single, plate 1 at the R angle / phase / scale, 2 at G, 3 at B; summed and clamped to 0..1; alpha
+//   the largest of the connected plates' alphas. An unconnected plate is skipped by its connected flag (plate1_on etc., from
+//   vs_inState), never by its value: an unconnected inlet reads black with alpha 1, which would set alpha to 1. Inlet 0 is
+//   ignored except by bypass. The Single path is the function single_path; `src` picks the inlet (0 = in1 ... 3 = in4).
 // screen: 0 = Dot, 1 = Line, 2 = Threshold, 3 = Bayer. Angles in degrees. bypass_gate = 1: the (zapped) source.
 // Non-finite input is zapped to 0: abs(x) < 1e30 with switch() (NaN == NaN is TRUE on this GPU).
 // The render size comes from the Params `width` and `height` (render_dim; the size global reads 1 inside a live Vsynth pix,
@@ -88,11 +93,28 @@ cover(qx, qy, is_line, tone, soft, aa, shp) {
     return cover_local(qx - floor(qx + 0.5), qy - floor(qy + 0.5), is_line, tone, soft, aa, shp);
 }
 
-// the zapped tone at a texel centre: ch 0 r, 1 g, 2 b, 3 the brightest of the three (Single)
-rd(ru, rv, ch) {
-    tx = zap(nearest(in1, vec(ru, rv)).x);
-    ty = zap(nearest(in1, vec(ru, rv)).y);
-    tz = zap(nearest(in1, vec(ru, rv)).z);
+// the zapped tone at a texel centre: ch 0 r, 1 g, 2 b, 3 the brightest of the three (Single); src the inlet (0 = in1 ... 3 = in4)
+rd(ru, rv, ch, src) {
+    tx = 0;
+    ty = 0;
+    tz = 0;
+    if (src < 0.5) {
+        tx = zap(nearest(in1, vec(ru, rv)).x);
+        ty = zap(nearest(in1, vec(ru, rv)).y);
+        tz = zap(nearest(in1, vec(ru, rv)).z);
+    } else if (src < 1.5) {
+        tx = zap(nearest(in2, vec(ru, rv)).x);
+        ty = zap(nearest(in2, vec(ru, rv)).y);
+        tz = zap(nearest(in2, vec(ru, rv)).z);
+    } else if (src < 2.5) {
+        tx = zap(nearest(in3, vec(ru, rv)).x);
+        ty = zap(nearest(in3, vec(ru, rv)).y);
+        tz = zap(nearest(in3, vec(ru, rv)).z);
+    } else {
+        tx = zap(nearest(in4, vec(ru, rv)).x);
+        ty = zap(nearest(in4, vec(ru, rv)).y);
+        tz = zap(nearest(in4, vec(ru, rv)).z);
+    }
     return switch(ch < 0.5, tx, switch(ch < 1.5, ty, switch(ch < 2.5, tz, max(max(tx, ty), tz))));
 }
 
@@ -112,7 +134,7 @@ jit_uv(qx, qy, cs, sn, pit, phx, phy, asp, wd, ht, jit, sd) {
 }
 
 // T024: the jittered Dot. ch picks the plate's channel (0 r, 1 g, 2 b, 3 the brightest: Single). Reads inside a function and a loop are exact (T010).
-dot_jit(qx, qy, ch, cs, sn, pit, phx, phy, asp, wd, ht, soft, aa, shp, jit, sd) {
+dot_jit(qx, qy, ch, src, cs, sn, pit, phx, phy, asp, wd, ht, soft, aa, shp, jit, sd) {
     cx = floor(qx + 0.5);
     cy = floor(qy + 0.5);
     best = 0;
@@ -132,7 +154,7 @@ dot_jit(qx, qy, ch, cs, sn, pit, phx, phy, asp, wd, ht, soft, aa, shp, jit, sd) 
             tj = clamp(floor((ppy + 0.5) * ht), 0, ht - 1);
             ru = (ti + 0.5) / wd;
             rv = (tj + 0.5) / ht;
-            tone = rd(ru, rv, ch);
+            tone = rd(ru, rv, ch, src);
             best = max(best, cover_local(qx - gx, qy - gy, 0, tone, soft, aa, shp));
         }
     }
@@ -166,6 +188,30 @@ bay_cell(pp, nx, ny, wd, ht, cellmode) {
     return switch(cellmode > 0.5, (bx + 0.5) / wd, nx), switch(cellmode > 0.5, (by + 0.5) / ht, ny), ix, iy;
 }
 
+// T028: the Single path (T016b) on one inlet, as a function so Plates can run it per plate. Returns the plate's r, g, b:
+// colour (rgb / brightest, at the texel the tone came from) times coverage. nx, ny: the pixel's norm.
+single_path(src, px, py, nx, ny, is_line, is_thr, is_bay, use_jit, cs, sn, pit, phx, phy, asp, wd, ht, soft, aa, shp, jit, sd, lvl, cellmode) {
+    qx, qy = lat_xy(px, py, cs, sn, pit, phx, phy);
+    ru, rv = read_uv(qx, qy, is_line, cs, sn, pit, phx, phy, asp, wd, ht);
+    cov = cover(qx, qy, is_line, rd(ru, rv, 3, src), soft, aa, shp);
+    cu = ru;
+    cv = rv;
+    if (use_jit > 0.5) {
+        cov = dot_jit(qx, qy, 3, src, cs, sn, pit, phx, phy, asp, wd, ht, soft, aa, shp, jit, sd);
+        cu, cv = jit_uv(qx, qy, cs, sn, pit, phx, phy, asp, wd, ht, jit, sd);
+    }
+    bu, bv, ix, iy = bay_cell(pit, nx, ny, wd, ht, cellmode);
+    cov = switch(is_thr > 0.5, thresh(rd(nx, ny, 3, src), lvl, soft), switch(is_bay > 0.5, bayer(rd(bu, bv, 3, src), ix, iy), cov));
+    cu = switch(is_thr > 0.5, nx, switch(is_bay > 0.5, bu, cu));
+    cv = switch(is_thr > 0.5, ny, switch(is_bay > 0.5, bv, cv));
+    cr = rd(cu, cv, 0, src);
+    cg = rd(cu, cv, 1, src);
+    cb = rd(cu, cv, 2, src);
+    ct = max(max(cr, cg), cb);
+    nrm = switch(ct > 0, 1 / max(ct, 0.000000000001), 0) * cov;
+    return cr * nrm, cg * nrm, cb * nrm;
+}
+
 Param screen(0);
 Param pitch(0.012);
 Param scale_r(1);
@@ -188,6 +234,9 @@ Param level(0.5);
 Param plate_mode(0);
 Param bayer_cell(1);
 Param bypass_gate(0);
+Param plate1_on(0);
+Param plate2_on(0);
+Param plate3_on(0);
 Param width(1920);
 Param height(1080);
 
@@ -225,7 +274,7 @@ ur, vr = read_uv(qxr, qyr, is_line, csr, snr, pit_r, phase_r_x, phase_r_y, asp, 
 tone_r = zap(nearest(in1, vec(ur, vr)).x);
 cov_r = cover(qxr, qyr, is_line, tone_r, soft, aa_r, shp);
 if (use_jit > 0.5) {
-    cov_r = dot_jit(qxr, qyr, 0, csr, snr, pit_r, phase_r_x, phase_r_y, asp, wd, ht, soft, aa_r, shp, jit, seed);
+    cov_r = dot_jit(qxr, qyr, 0, 0, csr, snr, pit_r, phase_r_x, phase_r_y, asp, wd, ht, soft, aa_r, shp, jit, seed);
 }
 
 // green plate
@@ -236,7 +285,7 @@ ug, vg = read_uv(qxg, qyg, is_line, csg, sng, pit_g, phase_g_x, phase_g_y, asp, 
 tone_g = zap(nearest(in1, vec(ug, vg)).y);
 cov_g = cover(qxg, qyg, is_line, tone_g, soft, aa_g, shp);
 if (use_jit > 0.5) {
-    cov_g = dot_jit(qxg, qyg, 1, csg, sng, pit_g, phase_g_x, phase_g_y, asp, wd, ht, soft, aa_g, shp, jit, seed);
+    cov_g = dot_jit(qxg, qyg, 1, 0, csg, sng, pit_g, phase_g_x, phase_g_y, asp, wd, ht, soft, aa_g, shp, jit, seed);
 }
 
 // blue plate
@@ -247,40 +296,40 @@ ub, vb = read_uv(qxb, qyb, is_line, csb, snb, pit_b, phase_b_x, phase_b_y, asp, 
 tone_b = zap(nearest(in1, vec(ub, vb)).z);
 cov_b = cover(qxb, qyb, is_line, tone_b, soft, aa_b, shp);
 if (use_jit > 0.5) {
-    cov_b = dot_jit(qxb, qyb, 2, csb, snb, pit_b, phase_b_x, phase_b_y, asp, wd, ht, soft, aa_b, shp, jit, seed);
+    cov_b = dot_jit(qxb, qyb, 2, 0, csb, snb, pit_b, phase_b_x, phase_b_y, asp, wd, ht, soft, aa_b, shp, jit, seed);
 }
 
 // T025: Threshold and Bayer replace the lattice, per pixel
 bur, bvr, ixr, iyr = bay_cell(pit_r, norm.x, norm.y, wd, ht, bayer_cell);
 bgu, bvg, ixg, iyg = bay_cell(pit_g, norm.x, norm.y, wd, ht, bayer_cell);
 bu, bv, ixb, iyb = bay_cell(pit_b, norm.x, norm.y, wd, ht, bayer_cell);
-cov_r = switch(is_thr > 0.5, thresh(zr, level, soft), switch(is_bay > 0.5, bayer(rd(bur, bvr, 0), ixr, iyr), cov_r));
-cov_g = switch(is_thr > 0.5, thresh(zg, level, soft), switch(is_bay > 0.5, bayer(rd(bgu, bvg, 1), ixg, iyg), cov_g));
-cov_b = switch(is_thr > 0.5, thresh(zb, level, soft), switch(is_bay > 0.5, bayer(rd(bu, bv, 2), ixb, iyb), cov_b));
+cov_r = switch(is_thr > 0.5, thresh(zr, level, soft), switch(is_bay > 0.5, bayer(rd(bur, bvr, 0, 0), ixr, iyr), cov_r));
+cov_g = switch(is_thr > 0.5, thresh(zg, level, soft), switch(is_bay > 0.5, bayer(rd(bgu, bvg, 1, 0), ixg, iyg), cov_g));
+cov_b = switch(is_thr > 0.5, thresh(zb, level, soft), switch(is_bay > 0.5, bayer(rd(bu, bv, 2, 0), ixb, iyb), cov_b));
 
-// T016b: Single, one plate at the blue plate's angle and phase
+// T016b: Single, one plate at the blue plate's angle and phase (single_path on in1)
 is_single = switch(plate_mode > 0.5, 1, 0);
-tone_s = rd(ub, vb, 3);
-cov_s = cover(qxb, qyb, is_line, tone_s, soft, aa_b, shp);
-cu = ub;
-cv = vb;
-if (use_jit > 0.5) {
-    cov_s = dot_jit(qxb, qyb, 3, csb, snb, pit_b, phase_b_x, phase_b_y, asp, wd, ht, soft, aa_b, shp, jit, seed);
-    cu, cv = jit_uv(qxb, qyb, csb, snb, pit_b, phase_b_x, phase_b_y, asp, wd, ht, jit, seed);
+sr, sg, sb = single_path(0, px, py, norm.x, norm.y, is_line, is_thr, is_bay, use_jit, csb, snb, pit_b, phase_b_x, phase_b_y,
+                         asp, wd, ht, soft, aa_b, shp, jit, seed, level, bayer_cell);
+oa = za;
+// T028: Plates, inlets 1 to 3 as Single at the R, G, B sets; summed, clamped; alpha the largest connected plate's
+if (plate_mode > 1.5) {
+    r1, g1, b1 = single_path(1, px, py, norm.x, norm.y, is_line, is_thr, is_bay, use_jit, csr, snr, pit_r, phase_r_x, phase_r_y,
+                             asp, wd, ht, soft, aa_r, shp, jit, seed, level, bayer_cell);
+    r2, g2, b2 = single_path(2, px, py, norm.x, norm.y, is_line, is_thr, is_bay, use_jit, csg, sng, pit_g, phase_g_x, phase_g_y,
+                             asp, wd, ht, soft, aa_g, shp, jit, seed, level, bayer_cell);
+    r3, g3, b3 = single_path(3, px, py, norm.x, norm.y, is_line, is_thr, is_bay, use_jit, csb, snb, pit_b, phase_b_x, phase_b_y,
+                             asp, wd, ht, soft, aa_b, shp, jit, seed, level, bayer_cell);
+    k1 = step(0.5, plate1_on);
+    k2 = step(0.5, plate2_on);
+    k3 = step(0.5, plate3_on);
+    sr = clamp(k1 * r1 + k2 * r2 + k3 * r3, 0, 1);
+    sg = clamp(k1 * g1 + k2 * g2 + k3 * g3, 0, 1);
+    sb = clamp(k1 * b1 + k2 * b2 + k3 * b3, 0, 1);
+    oa = max(max(k1 * zap(nearest(in2, norm).w), k2 * zap(nearest(in3, norm).w)), k3 * zap(nearest(in4, norm).w));
 }
-tone_p = max(max(zr, zg), zb);
-cov_s = switch(is_thr > 0.5, thresh(tone_p, level, soft), switch(is_bay > 0.5, bayer(rd(bu, bv, 3), ixb, iyb), cov_s));
-cu = switch(is_thr > 0.5, norm.x, switch(is_bay > 0.5, bu, cu));
-cv = switch(is_thr > 0.5, norm.y, switch(is_bay > 0.5, bv, cv));
-cr = zap(nearest(in1, vec(cu, cv)).x);
-cg = zap(nearest(in1, vec(cu, cv)).y);
-cb = zap(nearest(in1, vec(cu, cv)).z);
-ct = max(max(cr, cg), cb);
-sr = switch(ct > 0, cr / max(ct, 0.000000000001), 0) * cov_s;
-sg = switch(ct > 0, cg / max(ct, 0.000000000001), 0) * cov_s;
-sb = switch(ct > 0, cb / max(ct, 0.000000000001), 0) * cov_s;
 o_r = mix(cov_r, sr, is_single);
 o_g = mix(cov_g, sg, is_single);
 o_b = mix(cov_b, sb, is_single);
 
-out1 = mix(vec(o_r, o_g, o_b, za), vec(zr, zg, zb, za), step(0.5, bypass_gate));
+out1 = mix(vec(o_r, o_g, o_b, oa), vec(zr, zg, zb, za), step(0.5, bypass_gate));
