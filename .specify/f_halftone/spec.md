@@ -118,7 +118,7 @@ The same tone controls the width of parallel lines at an angle: a line screen, a
 
 **Acceptance Scenarios**:
 1. **Given** jitter 0, **Then** the lattice is exactly regular.
-2. **Given** jitter 1, **Then** no two marks overlap more than the cell allows, and the mean coverage equals the tone up to about mid-tone; above it ink is lost where displaced dots overlap (mirror, 2026-11-13: -0.010 at tone 0.5, -0.041 at 0.7, -0.069 at 0.9). Accepted for now (Matt, 2026-11-13).
+2. **Given** jitter 1, **Then** no two marks overlap more than the cell allows, and the mean coverage equals the tone up to about mid-tone; above it ink is lost where displaced dots overlap (mirror, 2026-11-13: -0.010 at tone 0.5, -0.041 at 0.7, -0.069 at 0.9). Accepted for now (Matt, 2026-11-13). Since fix A (each jittered mark clipped to its own cell, Matt 2026-11-14) the loss is larger at high tone: flat 0.9 at jitter 1 gives 0.794 (scratch measurement, offline Claude); GPU at 0.8: -0.075 (`tests/logs/20261114-094020-bench.log`).
 
 ### User Story 7: Threshold and Bayer types (Priority: P2)
 
@@ -210,20 +210,19 @@ A `levels` control (2 to 16, default 2) for Bayer, Blue and Random: the dither s
 
 | Param | Range | Default | Notes |
 |---|---|---|---|
-| `screen` | Dot / Line / Threshold / Bayer | Dot | Threshold and Bayer are P2 |
+| `screen` | Dot / Line / Threshold / Bayer / Blue / Random | Dot | Threshold and Bayer are P2; Blue and Random FR-023 (built 2026-11-14) |
 | `pitch` | frame units | 0.012 | lattice period; the smallest usable value is G5 |
-| `scale_r`, `scale_g`, `scale_b` | 0.25-4 | 1 | per-plate multiplier on `pitch` (FR-022, Matt 2026-11-14; not built); a number box in the plate table, linear |
+| `scale_r`, `scale_g`, `scale_b` | 0.25-4 | 1 | per-plate multiplier on `pitch` (FR-022, Matt 2026-11-14; built); a number box in the plate table, linear |
 | `angle_r`, `angle_g`, `angle_b` | degrees | 15, 75, 45 | per plate (P6) |
 | `phase_r_x`, `phase_r_y`, `phase_g_x`, `phase_g_y`, `phase_b_x`, `phase_b_y` | -1 to 1 pitches | 0 | per-plate lattice shift (FR-016); six dials, so a candidate for a compact pair control (`G-ui-density`) |
 | `softness` | 0-1 | 0.1 | edge ramp width |
-| `shape` | 0-1 | 0 | round to square (P2) |
+| `dot_shape` (label Shape) | 0-1 | 0 | round to square (P2); token renamed from `shape`, which never received its value (2026-11-14) |
 | `jitter` | 0-1 | 0 | regular to hash-displaced (P2) |
 | `level` | 0-1 | 0.5 | Threshold type only |
 | `seed` | int | 1 | for jitter, and the Blue and Random patterns (FR-025) |
-| `screen` (added) | + Blue / Random | | FR-023, not built; indices 4 and 5 |
-| `levels` | 2-16 int | 2 | Bayer, Blue, Random only (FR-027, not built); 2 = one-bit |
-| `plate` | Channels / Single | Channels | how the texture is read; Single is one plate (tone = brightest channel, colour normalised); reads `angle_b` (default 45) and `phase_b` as its one angle and phase: 45 degrees is the common single-plate screen angle (black plate, newspaper); inferred from print convention, not checked against a source |
-| `plate_mode` | Channels / Single / Plates | Channels | Plates (User Story 9, not built): inlets 1 to 3, one plate each at the R, G and B angle and phase |
+| `levels` | 2-16 int | 2 | Bayer, Blue, Random only (FR-027, built); 2 = one-bit |
+| `bayer_cell` (label Read) | Pixel / Cell | Cell | Bayer, Blue and Random: one tone per cell (Cell) or per pixel (Pixel); Matt 2026-11-14 |
+| `plate_mode` | Channels / Single / Plates | Channels | Plates (User Story 9, built 2026-11-14): inlets 1 to 3, one plate each at the R, G and B angle and phase |
 | `bypass` | toggle | 0 | passthrough |
 
 ## Success Criteria
@@ -234,7 +233,7 @@ A `levels` control (2 to 16, default 2) for Bayer, Blue and Random: the dither s
 - **SC-004**: Lattice: the output's autocorrelation shows the period `pitch` times the plate's scale along the channel's angle; plates with different angles show their own orientations.
 - **SC-005**: Plate independence: changing one channel's angle or tone leaves the other channels' outputs unchanged.
 - **SC-006**: Stability: two frames of the same input are bit-identical; a render-size change scales the lattice with the frame.
-- **SC-007**: Jitter: at 0 the lattice is exact; at 1 the mean coverage still equals the tone.
+- **SC-007**: Jitter: at 0 the lattice is exact; at 1 the mean coverage equals the tone up to about mid-tone, with less ink above it (User Story 6 scenario 2; accepted by Matt 2026-11-13).
 - **SC-008**: Tier-3 look (Matt): a photo through three plates at 15, 75 and 45 degrees reads as a halftone print with the expected rosette and no unintended moiré; followed by `f_vf_erode` it reads as ink on paper; one deliberately bent use (a very coarse screen, odd angles, or a line screen on a simulation) reads as intentionally digital.
 
 ## Edge Cases
