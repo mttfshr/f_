@@ -108,9 +108,9 @@ The engine is the source of truth and keeps the table in a plain `pattr vary_tab
 
 ## Status
 
-- Offline engine check passes (`tests/modules/f_util_vary/`). The row UI (T004) is built
-  offline and has NOT been opened in Max.
-- Live (Matt, 2026-11-12): panel renders, grids show and edit rows; the scratch
-  prototype's behaviors passed. Not yet checked live: `roll` with typed rows, the groups
-  and knobs grids, row deletion, save and reopen (T003).
-- Menu: `Vary` under Routing / Mod, provisional (`G-menu`).
+- Offline engine check passes (`tests/modules/f_util_vary/`, via `tests/build/test_vary_engine.py`).
+- Live (Matt, 2026-11-13): panel, + rows, param menu, roll, delete, all 8 outlets, trim dial,
+  lo/hi and mode/sign/group after a preset recall, two copies in one patch, strip and g dials
+  back on a recall. Four groups are enough for now (Matt); how to use groups is not yet clear
+  to Matt, so the helpfile and this doc should explain them better when revisited.
+- Menu: `Vary` under Routing / Mod (Matt: right, 2026-11-13).

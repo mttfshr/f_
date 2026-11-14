@@ -25,7 +25,7 @@ _Spec_: `.specify/f_util_vary/spec.md`. Record who observed what, and when.
 - [ ] T020 Reference doc `docs/f-reference/f_util_vary.md`; helpfile (`f-helpfile` skill); README row (110 chars, then `build/py.sh build/generate_launch.py`); menu entry in `src/f_modules/menu.py` (`G-menu`). Partly done 2026-11-12 (Claude): README row (draft status) and menu entry `Vary` under Routing / Mod (provisional, `G-menu`), launcher and menu regenerated; reference doc written 2026-11-13 (Claude, offline, from the engine source: `docs/f-reference/f_util_vary.md`); helpfile `package/help/f_util_vary.maxhelp` written 2026-11-13 by Claude from the f_vf_stamp model (a demo with the bpatcher, three base messages and four output boxes); NOT opened in Max, Matt's look owed; launcher regenerated.
 
 ## Phase 3: preflight
-- [ ] T030 Module preflight checklist (`module-preflight` skill).
+- [x] T030 Module preflight checklist (`module-preflight` skill), run 2026-11-13 by Claude. Part 1: drift `no_definition` is the recorded `out_of_scope` entry (`test_drift` 16/16); menu and launch up to date, `test_launch` and `test_generate_menu` pass; README row is 110 chars; no bypass; reference doc updated (Status was stale); helpfile bpatcher 372 x 488 equals the module footprint 372 x 488. `test_layout` fails on `f_vf_erode` only (known, not this module). Part 2: live by Matt (all T003 checks, helpfile looks good, menu category right). Open, Matt: groups are not yet clear to him (explain in the helpfile later); the helpfile digest says what it does, not yet when to reach for it over a plain wire.
 
 ## Open (decide before T002)
 - Per-destination bases; non-float params; the menu category.
