@@ -30,4 +30,4 @@ _Spec_: `.specify/stable/f_util_vary/spec.md`. Record who observed what, and whe
 ## Open (decide before T002)
 - Per-destination bases; non-float params; the menu category.
 
-- 2026-11-13 (Claude, offline): a Groups section added to the reference doc and a Groups comment (`d-g1`) to the helpfile; the helpfile layout is NOT yet looked at in Max (Matt).
+- 2026-11-13 (Claude, offline): a Groups section added to the reference doc and a Groups comment (`d-g1`) to the helpfile; reworked in `92821c0` (the draw, groups, five-row example); helpfile looked at in Max by Matt, 2026-11-13: looks good. The groups explanation is closed.
