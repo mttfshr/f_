@@ -382,14 +382,20 @@ out1 = mix(vec(o_r, o_g, o_b, oa), vec(zr, zg, zb, za), byp);
 
 // T038 (US12, FR-028, FR-029): outlets 2-4 carry plate k's term as summed above (Color, unclamped) or its brightest channel,
 // the coverage, as gray (Gray, plate_out 0). Bypass: the part of the source plate k would screen (Channels its channel,
-// Single the source on plate 3, Plates its input).
+// Single the source on plate 3, Plates its input, not zapped). Written as plain arithmetic: per-component switch / zap calls
+// here pushed the GL3 transformer over its capture budget (bench probes 2026-11-14, as T035).
 pc = step(0.5, plate_out);
-t0 = mix(vec(r0, g0, b0), vec(switch(is_pl > 0.5, zap(pv1.x), zr), switch(is_pl > 0.5, zap(pv1.y), 0), switch(is_pl > 0.5, zap(pv1.z), 0)) * en0, byp);
-t1 = mix(vec(r1, g1, b1), vec(switch(is_pl > 0.5, zap(pv2.x), 0), switch(is_pl > 0.5, zap(pv2.y), zg), switch(is_pl > 0.5, zap(pv2.z), 0)) * en1, byp);
-t2 = mix(vec(r2, g2, b2), vec(switch(is_pl > 0.5, zap(pv3.x), zr * is_sg), switch(is_pl > 0.5, zap(pv3.y), zg * is_sg), switch(is_pl > 0.5, zap(pv3.z), zb)) * en2, byp);
+t0 = mix(vec(r0, g0, b0), vec(zr * is_ch, 0, 0) + vec(pv1.x, pv1.y, pv1.z) * is_pl * en0, byp);
+t1 = mix(vec(r1, g1, b1), vec(0, zg * is_ch, 0) + vec(pv2.x, pv2.y, pv2.z) * is_pl * en1, byp);
+t2 = mix(vec(r2, g2, b2), vec(zr * is_sg, zg * is_sg, zb * (1 - is_pl)) + vec(pv3.x, pv3.y, pv3.z) * is_pl * en2, byp);
 m0 = max(max(t0.x, t0.y), t0.z);
 m1 = max(max(t1.x, t1.y), t1.z);
 m2 = max(max(t2.x, t2.y), t2.z);
-out2 = vec(mix(m0, t0.x, pc), mix(m0, t0.y, pc), mix(m0, t0.z, pc), pa0);
-out3 = vec(mix(m1, t1.x, pc), mix(m1, t1.y, pc), mix(m1, t1.z, pc), pa1);
-out4 = vec(mix(m2, t2.x, pc), mix(m2, t2.y, pc), mix(m2, t2.z, pc), pa2);
+// vec(vec3, scalar) does not build the four-component vector it reads as (bench 2026-11-14: zeros and a scrambled out4);
+// take the components one by one
+g0 = mix(vec(m0, m0, m0), t0, pc);
+g1 = mix(vec(m1, m1, m1), t1, pc);
+g2 = mix(vec(m2, m2, m2), t2, pc);
+out2 = vec(g0.x, g0.y, g0.z, pa0);
+out3 = vec(g1.x, g1.y, g1.z, pa1);
+out4 = vec(g2.x, g2.y, g2.z, pa2);

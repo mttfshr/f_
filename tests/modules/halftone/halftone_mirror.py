@@ -415,9 +415,9 @@ def halftone_outlets(src, *, plate_out="gray", **kw):
     if kw.get("bypass"):
         if mode == "plates":
             for k, p in enumerate(kw.get("plates", (None, None, None))):
-                if p is not None:
-                    z = zap(np.asarray(p, dtype=F32))
-                    terms[k] = (z[..., :3].copy(), z[..., 3].copy())
+                if p is not None:   # rgb not zapped, as the codebox (its capture budget, 2026-11-14); alpha zapped
+                    z = np.asarray(p, dtype=F32)
+                    terms[k] = (z[..., :3].copy(), zap(z)[..., 3].copy())
         elif src is not None:
             z = zap(np.asarray(src, dtype=F32))
             if mode == "single":

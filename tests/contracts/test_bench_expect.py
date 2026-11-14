@@ -55,8 +55,6 @@ def problems_in_table(table):
                 inlet, tol = spec[1], 0.0
             elif kind == "vec" and len(spec) == 3:
                 inlet, tol = spec[1], spec[2]
-            elif kind == "gray" and len(spec) == 4 and spec[2] in (0, 1, 2):   # inlet N's channel C as gray (2026-11-14)
-                inlet, tol = spec[1], spec[3]
             elif kind == "const" and len(spec) == 3:
                 inlet, tol = None, spec[2]
                 if len(spec[1]) != 4:

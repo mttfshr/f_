@@ -162,7 +162,7 @@ A `levels` control (2 to 16, default 2) for Bayer, Blue and Random: the dither s
 3. **Given** tone 0 or 1, **Then** the output is exactly 0 or 1.
 4. **Given** Dot, Line or Threshold, **Then** `levels` changes nothing.
 
-### User Story 12: Plate outlets (Priority: P2; Matt, 2026-11-14; not built)
+### User Story 12: Plate outlets (Priority: P2; Matt, 2026-11-14; built and benched 2026-11-14)
 
 Outlets 1 to 3 carry the three plates separately, so each can go through its own effect (`f_vf_erode`, for one) and be recombined downstream; outlet 0 stays the combined output. A Color / Gray toggle picks what the plate outlets carry: Gray (default) is the plate's coverage as a gray mask, Color is the plate in its colour as it enters the sum (Channels: pure red, green, blue; Single and Plates: the plate's own ink colour).
 
@@ -212,7 +212,7 @@ Outlets 1 to 3 carry the three plates separately, so each can go through its own
 - **FR-027** *(Matt, 2026-11-14; not built)*: `levels` (int, 2 to 16, default 2) MUST quantize the output of Bayer, Blue and Random to L evenly spaced values per channel: with q = tone × (L - 1), output = (floor(q) + [fract(q) > threshold]) / (L - 1), clamped to 0..1, tone <= 0 exactly 0 and tone >= 1 exactly 1; at L = 2 this MUST equal the one-bit output exactly. Dot, Line and Threshold ignore it. In Single and Plates, the quantized value takes the plate's colour as coverage does today.
 - **FR-028** *(Matt, 2026-11-14; not built)*: outlets 1 to 3 MUST carry plate k's term (k = R / G / B row, or plate 1 / 2 / 3 in Plates); outlet 0 is unchanged.
 - **FR-029** *(Matt, 2026-11-14; not built)*: a `plate_out` toggle Gray / Color, default Gray. Gray: (m, m, m) with m the brightest channel of plate k's Color term, which is its coverage. Color: the term as summed into outlet 0 (unclamped).
-- **FR-030** *(Matt, 2026-11-14; not built)*: plate outlet alpha is the source's in Channels and Single, plate k's input alpha in Plates (0 when unconnected); Single uses outlet 3 only; bypass passes each plate's source part (US12 scenario 6). Claude's recommendations, Matt to confirm at the look.
+- **FR-030** *(Matt, 2026-11-14; not built)*: plate outlet alpha is the source's in Channels and Single, plate k's input alpha in Plates (0 when unconnected); Single uses outlet 3 only; bypass passes each plate's source part (US12 scenario 6). Claude's recommendations, Matt to confirm at the look. Built limit (GL3 capture budget, 2026-11-14): in bypass a Plates input's rgb passes unzapped, and a NaN on a connected plate inlet reaches the plate outlets.
 - **FR-015**: Standard behaviour: `#0_`-scoped names, `routepass` / `route` / `autopattr` with `varname`, `definition.py` as the source of truth.
 
 ### Non-Functional Requirements
@@ -238,7 +238,7 @@ Outlets 1 to 3 carry the three plates separately, so each can go through its own
 | `levels` | 2-16 int | 2 | Bayer, Blue, Random only (FR-027, built); 2 = one-bit |
 | `bayer_cell` (label Read) | Pixel / Cell | Cell | Bayer, Blue and Random: one tone per cell (Cell) or per pixel (Pixel); Matt 2026-11-14 |
 | `plate_mode` | Channels / Single / Plates | Channels | Plates (User Story 9, built 2026-11-14): inlets 1 to 3, one plate each at the R, G and B angle and phase |
-| `plate_out` | Gray / Color | Gray | what outlets 1-3 carry (FR-029, not built) |
+| `plate_out` (label Out) | Gray / Color | Gray | what outlets 2-4 carry (FR-029, built 2026-11-14) |
 | `bypass` | toggle | 0 | passthrough |
 
 ## Success Criteria
