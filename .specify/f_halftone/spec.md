@@ -29,7 +29,7 @@ These are not Matt's calls. They are Claude's recommendations, accepted in place
 - **P5 One shared pitch** for all three plates; the angle is per plate.
 - **P6 (accepted by Matt, 2026-11-13) Default angles 15, 75 and 45 degrees** for R, G and B (inferred from the offset convention, which separates screens by 30 degrees or more to limit moiré; not tested).
 - **P7 Output is bounded to 0..1** by construction (coverage), with input above 1 saturating to full and below 0 giving none. This differs from `f_vf_erode` (unclamped) because a mark is either there or not.
-- **P8 No driver inlets in v1** (G12).
+- **P8 No driver inlets in v1** (G12). The plate inlets (User Story 9, Matt 2026-11-14) are not driver inlets: each is a source to screen, not a control signal.
 - **P9 Stochastic (FM) stipple is out of scope.** `f_stipple` is a hash-field stipple (its doc, read 2026-11-08), and it reads only the red channel.
 - **P10 Units are frame-relative,** as for `f_vf_erode` (A4 there; gate G2).
 - **P11 Polarity as in `f_vf_erode`:** high channel value = more ink.
@@ -52,6 +52,7 @@ These are not Matt's calls. They are Claude's recommendations, accepted in place
 - **G13 Naming alignment.** `softness`, `jitter`, `shape`, `angle` follow `docs/f-reference/discrete_item_conventions.md` (not opened this session); check that the names mean the same here.
 
 - **Plates from `f_separate`, and the plate toggle (Matt, 2026-11-08):** `f_separate` outputs three textures, each carrying one spot colour as its RGB channels; this module operates on the RGB channels of each of those textures. Because a real spot-colour screen is ONE screen, a `plate` toggle chooses how a texture is read: **Channels** (the spec as written: R, G and B are separate plates, each with its own angle) or **Single** (the whole texture is one plate with one angle: the tone is the brightest channel, `t = max(r, g, b)`; the colour is normalised to full brightness, `rgb / t`; the output is that colour times the mark, so a teal plate gets one set of teal dots and its two non-zero channels are not split). Matt chose the brightest-channel tone with normalised colour over keeping the plate's original brightness (which would cap the dot area): a dimmer plate colour is restored with a gain downstream. Black (`t` near 0) gives black. Alpha passes through. Default: Channels (a full-colour texture), Single for spot-colour plates. Details (which angle param Single reads, default) are gate G-plate in `tasks.md`.
+- **Plate inlets (Matt, 2026-11-14; a later feature, not built):** three more inlets so one `f_halftone` screens all three of `f_separate`'s plates, in place of three copies in Single mode added together. Four inlets in all: inlet 0 the main texture (Channels and Single, unchanged), inlets 1 to 3 the plates. User Story 9, FR-017 to FR-020, gate G-plates in `tasks.md`.
 
 ---
 
@@ -124,6 +125,20 @@ A `Threshold` type (a hard or soft cut at a level, the linocut and xerox base) a
 1. **Given** `Threshold` and a `level`, **Then** output is 1 where the tone is above it (softly edged by `softness`) and 0 elsewhere.
 2. **Given** `Bayer` and a flat tone, **Then** the fraction of lit texels equals the tone to within the matrix's resolution.
 
+### User Story 9: Plate inlets, one module for `f_separate`'s plates (Priority: P2; Matt, 2026-11-14; not built)
+
+A performer connects `f_separate`'s three plate outlets to `f_halftone`'s plate inlets, sets Plate to Plates, and gets the three spot-colour plates screened at three angles and recombined in one module: the print look of a two- or three-ink job with one copy instead of three plus a mixer.
+
+**Why this priority**: it is the natural chain after `f_separate`; three copies work today (each in Single, summed) but cost three modules, a mixer and two sets of unused dials.
+
+**Independent Test**: tier 1, against three Single screens summed: the Plates output equals the sum of `halftone_stage(plate_k, plate_mode="single")` with plate k's angle and phase, clamped to 0..1.
+
+**Acceptance Scenarios**:
+1. **Given** three plates connected and Plate set to Plates, **Then** each plate is screened once in its own colour (as Single) at its own angle, and the output is the three added.
+2. **Given** a plate inlet with nothing connected, **Then** that plate contributes nothing (black), and the other plates are unchanged.
+3. **Given** one plate's angle or phase changed, **Then** the other two plates' marks are unchanged.
+4. **Given** Plate set to Channels or Single, **Then** the module reads inlet 0 exactly as before and the plate inlets are ignored.
+
 ### User Story 8: Standard f_ module behaviour (Priority: P3)
 
 `bypass`, `#0_` scoped names, helpfile, menu entry, README row.
@@ -149,6 +164,10 @@ A `Threshold` type (a hard or soft cut at a level, the linocut and xerox base) a
 - **FR-013**: Alpha MUST pass through from the source.
 - **FR-014**: Bypass MUST use a codebox `bypass_gate` Param (never native `@bypass`) and pass the source through (P12).
 - **FR-016** *(Matt, 2026-11-13)*: Each plate MUST have its own lattice phase offset in x and y (`phase_r/g/b` x and y, in pitch units, default 0), so a plate shifted by misregistration keeps whole, sharp marks instead of a resampled blur. In Single mode the blue plate's phase is the one used.
+- **FR-017** *(Matt, 2026-11-14; not built)*: The module MUST have four inlets: inlet 0 the main texture (Channels and Single) and inlets 1 to 3 the plates. A third `plate_mode` value, **Plates**, screens inlets 1 to 3.
+- **FR-018**: In Plates mode each plate inlet MUST be read as Single reads a texture (tone the brightest channel, colour normalised to full brightness, black stays black), with plate 1 at `angle_r` / `phase_r`, plate 2 at `angle_g` / `phase_g`, plate 3 at `angle_b` / `phase_b` (preliminary, Claude: the three existing angle and phase dials become the three plates', so no new dials). Pitch, type, shape, softness, jitter, level and seed are shared by the three plates.
+- **FR-019**: In Plates mode the output MUST be the sum of the three screened plates, clamped to 0..1 (preliminary, Claude: as `f_separate`'s preview outlet sums its plates, the additive-light model of `f_separate`'s spec; P7 keeps the output bounded).
+- **FR-020**: An unconnected plate inlet MUST contribute nothing (an unconnected `jit.gl.pix` inlet reads black with alpha 1: `skills/jit-gen-codebox`, verified 2026-10-07; Vsynth's own unconnected handling to be checked on the bench).
 - **FR-015**: Standard behaviour: `#0_`-scoped names, `routepass` / `route` / `autopattr` with `varname`, `definition.py` as the source of truth.
 
 ### Non-Functional Requirements
@@ -171,6 +190,7 @@ A `Threshold` type (a hard or soft cut at a level, the linocut and xerox base) a
 | `level` | 0-1 | 0.5 | Threshold type only |
 | `seed` | int | 1 | for jitter |
 | `plate` | Channels / Single | Channels | how the texture is read; Single is one plate (tone = brightest channel, colour normalised); reads `angle_b` (default 45) and `phase_b` as its one angle and phase: 45 degrees is the common single-plate screen angle (black plate, newspaper); inferred from print convention, not checked against a source |
+| `plate_mode` | Channels / Single / Plates | Channels | Plates (User Story 9, not built): inlets 1 to 3, one plate each at the R, G and B angle and phase |
 | `bypass` | toggle | 0 | passthrough |
 
 ## Success Criteria
@@ -204,4 +224,4 @@ A `Threshold` type (a hard or soft cut at a level, the linocut and xerox base) a
 - Ink behaviour: dot gain, mottle, dropout, edge pooling (`f_vf_erode`); misregistration (`f_misregister`); colour and overprint (`f_paper`).
 - A fourth (CMYK black) plate.
 - Riso-specific halftone options.
-- Driver inlets (G12); drivers can be added in a later version.
+- Driver inlets (G12); drivers can be added in a later version. (The plate inlets of User Story 9 are sources, not drivers.)
