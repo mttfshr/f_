@@ -509,6 +509,7 @@ there, then the chapter-specific files for depth.
   at musically meaningful crossovers, for post-mix/complex-soundscape input.
   Parallel to `f_util_profile` but audio→control instead of GPU→CPU.
 - **[f_util_vary.md](f_util_vary.md)** 🧰 — A general randomizer as a percentage over a chosen parameter list: per-target amount and chance, groups with correlation (plates are groups), wobble, trim, seed, bake to a preset (Matt, 2026-11-10/11). `f_misregister` folds in as one preset of it. Sits on top of `f_util_scoped_presets`. Placeholder name; concept only.
+- **[f_util_row_engine.md](f_util_row_engine.md)** ⚪ — A shared row-table engine extracted from `f_util_vary` (engine owns the table, scripted row bpatchers, saved via the host's presets): Matrix 2, the tagged-texture router, macros, modulator bank, strike table and cue list are the same table with different columns. Parked 2026-11-13; inferred beyond Vary.
 - **[f_util_scoped_presets.md](f_util_scoped_presets.md)** 🧰 — A custom scoped `pattrstorage` plus a linked parameter list over any chain of modules: store everything, expose a few dials, one control driving several parameters, presets that morph (Matt, 2026-11-10; a sidecar first). Prompted by `f_misregister` (paused, not parked) and Ableton racks and macros. Concept only; experiment 1 (a scratch patch) is owed to Matt in Max.
 - **[f_util_compound_dial.md](f_util_compound_dial.md)** 🧰 — Custom `jsui`
   widget: two concentric rings controlling two independent params in one
@@ -576,6 +577,11 @@ there, then the chapter-specific files for depth.
   vecfields, and the pad / choke / envelope control layer. Option A doubles as the
   feasibility test for `f_loop_to_cycle` (indexable GPU-resident frames). Nothing
   tried in Max; lean is a small probe on A first.
+- **[f_mosh.md](f_mosh.md)** ⚪ — Datamosh without a codec (2009 Tintori/Nabil look): a held
+  image pushed by per-block motion from the live input, a `key` trigger as the I-frame
+  (skip it at a cut to mosh), `hold` to repeat the motion (bloom), residual and intra-block
+  chance. Optional second inlet lets one shot's motion drag another's pixels. Try a chain
+  first (`f_vf_optical_flow` → block quantize → `f_vf_advect`). Captured 2026-11-14.
 - **[variable_framerate.md](variable_framerate.md)** ⚪ — Captured 2026-10-18 from "can
   breath or an oscillator drive the frame rate?". Separates render rate (`jit.world`
   `fps` / `interval`, capped at the display refresh with vsync, slower is allowed;
