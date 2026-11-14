@@ -27,11 +27,16 @@ Alpha is the source's. Non-finite input is zapped to 0 first (FR-011). Bypass pa
 connected) returns None: the build supplies black with alpha 0 (vs_black), which then screens to black.
 
 `bug` values are mutations the tests must catch: "no_extremes", "no_zap", "wrong_area" ((2r)^2 instead of A(r)), "per_pixel_tone",
-"ignore_phase", "shared_phase", "ignore_alpha", "single_reads_r", "line_centre_tone", "ignore_scale", "shared_scale".
+"ignore_phase", "shared_phase", "ignore_alpha", "single_reads_r", "line_centre_tone", "ignore_scale", "shared_scale",
+"plates_shared_angle", "plates_no_clamp", "plates_read_src", "plates_alpha_src".
 
 Per-plate pitch scale (Matt, 2026-11-14; spec FR-022, T029a): each plate's pitch is pitch * scale (scales R, G, B; Single uses
 scale B), formed in float32 as the codebox does; everything that follows the pitch (lattice, phase, edge ramp, jitter, Bayer
 cell) follows the plate's own pitch.
+
+plate "plates" (Matt, 2026-11-14; spec US9, FR-017 to FR-021, T027; offline Claude, not benched): `plates` holds inlets 1-3;
+each is screened as Single at angle / phase / scale k (plate 1 the R set, 2 the G set, 3 the B set), the three summed and
+clamped to 0..1; alpha the largest of the connected plates'; inlet 0 ignored except by bypass; None (unconnected) adds nothing.
 """
 import numpy as np
 
@@ -230,10 +235,24 @@ def _plate_pitch(pitch, scales, ch, bug=None):
     return F32(F32(pitch) * F32(sc))
 
 
+def _single(z, W, H, theta, phase, pitch, kw):
+    """The Single path (T016a) on one texture: tone the brightest channel, colour normalised, output colour * coverage."""
+    read = lambda i, j: np.max(z[j, i, :3], axis=-1)   # noqa: E731
+    cov, ti, tj = plate(read, W, H, theta=theta, phase=phase, pitch=pitch, **kw)
+    t = np.max(z[tj, ti, :3], axis=-1)
+    col = np.where(t[..., None] > 0, z[tj, ti, :3] / np.maximum(t, F32(1e-12))[..., None], F32(0))
+    return (col * cov[..., None]).astype(F32)
+
+
 def halftone_stage(src, *, screen="dot", pitch=0.012, angles=(15.0, 75.0, 45.0), phases=((0, 0), (0, 0), (0, 0)), scales=(1.0, 1.0, 1.0),
                    softness=0.1, shape=0.0, jitter=0.0, seed=1, level=0.5, bayer_read="cell", plate_mode="channels",
-                   tone_mode="center", bypass=False, bug=None):
-    """src: (H, W, 4) float32 (R, G, B, A) or None. Returns (H, W, 4) float32."""
+                   tone_mode="center", bypass=False, plates=(None, None, None), bug=None):
+    """src: (H, W, 4) float32 (R, G, B, A) or None (inlet 0). plates: three (H, W, 4) textures or None (inlets 1-3; read
+    only in plate_mode "plates", None = unconnected). Returns (H, W, 4) float32, or None where the build supplies black."""
+    if plate_mode == "plates":
+        return _plates_stage(src, plates, screen=screen, pitch=pitch, angles=angles, phases=phases, scales=scales,
+                             softness=softness, shape=shape, jitter=jitter, seed=seed, level=level, bayer_read=bayer_read,
+                             tone_mode=tone_mode, bypass=bypass, bug=bug)
     if src is None:
         return None
     src = np.asarray(src, dtype=F32)
@@ -247,12 +266,7 @@ def halftone_stage(src, *, screen="dot", pitch=0.012, angles=(15.0, 75.0, 45.0),
               tone_mode=tone_mode, bug=bug)
     if plate_mode == "single":
         ch = 0 if bug == "single_reads_r" else 2
-        th, ph = angles[ch], phases[ch]
-        read = lambda i, j: np.max(z[j, i, :3], axis=-1)   # noqa: E731
-        cov, ti, tj = plate(read, W, H, theta=th, phase=ph, pitch=_plate_pitch(pitch, scales, ch, bug), **kw)
-        t = np.max(z[tj, ti, :3], axis=-1)
-        col = np.where(t[..., None] > 0, z[tj, ti, :3] / np.maximum(t, F32(1e-12))[..., None], F32(0))
-        out[..., :3] = (col * cov[..., None]).astype(F32)
+        out[..., :3] = _single(z, W, H, angles[ch], phases[ch], _plate_pitch(pitch, scales, ch, bug), kw)
     else:
         for ch in range(3):
             ph = phases[0] if bug == "shared_phase" else phases[ch]
@@ -260,4 +274,43 @@ def halftone_stage(src, *, screen="dot", pitch=0.012, angles=(15.0, 75.0, 45.0),
             cov, _, _ = plate(read, W, H, theta=angles[ch], phase=ph, pitch=_plate_pitch(pitch, scales, ch, bug), **kw)
             out[..., ch] = cov
     out[..., 3] = F32(1) if bug == "ignore_alpha" else z[..., 3]
+    return out.astype(F32)
+
+
+def _plates_stage(src, plates, *, screen, pitch, angles, phases, scales, softness, shape, jitter, seed, level, bayer_read,
+                  tone_mode, bypass, bug):
+    """Plates mode (spec US9, FR-017 to FR-021, plan ADR-8): plate k (inlet k + 1) is screened as Single at angle k, phase k
+    and scale k; the three are summed and clamped to 0..1 (FR-019); alpha is the largest of the connected plates' alphas
+    (FR-021); inlet 0 is ignored except by bypass, which passes it (P12; None, so the build's black, when it is empty).
+    An unconnected plate (None) contributes nothing, colour or alpha (FR-020; the codebox skips it by its connected flag)."""
+    if bypass:
+        if src is None:
+            return None
+        z0 = np.asarray(src, dtype=F32)
+        return (z0 if bug == "no_zap" else zap(z0)).astype(F32)
+    plates = list(plates)
+    if bug == "plates_read_src":
+        plates[0] = src
+    shapes = [np.asarray(p).shape[:2] for p in plates if p is not None]
+    if not shapes:
+        if src is None:
+            return None
+        shapes = [np.asarray(src).shape[:2]]
+    H, W = shapes[0]
+    out = np.zeros((H, W, 4), dtype=F32)
+    kind = {"dot": "dot", "line": "line", "threshold": "threshold", "bayer": "bayer"}[screen]
+    kw = dict(kind=kind, softness=softness, shape=shape, jitter=jitter, seed=seed, level=level, bayer_read=bayer_read,
+              tone_mode=tone_mode, bug=bug)
+    for k, p in enumerate(plates):
+        if p is None:
+            continue
+        p = np.asarray(p, dtype=F32)
+        z = p if bug == "no_zap" else zap(p)
+        ch = 2 if bug == "plates_shared_angle" else k
+        out[..., :3] += _single(z, W, H, angles[ch], phases[ch], _plate_pitch(pitch, scales, ch, bug), kw)
+        out[..., 3] = np.maximum(out[..., 3], z[..., 3])
+    if bug != "plates_no_clamp":
+        out[..., :3] = np.clip(out[..., :3], 0, 1)
+    if bug == "plates_alpha_src" and src is not None:
+        out[..., 3] = zap(np.asarray(src, dtype=F32))[..., 3]
     return out.astype(F32)

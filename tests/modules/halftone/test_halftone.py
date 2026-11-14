@@ -1,4 +1,4 @@
-"""test_halftone.py -- tier-1 tests for the not-yet-built f_halftone module (T017, T016c, T016a, T018 in part, T029a; SC-001 to SC-007, FR-022).
+"""test_halftone.py -- tier-1 tests for the not-yet-built f_halftone module (T017, T016c, T016a, T018 in part, T029a, T027; SC-001 to SC-007, FR-022).
 
 Ground truth is independent of the mirror where it can be: the area law (mean coverage of a flat patch = its tone), a
 Monte Carlo area for the round-dot function A(r), the recursive Bayer matrix, the FFT of the output for the lattice's
@@ -352,6 +352,54 @@ def test_threshold_and_bayer():
     check("Threshold, soft: monotone", float(max(0.0, -np.diff(o[0].astype(np.float64)).min())), 0)
 
 
+def test_plates():
+    """US9 / FR-017 to FR-021 (T027): Plates mode is the sum of three Single screens, clamped; an unconnected plate adds
+    nothing; inlet 0 is ignored (bypass passes it); one plate's angle moves only that plate; Channels and Single ignore plates."""
+    W = H = 128
+    rng = np.random.default_rng(7)
+    p1 = flat((0.0, 0.6, 0.8), W, H)
+    p2 = ramp(W, H)
+    p2[..., 1] = 0
+    p3 = flat((0.7, 0.7, 0.0), W, H, a=0.6)
+    p3[..., :3] *= rng.uniform(0.3, 1.0, (H, W, 1)).astype(F32)
+    src = flat((0.2, 0.9, 0.4), W, H, a=0.3)
+    kw = dict(pitch=0.1, softness=0.2, angles=(15.0, 75.0, 45.0), phases=((0.1, 0.2), (0.3, 0.0), (0.0, 0.5)), scales=(1.0, 1.5, 0.75))
+
+    def single(p, k):
+        return halftone_stage(p, plate_mode="single", pitch=kw["pitch"], softness=kw["softness"],
+                              angles=(0.0, 0.0, kw["angles"][k]), phases=((0, 0), (0, 0), kw["phases"][k]),
+                              scales=(1.0, 1.0, kw["scales"][k]))
+
+    s = [single(p, k) for k, p in enumerate((p1, p2, p3))]
+    o = halftone_stage(src, plate_mode="plates", plates=(p1, p2, p3), **kw)
+    want = np.clip(s[0][..., :3] + s[1][..., :3] + s[2][..., :3], 0, 1)
+    check("Plates = sum of three Single screens, clamped (US9)", err(o[..., :3], want), 1e-6)
+    note("Plates: share of pixels the clamp touches", float((s[0][..., :3] + s[1][..., :3] + s[2][..., :3] > 1).mean()))
+    check("Plates: alpha is the largest plate alpha (FR-021)", err(o[..., 3], 1.0), 0)
+    check("Plates: output in 0..1", float(max(0.0, -o.min(), o.max() - 1)), 0)
+    o2 = halftone_stage(None, plate_mode="plates", plates=(p1, None, p3), **kw)
+    check("Plates: an unconnected plate adds nothing (FR-020)", err(o2[..., :3], np.clip(s[0][..., :3] + s[2][..., :3], 0, 1)), 1e-6)
+    o3 = halftone_stage(src, plate_mode="plates", plates=(None, None, p3), **kw)
+    check("Plates: alpha from the connected plates only", err(o3[..., 3], 0.6), 1e-6)
+    o4 = halftone_stage(src, plate_mode="plates", plates=(None, None, None), **kw)
+    check("Plates: nothing connected gives black, alpha 0", float(np.abs(o4).max()), 0)
+    o5 = halftone_stage(flat(0.1, W, H), plate_mode="plates", plates=(p1, p2, p3), **kw)
+    check("Plates: inlet 0 is ignored (FR-021)", err(o5, o), 0)
+    check("Plates: bypass passes inlet 0 (P12)", err(halftone_stage(src, plate_mode="plates", plates=(p1, p2, p3), bypass=True, **kw), src), 0)
+    check("Plates: bypass with inlet 0 empty is the build's black (None)",
+          float(halftone_stage(None, plate_mode="plates", plates=(p1, p2, p3), bypass=True, **kw) is not None), 0)
+    # one plate per channel, so no overlap: plate 1's angle moves R only
+    r, g, b = flat((0.5, 0, 0), W, H), flat((0, 0.5, 0), W, H), flat((0, 0, 0.5), W, H)
+    a = halftone_stage(None, plate_mode="plates", plates=(r, g, b), **kw)
+    kw2 = dict(kw, angles=(40.0, 75.0, 45.0))
+    c = halftone_stage(None, plate_mode="plates", plates=(r, g, b), **kw2)
+    check("Plates: plate 1's angle leaves plates 2 and 3 unchanged", err(a[..., 1:3], c[..., 1:3]), 0)
+    check("Plates: plate 1's angle moves plate 1", float(err(a[..., 0], c[..., 0]) < 0.5), 0)
+    for pm in ("channels", "single"):
+        check(f"{pm.capitalize()}: the plate inlets are ignored",
+              err(halftone_stage(src, plate_mode=pm, plates=(p1, p2, p3), **kw), halftone_stage(src, plate_mode=pm, **kw)), 0)
+
+
 def test_mutations():
     """Each plausible mistake changes an output the checks above look at."""
     nan = flat(0.5, 64, 64)
@@ -369,6 +417,10 @@ def test_mutations():
         "line_centre_tone": (ramp(256, 64), dict(pitch=0.3, screen="line", angles=(0, 0, 0), softness=0.0)),
         "ignore_scale": (flat(0.4, 64, 64), dict(pitch=0.1, scales=(2, 1, 0.5))),
         "shared_scale": (flat(0.4, 64, 64), dict(pitch=0.1, scales=(1, 2, 0.5))),
+        "plates_shared_angle": (None, dict(pitch=0.1, plate_mode="plates", plates=(flat((0.5, 0, 0), 64, 64), None, None))),
+        "plates_no_clamp": (None, dict(pitch=0.1, softness=0.5, plate_mode="plates", plates=(flat(0.8, 64, 64),) * 3)),
+        "plates_read_src": (flat(0.2, 64, 64), dict(pitch=0.1, plate_mode="plates", plates=(flat(0.7, 64, 64), None, None))),
+        "plates_alpha_src": (flat(0.2, 64, 64, a=0.3), dict(pitch=0.1, plate_mode="plates", plates=(flat(0.7, 64, 64), None, None))),
     }
     for bug, (src, kw) in cases.items():
         a = halftone_stage(src, **kw)
