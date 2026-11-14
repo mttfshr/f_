@@ -34,7 +34,13 @@ patcher = {
     "presentation_width":  290,
     "presentation_height": 164,
 
-    "outlets": [{"comment": "texture"}],
+    # T038 (Matt, 2026-11-14; spec US12, FR-028 to FR-030): outlet 0 the combined screen, outlets 1-3 the plates
+    "outlets": [
+        {"comment": "texture (the plates combined)"},
+        {"comment": "plate R (Plates: plate 1), gray mask or color per Out"},
+        {"comment": "plate G (Plates: plate 2), gray mask or color per Out"},
+        {"comment": "plate B (Plates and Single: plate 3 / the one plate), gray mask or color per Out"},
+    ],
 
     # T028 (Matt, 2026-11-14; spec FR-017 to FR-021): the plate inlets, read only in Plates mode. Each connected flag lets the
     # codebox skip an unconnected plate (an unconnected inlet reads black with alpha 1, which would set the output alpha to 1).
@@ -91,6 +97,8 @@ patcher = {
          "hint": "Shifts the blue plate's lattice along its own x, in pitches"},
         {"name": "phase_b_y", "type": "float", "min": -1.0, "max": 1.0, "default": 0.0, "label": "B y", "widget": "numbox",
          "hint": "Shifts the blue plate's lattice along its own y, in pitches"},
+        {"name": "plate_out", "type": "text_button", "options": ["Gray", "Color"], "default": 0, "label": "Out",
+         "hint": "What outlets 2-4 carry. Gray: each plate's coverage as a gray mask (for an effect such as f_vf_erode). Color: each plate in its color, as it enters outlet 1 (red, green, blue in Channels; the ink color in Single and Plates)"},
         {"name": "bypass", "type": "bypass"},
 
         # Driven by the bypass jsui (`prepend param bypass_gate`), never by a dial
@@ -147,6 +155,7 @@ _ov["levels.ctl"] = {"presentation_rect": [_SEED_X - 17.0, _DIAL_TOP + 29.0, 34.
                          "parameter_shortname": "levels", "parameter_type": 1, "parameter_unitstyle": 0}}}
 _ov["levels.label"] = {"presentation_rect": [_SEED_X - 19.0, _DIAL_TOP + 13.0, 38.0, 16.0]}
 _ov["bayer_cell.ctl"] = {"presentation_rect": [_READ_X - 20.0, _DIAL_TOP + 13.0, 40.0, 17.0]}   # shows Cell / Pixel itself
+_ov["plate_out.ctl"] = {"presentation_rect": [186.0, 3.0, 40.0, 15.0]}   # T038: in the title bar after Plate (Claude's placement)
 
 # the plate table: one row per plate; the per-cell labels are hidden, the headers and row labels are comments
 _CELL = {"angle": "angle_{c}", "scale": "scale_{c}", "x": "phase_{c}_x", "y": "phase_{c}_y"}

@@ -52,7 +52,7 @@ import numpy as np
 
 import benchclient as bc
 from harness import check, note, run, slow
-from halftone_mirror import F32, halftone_stage
+from halftone_mirror import F32, halftone_outlets, halftone_stage
 
 CODE = (_paths.REPO / "src" / "f_halftone" / "codebox_halftone.gen").read_text()
 W, H = 128, 128
@@ -62,7 +62,7 @@ PITCH = 16.0 / H       # 16 texels
 PINNED = {"screen": 0.0, "pitch": PITCH, "angle_r": 15.0, "angle_g": 75.0, "angle_b": 45.0,
           "phase_r_x": 0.0, "phase_r_y": 0.0, "phase_g_x": 0.0, "phase_g_y": 0.0, "phase_b_x": 0.0, "phase_b_y": 0.0,
           "softness": 0.0, "dot_shape": 0.0, "jitter": 0.0, "seed": 1.0, "level": 0.5, "plate_mode": 0.0, "bayer_cell": 1.0, "bypass_gate": 0.0,
-          "scale_r": 1.0, "scale_g": 1.0, "scale_b": 1.0, "plate1_on": 0.0, "plate2_on": 0.0, "plate3_on": 0.0, "levels": 2.0}
+          "scale_r": 1.0, "scale_g": 1.0, "scale_b": 1.0, "plate1_on": 0.0, "plate2_on": 0.0, "plate3_on": 0.0, "levels": 2.0, "plate_out": 0.0}
 SCREENS = {0: "dot", 1: "line", 2: "threshold", 3: "bayer", 4: "blue", 5: "random"}
 LATTICE = {0: "dot", 1: "line"}
 
@@ -93,7 +93,7 @@ def photo(w=W, h=H, seed=4):
     return t
 
 
-def gpu(src, code=CODE, probe=None, plates=None, **deltas):
+def gpu(src, code=CODE, probe=None, plates=None, all_outs=False, **deltas):
     """probe: the whole Param dict for a codebox that is not the module's (a Param it does not declare is an invalid message
     and fails the job: first run, 2026-11-13)."""
     h, w = src.shape[:2]
@@ -105,16 +105,22 @@ def gpu(src, code=CODE, probe=None, plates=None, **deltas):
     outs, r = bc.run_pass(code, [src] + list(plates or []), dim=(w, h), params=params, timeout_ms=30000, all_outputs=True)
     if r["status"] != "ok" or outs[0] is None:
         raise AssertionError(f"bench job failed: {r['status']} {r['errors']} ({r['job_dir']})")
-    return outs[0]
+    return outs if all_outs else outs[0]
 
 
 PLATE_MODES = {0: "channels", 1: "single", 2: "plates"}
 
 
-def mirror(src, plates=(None, None, None), **deltas):
+def mirror(src, plates=(None, None, None), all_outs=False, **deltas):
     p = dict(PINNED)
     p.update(deltas)
-    return halftone_stage(src, screen=SCREENS[int(p["screen"])], pitch=p["pitch"],
+    if all_outs:
+        return halftone_outlets(src, plate_out="color" if p["plate_out"] > 0.5 else "gray", **_mirror_kw(p, plates))
+    return halftone_stage(src, **_mirror_kw(p, plates))
+
+
+def _mirror_kw(p, plates):
+    return dict(screen=SCREENS[int(p["screen"])], pitch=p["pitch"],
                           angles=(p["angle_r"], p["angle_g"], p["angle_b"]),
                           phases=((p["phase_r_x"], p["phase_r_y"]), (p["phase_g_x"], p["phase_g_y"]),
                                   (p["phase_b_x"], p["phase_b_y"])),
@@ -490,6 +496,43 @@ def test_levels():
         got = gpu(flat(tone, tone, tone), screen=3.0, levels=7.0)
         check(f"bayer, levels 7, flat {tone:g}: exactly {tone:g}", float(np.abs(got[..., :3] - tone).max()), 0.0)
     check("dot ignores levels", mx(gpu(p, levels=7.0), gpu(p)), 0.0)
+
+
+def outlets_row(label, src, plates=None, mirror_plates=(None, None, None), **deltas):
+    """T038 (spec US12): the four outlets against halftone_outlets; plate outlets with the same edge-pixel allowance as
+    mostly() (Dot pictures have had none beyond TOL), alpha exact."""
+    got = gpu(src, plates=plates, all_outs=True, **deltas)
+    want = mirror(src, plates=mirror_plates, all_outs=True, **deltas)
+    for k in range(4):
+        e = np.abs(got[k][..., :3].astype(np.float64) - want[k][..., :3].astype(np.float64))
+        note(f"{label}: outlet {k + 1} worst rgb error", float(e.max()))
+        check(f"{label}: outlet {k + 1} fraction beyond tolerance", float((e > TOL).mean()), FRAC_BAD)
+        check(f"{label}: outlet {k + 1} alpha", mx(got[k][..., 3], want[k][..., 3]), 1e-6)
+    return got
+
+
+def test_plate_outlets():
+    """T038 (spec US12, FR-028 to FR-030): outlets 2-4 carry the plates, Gray (plate_out 0) or Color (1); Single on outlet 4
+    only; Plates alpha per plate, an unconnected plate black with alpha 0; bypass splits the source."""
+    src = photo(seed=31)
+    for po in (0.0, 1.0):
+        tag = "color" if po else "gray"
+        outlets_row(f"outlets, channels, dot, {tag}", src, plate_out=po)
+        outlets_row(f"outlets, single, dot, {tag}", spot(), plate_mode=1.0, plate_out=po)
+        outlets_row(f"outlets, channels, bayer, {tag}", src, screen=3.0, plate_out=po)
+        outlets_row(f"outlets, bypass, channels, {tag}", src, bypass_gate=1.0, plate_out=po)
+        outlets_row(f"outlets, bypass, single, {tag}", src, bypass_gate=1.0, plate_mode=1.0, plate_out=po)
+    pics = [photo(seed=21), photo(seed=22), photo(seed=23)]
+    for po in (0.0, 1.0):
+        tag = "color" if po else "gray"
+        got = outlets_row(f"outlets, plates 1 and 3, dot, {tag}", src, plates=pics, mirror_plates=(pics[0], None, pics[2]),
+                          plate_mode=2.0, plate1_on=1.0, plate3_on=1.0, plate_out=po)
+        check(f"outlets, plates, {tag}: unconnected plate 2 is black, alpha 0", float(np.abs(got[2]).max()), 0.0)
+    outlets_row("outlets, bypass, plates", src, plates=pics, mirror_plates=(pics[0], None, pics[2]),
+                plate_mode=2.0, plate1_on=1.0, plate3_on=1.0, bypass_gate=1.0, plate_out=1.0)
+    j = gpu(src, all_outs=True, jitter=1.0, plate_out=1.0)
+    s3 = j[1][..., :3] + j[2][..., :3] + j[3][..., :3]
+    check("outlets, jitter 1, color: outlets 2-4 sum to outlet 1", mx(np.clip(s3, 0, 1), j[0][..., :3]), 1e-6)
 
 
 def test_bypass():

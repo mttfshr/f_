@@ -109,6 +109,7 @@ BYPASS_EXPECT = {
         2: ("const", (0.5, 0.5, 0.5, 1.0), 1e-6),       # gradient vecfield: neutral
     },
     "f_separate": {2: IN1, 3: IN1, 4: IN1},             # the (zapped) source on all four outlets (spec FR-012, P10)
+    "f_halftone": {2: ("gray", 1, 0, 1e-6), 3: ("gray", 1, 1, 1e-6), 4: ("gray", 1, 2, 1e-6)},   # T038: plate k's channel as gray (defaults: Channels, Gray)
     "f_vf_erode": {1: IN1, 2: IN1},                          # bypass_gate in enc: the zapped source on both outlets (spec FR-113)
     "f_vf_stamp": {2: ("vec", 2, 1e-6)},                # G5: out1 is in1 (implicit), out2 the field on inlet 2
     "f_quasi": {                                        # dual generator: bypass_gate = neutral values on every outlet
@@ -140,6 +141,11 @@ def bypass_expected(spec, inputs):
         a[..., 2] = np.float32(0.5)
         a[..., 3] = np.float32(1.0)
         return a, spec[2]
+    if kind == "gray":
+        # inlet N's channel C as a gray mask, alpha kept (f_halftone's plate outlets at Gray, Channels, 2026-11-14)
+        a = inputs[spec[1]].copy()
+        a[..., :3] = a[..., spec[2]:spec[2] + 1]
+        return a, spec[3]
     if kind == "const":
         return np.array(spec[1], np.float32), spec[2]
     raise ValueError(f"unknown bypass expectation {spec!r}")
