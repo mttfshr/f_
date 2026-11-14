@@ -1938,7 +1938,7 @@
 										150.0,
 										22.0
 									],
-									"text": "f_separate",
+									"text": "f_halftone",
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
@@ -1963,7 +1963,7 @@
 										230.0,
 										22.0
 									],
-									"text": "loadunique f_separate.maxhelp"
+									"text": "loadunique f_halftone.maxhelp"
 								}
 							},
 							{
@@ -1978,7 +1978,7 @@
 										150.0,
 										20.0
 									],
-									"text": "Splits an image into up to three spot-color plates of additive inks, plus a summed preview",
+									"text": "Tone to dots, lines or dithers at a fixed angle per plate; plates also out one by one, gray or color",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
@@ -2007,7 +2007,7 @@
 										150.0,
 										22.0
 									],
-									"text": "f_tone_curve",
+									"text": "f_separate",
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
@@ -2032,7 +2032,7 @@
 										230.0,
 										22.0
 									],
-									"text": "loadunique f_tone_curve.maxhelp"
+									"text": "loadunique f_separate.maxhelp"
 								}
 							},
 							{
@@ -2047,7 +2047,7 @@
 										150.0,
 										20.0
 									],
-									"text": "Lifts or lowers shadows, mids and highlights separately, with movable crossovers; not a curve editor",
+									"text": "Splits an image into up to three spot-color plates of additive inks, plus a summed preview",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
@@ -2076,7 +2076,7 @@
 										150.0,
 										22.0
 									],
-									"text": "f_vf_erode",
+									"text": "f_tone_curve",
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
@@ -2101,7 +2101,7 @@
 										230.0,
 										22.0
 									],
-									"text": "loadunique f_vf_erode.maxhelp"
+									"text": "loadunique f_tone_curve.maxhelp"
 								}
 							},
 							{
@@ -2116,11 +2116,80 @@
 										150.0,
 										20.0
 									],
-									"text": "Ink that pools like a wash: a terrain and a vecfield steer water that lifts and drops a picture's pigment",
+									"text": "Lifts or lowers shadows, mids and highlights separately, with movable crossovers; not a curve editor",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
 										154.0,
+										720.0,
+										20.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "obj-20",
+									"maxclass": "textbutton",
+									"numinlets": 1,
+									"numoutlets": 3,
+									"outlettype": [
+										"",
+										"",
+										"int"
+									],
+									"parameter_enable": 0,
+									"fontsize": 12.0,
+									"patching_rect": [
+										20.0,
+										380.0,
+										150.0,
+										22.0
+									],
+									"text": "f_vf_erode",
+									"presentation": 1,
+									"presentation_rect": [
+										10.0,
+										180.0,
+										210.0,
+										22.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "obj-21",
+									"maxclass": "message",
+									"numinlets": 2,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										20.0,
+										408.0,
+										230.0,
+										22.0
+									],
+									"text": "loadunique f_vf_erode.maxhelp"
+								}
+							},
+							{
+								"box": {
+									"id": "obj-22",
+									"maxclass": "comment",
+									"numinlets": 1,
+									"numoutlets": 0,
+									"patching_rect": [
+										260.0,
+										380.0,
+										150.0,
+										20.0
+									],
+									"text": "Ink that pools like a wash: a terrain and a vecfield steer water that lifts and drops a picture's pigment",
+									"presentation": 1,
+									"presentation_rect": [
+										230.0,
+										182.0,
 										720.0,
 										20.0
 									]
@@ -2264,6 +2333,30 @@
 								"patchline": {
 									"source": [
 										"obj-18",
+										0
+									],
+									"destination": [
+										"obj-1",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"source": [
+										"obj-20",
+										0
+									],
+									"destination": [
+										"obj-21",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"source": [
+										"obj-21",
 										0
 									],
 									"destination": [

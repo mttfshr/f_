@@ -57,6 +57,7 @@ This table is also the source for the package's launcher patcher (`package/extra
 | `f_channel_grader` | Per-channel color grading |
 | `f_hue_processor` | Hue-selective processing |
 | `f_luma_processor` | Luminance-selective processing |
+| `f_halftone` | Tone to dots, lines or dithers at a fixed angle per plate; plates also out one by one, gray or color |
 | `f_separate` | Splits an image into up to three spot-color plates of additive inks, plus a summed preview |
 | `f_tone_curve` | Lifts or lowers shadows, mids and highlights separately, with movable crossovers; not a curve editor |
 | `f_vf_erode` | Ink that pools like a wash: a terrain and a vecfield steer water that lifts and drops a picture's pigment |

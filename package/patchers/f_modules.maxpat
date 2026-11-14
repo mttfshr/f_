@@ -551,6 +551,7 @@
                             "parameter_enum": [
                                 "Channel Grader",
                                 "Erode",
+                                "Halftone",
                                 "Hue Processor",
                                 "Luma Processor",
                                 "Separate",
@@ -561,7 +562,7 @@
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_2_disp",
-                            "parameter_mmax": 5,
+                            "parameter_mmax": 6,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -594,6 +595,7 @@
                             "parameter_enum": [
                                 "channel_grader",
                                 "vf_erode",
+                                "halftone",
                                 "hue_processor",
                                 "luma_processor",
                                 "separate",
@@ -604,7 +606,7 @@
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_2_file",
-                            "parameter_mmax": 5,
+                            "parameter_mmax": 6,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2

@@ -24,6 +24,7 @@ var SIZES = {
     "stereo":         [160,  90],
     "channel_grader": [150, 165],
     "vf_erode":       [190, 150],
+    "halftone":       [290, 164],
     "hue_processor":  [150, 120],
     "luma_processor": [150, 120],
     "separate":       [191, 200],
