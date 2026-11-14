@@ -1,6 +1,13 @@
 # HANDOFF archive
 
-Entries moved out of `HANDOFF.md` on 2026-10-31, 2026-11-04, 2026-11-08, 2026-11-10, 2026-11-11, 2026-11-12 and 2026-11-13 (newest first, as they were). Not read at session start: grep it for history. The full pre-trim `HANDOFF.md` is also in git (commit 76c2ab8).
+Entries moved out of `HANDOFF.md` on 2026-10-31, 2026-11-04, 2026-11-08, 2026-11-10, 2026-11-11, 2026-11-12, 2026-11-13 and 2026-11-14 (newest first, as they were). Not read at session start: grep it for history. The full pre-trim `HANDOFF.md` is also in git (commit 76c2ab8).
+
+## 2026-11-13 (evening): `f_halftone` built and benched (moved out of HANDOFF.md 2026-11-14)
+
+- **Done and committed (Claude, with Matt's go):** codebox (T020), `definition.py` and patcher (T021), bench files (T022). Codebox bench 9/9, module bench 4/4, contract bench clean for `f_halftone`; T007 and T010 settled by measurement. Commits `3196e41` to `c24247f`.
+- **Found:** the `dim` global reads 1 in a live Vsynth pix, so the codebox takes `width` / `height` from `render_dim` (caught from `build/spec.md` before any run). A probe codebox must get only its own Params: the bench fails a job on an undeclared Param.
+- **Matt, live:** first look "working great". Not run: the 1080p cost (`--slow`).
+- **Not touched:** Matt's `ideas/INDEX.md` edit and `ideas/f_util_row_engine.md`; `f_util_vary_row` fails the offline contract test (unrouted tokens), question to Matt.
 
 ## 2026-11-13 (later): `f_halftone` renamed, clarified, mirrored (moved out of HANDOFF.md 2026-11-13)
 
