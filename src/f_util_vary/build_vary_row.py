@@ -36,7 +36,7 @@ ui("c_out", "number", [2, 2, 22, 16], 2, ["", "bang"], minimum=1, maximum=8)
 ui("c_param", "umenu", [26, 2, 64, 16], 3, ["int", "", ""], items=[], arrow=0)
 ui("c_lo", "flonum", [93, 2, 38, 16], 2, ["", "bang"])
 ui("c_hi", "flonum", [133, 2, 38, 16], 2, ["", "bang"])
-DIALS = [("amt", 173, 0.0, 100.0), ("chance", 195, 0.0, 100.0), ("wob", 217, 0.0, 100.0), ("trim", 239, -100.0, 200.0)]
+DIALS = [("amt", 173, 0.0, 100.0), ("chance", 195, 0.0, 100.0), ("wob", 217, 0.0, 100.0), ("trim", 239, 0.0, 200.0)]
 for f, x, lo, size in DIALS:
     ui("c_" + f, "dial", [x, 0, 20, 20], 1, ["float"], floatoutput=1, min=lo, size=size)
 ui("c_mode", "toggle", [262, 3, 14, 14], 1, ["int"])
@@ -54,7 +54,11 @@ ln("in", 0, "r1", 0); ln("r1", 0, "r2", 0)
 target = {"out": "c_out", "param_idx": "c_param", "lo": "c_lo", "hi": "c_hi", "amt": "c_amt", "chance": "c_chance", "wob": "c_wob", "trim": "c_trim", "group": "c_grp"}
 for k, f in enumerate(FIELDS):
     if f in target:
-        obj("ps_" + f, "prepend set", [20 + 70 * k, 150, 70, 22], 1, 1); ln("r2", k, "ps_" + f, 0); ln("ps_" + f, 0, target[f], 0)
+        obj("ps_" + f, "prepend set", [20 + 70 * k, 150, 70, 22], 1, 1); ln("ps_" + f, 0, target[f], 0)
+        if f == "trim":   # the dial runs 0..200 (a negative dial minimum did not move in Max); trim -100..100 is shown as +100
+            obj("trin", "expr $f1 + 100", [20 + 70 * k, 120, 80, 22], 1, 1); ln("r2", k, "trin", 0); ln("trin", 0, "ps_" + f, 0)
+        else:
+            ln("r2", k, "ps_" + f, 0)
 # the names list -> the param menu (clear, a placeholder item `-` at index 0, then each name)
 k = FIELDS.index("names")
 obj("nt", "t l b", [20, 200, 50, 22], 1, 2); msg("nclr", "clear, append -", [20, 230, 90, 22]); obj("nit", "zl iter 1", [80, 230, 60, 22], 2, 2); obj("nap", "prepend append", [80, 260, 90, 22], 1, 1)
@@ -76,6 +80,8 @@ def cell(src, so, field, i):
 
 for f, src, so in [("out", "c_out", 0), ("param", "c_param", 1), ("lo", "c_lo", 0), ("hi", "c_hi", 0), ("amt", "c_amt", 0), ("chance", "c_chance", 0), ("wob", "c_wob", 0),
                    ("trim", "c_trim", 0), ("sign", "c_sign", 1), ("group", "c_grp", 0)]:
+    if f == "trim":
+        obj("trout", "expr $f1 - 100", [20, 300, 80, 22], 1, 1); ln(src, so, "trout", 0); src, so = "trout", 0
     cell(src, so, f, f)
 obj("tm", "sel 0 1", [20, 360, 60, 22], 1, 3); msg("tm0", "cell #1 mode u", [20, 390, 100, 22]); msg("tm1", "cell #1 mode d", [130, 390, 100, 22])
 ln("c_mode", 0, "tm", 0); ln("tm", 0, "tm0", 0); ln("tm", 1, "tm1", 0); ln("tm0", 0, "outl", 0); ln("tm1", 0, "outl", 0)

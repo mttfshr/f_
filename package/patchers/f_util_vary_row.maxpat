@@ -248,7 +248,7 @@
 					"fontname": "Ableton Sans Light",
 					"fontsize": 9.0,
 					"floatoutput": 1,
-					"min": -100.0,
+					"min": 0.0,
 					"size": 200.0
 				}
 			},
@@ -624,6 +624,26 @@
 			},
 			{
 				"box": {
+					"id": "trin",
+					"maxclass": "newobj",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						580,
+						120,
+						80,
+						22
+					],
+					"text": "expr $f1 + 100",
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.0
+				}
+			},
+			{
+				"box": {
 					"id": "ps_group",
 					"maxclass": "newobj",
 					"numinlets": 1,
@@ -879,7 +899,7 @@
 						""
 					],
 					"patching_rect": [
-						100,
+						180,
 						330,
 						120,
 						22
@@ -899,7 +919,7 @@
 						""
 					],
 					"patching_rect": [
-						180,
+						260,
 						330,
 						120,
 						22
@@ -919,7 +939,7 @@
 						""
 					],
 					"patching_rect": [
-						260,
+						340,
 						330,
 						120,
 						22
@@ -939,7 +959,7 @@
 						""
 					],
 					"patching_rect": [
-						340,
+						20,
 						330,
 						120,
 						22
@@ -959,7 +979,7 @@
 						""
 					],
 					"patching_rect": [
-						20,
+						100,
 						330,
 						120,
 						22
@@ -979,7 +999,7 @@
 						""
 					],
 					"patching_rect": [
-						100,
+						180,
 						330,
 						120,
 						22
@@ -999,12 +1019,32 @@
 						""
 					],
 					"patching_rect": [
-						180,
+						260,
 						330,
 						120,
 						22
 					],
 					"text": "prepend cell #1 wob",
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.0
+				}
+			},
+			{
+				"box": {
+					"id": "trout",
+					"maxclass": "newobj",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						20,
+						300,
+						80,
+						22
+					],
+					"text": "expr $f1 - 100",
 					"fontname": "Ableton Sans Light",
 					"fontsize": 9.0
 				}
@@ -1019,7 +1059,7 @@
 						""
 					],
 					"patching_rect": [
-						260,
+						20,
 						330,
 						120,
 						22
@@ -1039,7 +1079,7 @@
 						""
 					],
 					"patching_rect": [
-						340,
+						100,
 						330,
 						120,
 						22
@@ -1059,7 +1099,7 @@
 						""
 					],
 					"patching_rect": [
-						20,
+						180,
 						330,
 						120,
 						22
@@ -1180,18 +1220,6 @@
 			{
 				"patchline": {
 					"source": [
-						"r2",
-						0
-					],
-					"destination": [
-						"ps_out",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
 						"ps_out",
 						0
 					],
@@ -1205,10 +1233,10 @@
 				"patchline": {
 					"source": [
 						"r2",
-						1
+						0
 					],
 					"destination": [
-						"ps_param_idx",
+						"ps_out",
 						0
 					]
 				}
@@ -1229,10 +1257,10 @@
 				"patchline": {
 					"source": [
 						"r2",
-						3
+						1
 					],
 					"destination": [
-						"ps_lo",
+						"ps_param_idx",
 						0
 					]
 				}
@@ -1253,10 +1281,10 @@
 				"patchline": {
 					"source": [
 						"r2",
-						4
+						3
 					],
 					"destination": [
-						"ps_hi",
+						"ps_lo",
 						0
 					]
 				}
@@ -1277,10 +1305,10 @@
 				"patchline": {
 					"source": [
 						"r2",
-						5
+						4
 					],
 					"destination": [
-						"ps_amt",
+						"ps_hi",
 						0
 					]
 				}
@@ -1301,10 +1329,10 @@
 				"patchline": {
 					"source": [
 						"r2",
-						6
+						5
 					],
 					"destination": [
-						"ps_chance",
+						"ps_amt",
 						0
 					]
 				}
@@ -1325,10 +1353,10 @@
 				"patchline": {
 					"source": [
 						"r2",
-						7
+						6
 					],
 					"destination": [
-						"ps_wob",
+						"ps_chance",
 						0
 					]
 				}
@@ -1349,10 +1377,10 @@
 				"patchline": {
 					"source": [
 						"r2",
-						8
+						7
 					],
 					"destination": [
-						"ps_trim",
+						"ps_wob",
 						0
 					]
 				}
@@ -1373,10 +1401,22 @@
 				"patchline": {
 					"source": [
 						"r2",
-						9
+						8
 					],
 					"destination": [
-						"ps_group",
+						"trin",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"trin",
+						0
+					],
+					"destination": [
+						"ps_trim",
 						0
 					]
 				}
@@ -1389,6 +1429,18 @@
 					],
 					"destination": [
 						"c_grp",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"r2",
+						9
+					],
+					"destination": [
+						"ps_group",
 						0
 					]
 				}
@@ -1781,6 +1833,18 @@
 				"patchline": {
 					"source": [
 						"c_trim",
+						0
+					],
+					"destination": [
+						"trout",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"trout",
 						0
 					],
 					"destination": [

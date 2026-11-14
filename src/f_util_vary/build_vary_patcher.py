@@ -59,7 +59,7 @@ add({"id": "bg", "maxclass": "panel", "angle": 270.0, "background": 1, "bgcolor"
 for dot_id, y, hint in (("obj-19f", 5.0, "Takes: no vecfield or tensor"), ("obj-19g", 12.0, "Outputs: no vecfield or tensor")):
     add({"id": dot_id, "maxclass": "panel", "background": 0, "bgcolor": [0.28, 0.28, 0.28, 1.0], "border": 0, "mode": 0, "hint": hint, "numinlets": 1, "numoutlets": 0,
          "patching_rect": [400, 250 + y, 5.0, 5.0], "presentation": 1, "presentation_rect": [4.0, y, 5.0, 5.0], "rounded": 6})
-add({"id": "title", "maxclass": "comment", "numinlets": 1, "numoutlets": 0, "patching_rect": [400, 20, 100, 21], "text": "f_util_vary", "fontname": FONT, "fontsize": 12.0,
+add({"id": "title", "maxclass": "comment", "numinlets": 1, "numoutlets": 0, "patching_rect": [400, 20, 100, 21], "text": "Vary", "fontname": FONT, "fontsize": 12.0,
      "presentation": 1, "presentation_rect": [10.5, 0.0, 92.0, 21.0]})
 com("hint", "bases in the left inlet, settings in the right; 8 outlets", [400, 40, 300, 20], [104, 3, 264, 16], 8.0)
 add({"id": "roll", "maxclass": "textbutton", "text": "\u2685", "mode": 0, "hint": "roll", "numinlets": 1, "numoutlets": 3, "outlettype": ["", "", "int"],

@@ -131,7 +131,7 @@
 						100,
 						21
 					],
-					"text": "f_util_vary",
+					"text": "Vary",
 					"fontname": "Ableton Sans Light",
 					"fontsize": 12.0,
 					"presentation": 1,
