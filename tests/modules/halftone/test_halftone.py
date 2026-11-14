@@ -400,6 +400,25 @@ def test_plates():
               err(halftone_stage(src, plate_mode=pm, plates=(p1, p2, p3), **kw), halftone_stage(src, plate_mode=pm, **kw)), 0)
 
 
+def test_jitter_marks_stay_in_their_cell():
+    """Fix A (Matt, 2026-11-14): under jitter a mark is clipped to its own displaced unit square. One cell at full tone on
+    black inks one cell's area, not the 3 x 3 block around it; and a mark never shrinks as its tone rises to 1."""
+    W = H = 160
+    pitch = 16.0 / H                     # 16-pixel cells, axis-aligned at angle 0
+
+    def hot(t):
+        s = flat(0.0, W, H)
+        s[72:88, 72:88, :3] = t          # the cell centred on pixel 80
+        return s
+
+    for jit in (0.01, 0.5, 1.0):
+        n = [int((halftone_stage(hot(t), pitch=pitch, angles=(0, 0, 0), softness=0.0, jitter=jit)[..., 0] > 0.5).sum())
+             for t in (0.999, 1.0, 1.3)]
+        note(f"jitter {jit}: inked px for a hot cell at 0.999 / 1.0 / 1.3 (one cell = 256)", n)
+        check(f"jitter {jit}: a full-tone cell inks at most one cell's area", float(max(n[1], n[2]) > 256 + 32), 0)
+        check(f"jitter {jit}: the mark does not shrink from 0.999 to 1.0", float(n[0] > n[1]), 0)
+
+
 def test_mutations():
     """Each plausible mistake changes an output the checks above look at."""
     nan = flat(0.5, 64, 64)
@@ -421,6 +440,7 @@ def test_mutations():
         "plates_no_clamp": (None, dict(pitch=0.1, softness=0.5, plate_mode="plates", plates=(flat(0.8, 64, 64),) * 3)),
         "plates_read_src": (flat(0.2, 64, 64), dict(pitch=0.1, plate_mode="plates", plates=(flat(0.7, 64, 64), None, None))),
         "plates_alpha_src": (flat(0.2, 64, 64, a=0.3), dict(pitch=0.1, plate_mode="plates", plates=(flat(0.7, 64, 64), None, None))),
+        "no_jitter_clip": (flat(0.95, 64, 64), dict(pitch=0.25, jitter=1.0, softness=0.0)),
     }
     for bug, (src, kw) in cases.items():
         a = halftone_stage(src, **kw)

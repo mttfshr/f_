@@ -14,7 +14,8 @@
 //   position along its centreline row. The reads are in the main body, the tone is passed to the functions (gate G8).
 // Jitter (ADR-5, Dot only): each cell centre moves by jitter * .5 * (hash - .5) cells (the sin hash, seeded); the nine cells
 //   around the pixel are tested and the largest coverage wins; the tone is read at each displaced centre. jitter 0 takes the
-//   one-cell path, so the regular lattice is exactly the T020 one.
+//   one-cell path, so the regular lattice is exactly the T020 one. Each jittered mark is clipped to its own displaced unit
+//   square (fix A, Matt 2026-11-14), as the mirror does.
 // Threshold (ADR-6): smoothstep(level - w, level + w, tone), w = softness / 2 (a hard step at softness 0), per pixel.
 // Bayer: the 8 x 8 ordered matrix by texel, M = sum over bits b of 4^(2-b) (2 (x_b xor y_b) + y_b); lit where tone > (M + .5) / 64.
 //   The matrix repeats once per pitch (Matt, 2026-11-14): a cell is pitch / 8 frame heights, rounded to whole pixels, at
@@ -155,7 +156,10 @@ dot_jit(qx, qy, ch, src, cs, sn, pit, phx, phy, asp, wd, ht, soft, aa, shp, jit,
             ru = (ti + 0.5) / wd;
             rv = (tj + 0.5) / ht;
             tone = rd(ru, rv, ch, src);
-            best = max(best, cover_local(qx - gx, qy - gy, 0, tone, soft, aa, shp));
+            // fix A (Matt, 2026-11-14): a mark lives only in its own displaced unit square (unclipped, a full-tone
+            // neighbour inked the whole 3 x 3 block, since tone >= 1 gives full ink at any distance)
+            inside = step(max(abs(qx - gx), abs(qy - gy)), 0.5);
+            best = max(best, inside * cover_local(qx - gx, qy - gy, 0, tone, soft, aa, shp));
         }
     }
     return best;

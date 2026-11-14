@@ -15,7 +15,8 @@ Soft edge (ADR-3): coverage = clamp(.5 + (tone - T) / w, 0, 1), w = max(softness
 Tone (ADR-4, P1): Dot reads once at the cell centre (nearest texel), `tone_mode="avg"` is the G4 alternative (a 4 x 4 average
   over the cell, 16 taps); Line reads at the pixel's own position along its centreline row.
 Jitter (ADR-5): each cell centre moves by jitter * .25 * 2 * (hash - .5) cells; nine cells are tested and the maximum coverage
-  wins; jitter 0 tests one cell. (Dot only; a Line has no jitter.)
+  wins; jitter 0 tests one cell. (Dot only; a Line has no jitter.) Each jittered mark is clipped to its own displaced unit square
+  (Matt, 2026-11-14, fix A): unclipped, a cell at tone >= 1 inked all nine cells around it, and near-full marks spilled over.
 Threshold (ADR-6): smoothstep(level - w, level + w, tone), w = softness / 2, per pixel, no lattice. Bayer: 8 x 8 ordered matrix by texel,
   lit where tone > (M + .5) / 64; the 8 x 8 matrix repeats once per pitch (Matt, 2026-11-14): a cell is
   pitch / 8 frame heights, rounded to whole pixels, at least 1. bayer_read "cell" (default) reads one tone per cell at its
@@ -28,7 +29,7 @@ connected) returns None: the build supplies black with alpha 0 (vs_black), which
 
 `bug` values are mutations the tests must catch: "no_extremes", "no_zap", "wrong_area" ((2r)^2 instead of A(r)), "per_pixel_tone",
 "ignore_phase", "shared_phase", "ignore_alpha", "single_reads_r", "line_centre_tone", "ignore_scale", "shared_scale",
-"plates_shared_angle", "plates_no_clamp", "plates_read_src", "plates_alpha_src".
+"plates_shared_angle", "plates_no_clamp", "plates_read_src", "plates_alpha_src", "no_jitter_clip".
 
 Per-plate pitch scale (Matt, 2026-11-14; spec FR-022, T029a): each plate's pitch is pitch * scale (scales R, G, B; Single uses
 scale B), formed in float32 as the codebox does; everything that follows the pitch (lattice, phase, edge ramp, jitter, Bayer
@@ -218,6 +219,10 @@ def plate(read, W, H, *, kind, pitch, theta, phase, softness, shape, jitter, see
                 T = ((F32(2) * np.sqrt(fx * fx + fy * fy)) ** 2).astype(F32)
                 dT = (F32(8) * np.sqrt(fx * fx + fy * fy)).astype(F32)
             cov = _cover(T, dT, tone, softness, aa, bug != "no_extremes")
+            if jitter > 0 and bug != "no_jitter_clip":
+                # each mark lives only in its own (displaced) unit square, the square A(r) is defined on (Matt, 2026-11-14:
+                # a full-tone neighbour inked the whole 3 x 3 block under jitter)
+                cov = np.where(np.maximum(np.abs(fx), np.abs(fy)) > F32(0.5), F32(0), cov).astype(F32)
             if out_i is None:
                 out_i, out_j = ti, tj
             take = cov > best
