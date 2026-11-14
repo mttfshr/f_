@@ -18,7 +18,10 @@ cd "$(dirname "$0")"
 MANIFEST="MANIFEST.md"
 
 skills() { find . -mindepth 2 -maxdepth 2 -name SKILL.md | sed 's|^\./||;s|/SKILL.md$||' | sort; }
-hash_of() { shasum -a 256 "$1/SKILL.md" | awk '{print substr($1,1,12)}'; }
+# Hash SKILL.md followed by every other file in the skill folder (e.g. local.md),
+# so a changed sidecar also reads STALE. For a SKILL.md-only skill the bytes are
+# identical to hashing SKILL.md alone, so existing manifest rows stay valid.
+hash_of() { { cat "$1/SKILL.md"; find "$1" -type f ! -name SKILL.md | LC_ALL=C sort | xargs cat 2>/dev/null; } | shasum -a 256 | awk '{print substr($1,1,12)}'; }
 lines_of() { awk 'END{print NR}' "$1/SKILL.md"; }
 
 if [ "${1:-check}" = "stamp" ]; then
