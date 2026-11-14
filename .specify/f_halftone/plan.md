@@ -1,7 +1,7 @@
-# Implementation Plan: f_screen
+# Implementation Plan: f_halftone
 
 **Date**: 2026-11-08
-**Spec**: .specify/f_screen/spec.md
+**Spec**: .specify/f_halftone/spec.md
 
 All gate decisions below are **preliminary**: Claude's recommendations, accepted in place on Matt's instruction (2026-11-08). Matt has not confirmed them. Derivations marked inferred are worked out, not run.
 
@@ -18,7 +18,7 @@ A stateless, analytic processor in one `jit.gl.pix` stage. For each of the three
 - **Runtime**: Max 9, `jit.gl.pix` GPU path (GenExpr). `@type float32`.
 - **Archetype**: processor, in0 the `driving_inlet`; one stage; no optional inputs in v1 (spec P8, G12). With in0 unconnected the output is black.
 - **Limits** (`skills/jit-gen-codebox/SKILL.md`, `ideas/f_deflicker.md`; read, not re-run): about 250 statements per function and about 450 per program; about 16 reads per stage; `noise()` is black on this path (use the sin hash); a bilinear tap on a texel corner once returned ONE texel, so every tone read here is a `nearest` read at a texel centre.
-- **Build**: `src/f_screen/definition.py` → `build/build_patcher.py` → `package/patchers/f_screen.maxpat`.
+- **Build**: `src/f_halftone/definition.py` → `build/build_patcher.py` → `package/patchers/f_halftone.maxpat`.
 - **Naming**: `softness`, `jitter`, `shape`, `angle` are the library's vocabulary (`docs/f-reference/discrete_item_conventions.md`, not opened; G13 checks).
 
 ---
@@ -35,15 +35,15 @@ A stateless, analytic processor in one `jit.gl.pix` stage. For each of the three
 ## Project Structure
 
 ```
-src/f_screen/
+src/f_halftone/
   definition.py              # source of truth
-  codebox_screen.gen         # the single stage
-tests/modules/screen/
-  screen_mirror.py           # float32 NumPy mirror
-  test_screen.py             # tier 1
-  bench_screen.py            # tier 2: real codebox vs mirror
-  bench_screen_module.py     # shipped patcher: bypass, flags
-package/patchers/f_screen.maxpat   docs/f-reference/f_screen.md   package/help/f_screen.maxhelp
+  codebox_halftone.gen         # the single stage
+tests/modules/halftone/
+  halftone_mirror.py           # float32 NumPy mirror
+  test_halftone.py             # tier 1
+  bench_halftone.py            # tier 2: real codebox vs mirror
+  bench_halftone_module.py     # shipped patcher: bypass, flags
+package/patchers/f_halftone.maxpat   docs/f-reference/f_halftone.md   package/help/f_halftone.maxhelp
 ```
 
 ---
@@ -103,8 +103,8 @@ r dim -> screen (render size, aspect)
 ## Testing plan (constitution tiers)
 
 - **G1 decided (preliminary)**: tiers 1, 2, 3 all apply.
-- **Tier 1**: `screen_mirror.py` / `test_screen.py`: area law on flat patches (several tones, pitches, angles), tone extremes exact, monotone along a ramp, lattice period and orientation (autocorrelation), plate independence, jitter 0 exact and jitter 1 mean preserved, render-size scaling, non-finite zap. Run `tests/run.sh -q tests/modules/screen`.
-- **Tier 2**: `bench_screen.py` runs the real codebox against the mirror (one input); first checks `sample()` inside a function and the smallest usable pitch. `bench_screen_module.py` covers bypass and the connected flag. Read `skills/bench-test-authoring` before writing either.
+- **Tier 1**: `halftone_mirror.py` / `test_halftone.py`: area law on flat patches (several tones, pitches, angles), tone extremes exact, monotone along a ramp, lattice period and orientation (autocorrelation), plate independence, jitter 0 exact and jitter 1 mean preserved, render-size scaling, non-finite zap. Run `tests/run.sh -q tests/modules/halftone`.
+- **Tier 2**: `bench_halftone.py` runs the real codebox against the mirror (one input); first checks `sample()` inside a function and the smallest usable pitch. `bench_halftone_module.py` covers bypass and the connected flag. Read `skills/bench-test-authoring` before writing either.
 - **Contracts**: register in `tests/contracts/test_module_contracts.py` and `bench_modules.py`.
 - **Tier 3 (Matt)**: a photo through three plates at 15, 75, 45; followed by `f_vf_erode`; a bent use.
 

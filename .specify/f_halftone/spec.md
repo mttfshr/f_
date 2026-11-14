@@ -1,8 +1,8 @@
-# Spec: f_screen
+# Spec: f_halftone
 
 _Created: 2026-11-08_
 _Status: Draft: not yet built, not yet clarified_
-_Origin: `ideas/f_print_styles.md` (stage 2 of the print-styles family, "tone to mark"). Name `f_screen` is a placeholder: `screen` collides in meaning with `ideas/circular_screen.md`, so `f_halftone` is the alternative (gate G10)._
+_Origin: `ideas/f_print_styles.md` (stage 2 of the print-styles family, "tone to mark"). Named `f_halftone` (Matt, 2026-11-13; renamed from `f_screen`, because `screen` collides in meaning with `ideas/circular_screen.md`)._
 
 ---
 
@@ -14,20 +14,20 @@ _Origin: `ideas/f_print_styles.md` (stage 2 of the print-styles family, "tone to
 - **Plain `f_` name** (no family prefix). Plates are RGB channels, up to three; alpha is not a plate. A reversed channel comes from Vsynth's invert module.
 - **Halftoning in general.** No riso-specific halftone work (Matt, 2026-11-08).
 - **Fixed-angle screens only** (tentative: "a decision but I'm not sure it's the decision"). Marks that follow the image's form (stretched dots, hatching, engraving) belong to the tensor family and the later `f_engrave`, not here.
-- **Dithering is one operation.** A halftone is a comparison of tone against a threshold field; ordered dither is the same comparison with a different field. `f_screen` is the threshold-field stage, with a soft compare.
-- **`f_screen` and `ideas/f_dither_grain.md` stay separate for now** (Matt: "maybe", the question is open). They share only the cell vocabulary.
-- **Print-faithful output.** Dot gain, mottle, dropout and the rest of the ink's behaviour belong to `f_vf_erode`, which follows `f_screen` in a chain.
+- **Dithering is one operation.** A halftone is a comparison of tone against a threshold field; ordered dither is the same comparison with a different field. `f_halftone` is the threshold-field stage, with a soft compare.
+- **`f_halftone` and `ideas/f_dither_grain.md` stay separate** (Matt, 2026-11-13: proceed with what is here). `f_dither_grain` was superseded 2026-07-21 (folded into `f_vf_seeds`, Evolution 3) and its spec is in `.specify/paused/`; nothing is shared except the cell vocabulary (`density`, `size`, `shape`, `jitter`).
+- **Print-faithful output.** Dot gain, mottle, dropout and the rest of the ink's behaviour belong to `f_vf_erode`, which follows `f_halftone` in a chain.
 
 ### Preliminary decisions taken by Claude (Matt, 2026-11-08: "proceed and accept your own recommendations for preliminary gates")
 
 These are not Matt's calls. They are Claude's recommendations, accepted in place so the spec can proceed, and each is open to Matt's reversal.
 
-- **P1 Per-cell tone sampling for dots.** A dot's size comes from one tone value per cell, sampled at the cell centre, so dots are regular and uniform within a cell (gate G4). Per-pixel comparison, where tone varies inside a cell and distorts the dot, is not the default.
+- **P1 (accepted by Matt, 2026-11-13; the staircase is still measured in the mirror first) Per-cell tone sampling for dots.** A dot's size comes from one tone value per cell, sampled at the cell centre, so dots are regular and uniform within a cell (gate G4). Per-pixel comparison, where tone varies inside a cell and distorts the dot, is not the default.
 - **P2 Line screen samples along the line.** Line width comes from the tone at the nearest point on the line's centre.
 - **P3 Area coverage equals tone.** On a flat patch, the fraction of the area inked equals the tone (exactly at 0 and at 1).
-- **P4 Rotation about the frame centre.** The lattice is fixed to the frame, never to the image, so an animated input moves under a static screen.
+- **P4 Rotation about the frame centre.** The lattice is fixed to the frame, never to the image, so an animated input moves under a static screen. A per-plate phase offset (FR-016) shifts a plate's lattice without rotating it.
 - **P5 One shared pitch** for all three plates; the angle is per plate.
-- **P6 Default angles 15, 75 and 45 degrees** for R, G and B (inferred from the offset convention, which separates screens by 30 degrees or more to limit moiré; not tested).
+- **P6 (accepted by Matt, 2026-11-13) Default angles 15, 75 and 45 degrees** for R, G and B (inferred from the offset convention, which separates screens by 30 degrees or more to limit moiré; not tested).
 - **P7 Output is bounded to 0..1** by construction (coverage), with input above 1 saturating to full and below 0 giving none. This differs from `f_vf_erode` (unclamped) because a mark is either there or not.
 - **P8 No driver inlets in v1** (G12).
 - **P9 Stochastic (FM) stipple is out of scope.** `f_stipple` is a hash-field stipple (its doc, read 2026-11-08), and it reads only the red channel.
@@ -41,12 +41,12 @@ These are not Matt's calls. They are Claude's recommendations, accepted in place
 - **G2 Units.** Frame widths or frame heights for `pitch`; shared with `f_vf_erode` G2.
 - **G3 Spot functions.** The threshold field for each type (round dot, line) must be area-preserving (P3): the fraction of a cell below threshold t equals t. A round dot's radius is not linear in tone, and a dot at tone above one half has to merge into its neighbours. Settle the functions and test the area law on the mirror.
 - **G4 Per-cell versus per-pixel tone sampling.** Preliminary P1. Open details: a single centre tap versus a small average over the cell (taps are limited to about 16 reads per stage), and what the cell-boundary staircase looks like on a smooth ramp.
-- **G5 Smallest usable pitch and antialiasing.** The pitch (in texels) below which the screen aliases or the dot area stops tracking tone, and the edge ramp width in texels.
+- **G5 Smallest usable pitch and antialiasing.** (Mirror, 2026-11-13: the area-law error is 0.083 at 3 texels and under 0.02 from about 10; Matt: about 10 texels is the practical floor for now, the bench repeats it.) The pitch (in texels) below which the screen aliases or the dot area stops tracking tone, and the edge ramp width in texels.
 - **G6 Lattice origin and rotation.** Preliminary P4 (frame centre); check that 0, 45 and 90 degrees are exact and that rotation about the centre keeps the grid stable on non-square frames.
 - **G7 Jitter.** How much displacement keeps neighbouring marks from overlapping, and whether the displacement adds statements within the budget (about 250 per function body, about 450 per program; `skills/jit-gen-codebox/SKILL.md`).
 - **G8 `sample()` behaviour.** `ideas/f_deflicker.md` (2026-10-25) says a bilinear tap on a texel corner returned one texel; settle on the bench, shared with `f_vf_erode` G4. The screen's own pattern needs no sampling (it is analytic), only the tone read.
 - **G9 Linear-light versus encoded tone.** Deferred (Matt, for `f_vf_erode`; the same call applies here). It changes how a mid-tone maps to dot area.
-- **G10 Name and menu.** `f_screen` or `f_halftone`; menu category under `G-menu`.
+- **G10 Name and menu.** DECIDED (Matt, 2026-11-13): `f_halftone`. Menu category still under `G-menu`.
 - **G11 Control set.** Pitch, three angles, type, shape, softness, jitter, level, seed: about ten dials plus the type menu (`G-ui-density`).
 - **G12 Drivers.** Preliminary P8: none. A later optional modulation inlet (pitch or size by a texture) is possible and would be a new version.
 - **G13 Naming alignment.** `softness`, `jitter`, `shape`, `angle` follow `docs/f-reference/discrete_item_conventions.md` (not opened this session); check that the names mean the same here.
@@ -59,7 +59,7 @@ These are not Matt's calls. They are Claude's recommendations, accepted in place
 
 ### User Story 1: Dot screen (Priority: P1)
 
-A performer patches a tone texture (one to three plates in R, G and B) into f_screen and gets a halftone: a regular lattice of dots at an angle, each dot sized by the tone in its cell, so dark areas have large dots and light areas small ones.
+A performer patches a tone texture (one to three plates in R, G and B) into f_halftone and gets a halftone: a regular lattice of dots at an angle, each dot sized by the tone in its cell, so dark areas have large dots and light areas small ones.
 
 **Why this priority**: the core of stage 2, and the base for the riso and offset recipes.
 
@@ -114,7 +114,7 @@ The same tone controls the width of parallel lines at an angle: a line screen, a
 
 **Acceptance Scenarios**:
 1. **Given** jitter 0, **Then** the lattice is exactly regular.
-2. **Given** jitter 1, **Then** no two marks overlap more than the cell allows, and the mean coverage still equals the tone.
+2. **Given** jitter 1, **Then** no two marks overlap more than the cell allows, and the mean coverage equals the tone up to about mid-tone; above it ink is lost where displaced dots overlap (mirror, 2026-11-13: -0.010 at tone 0.5, -0.041 at 0.7, -0.069 at 0.9). Accepted for now (Matt, 2026-11-13).
 
 ### User Story 7: Threshold and Bayer types (Priority: P2)
 
@@ -148,6 +148,7 @@ A `Threshold` type (a hard or soft cut at a level, the linocut and xerox base) a
 - **FR-012**: Every length MUST follow the render size (`render_dim` convention) and be correct for non-square frames.
 - **FR-013**: Alpha MUST pass through from the source.
 - **FR-014**: Bypass MUST use a codebox `bypass_gate` Param (never native `@bypass`) and pass the source through (P12).
+- **FR-016** *(Matt, 2026-11-13)*: Each plate MUST have its own lattice phase offset in x and y (`phase_r/g/b` x and y, in pitch units, default 0), so a plate shifted by misregistration keeps whole, sharp marks instead of a resampled blur. In Single mode the blue plate's phase is the one used.
 - **FR-015**: Standard behaviour: `#0_`-scoped names, `routepass` / `route` / `autopattr` with `varname`, `definition.py` as the source of truth.
 
 ### Non-Functional Requirements
@@ -163,12 +164,13 @@ A `Threshold` type (a hard or soft cut at a level, the linocut and xerox base) a
 | `screen` | Dot / Line / Threshold / Bayer | Dot | Threshold and Bayer are P2 |
 | `pitch` | frame units | 0.012 | lattice period; the smallest usable value is G5 |
 | `angle_r`, `angle_g`, `angle_b` | degrees | 15, 75, 45 | per plate (P6) |
+| `phase_r_x`, `phase_r_y`, `phase_g_x`, `phase_g_y`, `phase_b_x`, `phase_b_y` | -1 to 1 pitches | 0 | per-plate lattice shift (FR-016); six dials, so a candidate for a compact pair control (`G-ui-density`) |
 | `softness` | 0-1 | 0.1 | edge ramp width |
 | `shape` | 0-1 | 0 | round to square (P2) |
 | `jitter` | 0-1 | 0 | regular to hash-displaced (P2) |
 | `level` | 0-1 | 0.5 | Threshold type only |
 | `seed` | int | 1 | for jitter |
-| `plate` | Channels / Single | Channels | how the texture is read; Single is one plate (tone = brightest channel, colour normalised); reads `angle_r` as its one angle (name decided in Phase 0) |
+| `plate` | Channels / Single | Channels | how the texture is read; Single is one plate (tone = brightest channel, colour normalised); reads `angle_b` (default 45) and `phase_b` as its one angle and phase: 45 degrees is the common single-plate screen angle (black plate, newspaper); inferred from print convention, not checked against a source |
 | `bypass` | toggle | 0 | passthrough |
 
 ## Success Criteria

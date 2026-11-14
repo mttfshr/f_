@@ -162,5 +162,5 @@ A continuous source, so the module follows an animated or live input. A `feed` d
 - Wicking into the paper, and pigments that settle at different rates.
 - Counting or labeling strokes; a region-map inlet (Matt, 2026-11-10: only if areas from the land fall short).
 - Spread, snap, bias, mottle, dropout, flecks, banding, channel gains, and Extent, Bulge, Travel (the 2026-11-08 and 2026-11-09 designs).
-- Ink color, paper, overprint and plate logic (`f_paper`, `f_separate`); screens and line work (`f_screen`, `f_engrave`).
+- Ink color, paper, overprint and plate logic (`f_paper`, `f_separate`); screens and line work (`f_halftone`, `f_engrave`).
 - Audio analysis: audio drives f_vf_erode only through an upstream texture.

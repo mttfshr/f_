@@ -75,7 +75,7 @@ Each at two tone levels (flat 0.5 and a ramp) and with a small perturbation copy
 
 ### ADR-4: Tone to width, per-line sampling (G7, G8, spec P8, P9)
 
-**Decision (preliminary)**: whatever the method, the line coordinate `s` (distance across the line in pitch units, in `[-0.5, 0.5]`) gives width by `inked = |s| < tone / 2`, so the area law is exact on constant tone; hairlines (width under a texel) are drawn as partial coverage by an antialiasing ramp the width of a texel (as `f_screen` ADR-3); tone 0 gives exactly 0 and tone 1 exactly 1. The tone is read at the line's centre (the pixel moved by `-s * pitch` along the line normal), one `nearest` tap, so a line's width varies along it only with the tone along its centreline. Lines thin to nothing in highlights; whether a line also *ends* is deferred (the `ends` control in the spec's User Story 6).
+**Decision (preliminary)**: whatever the method, the line coordinate `s` (distance across the line in pitch units, in `[-0.5, 0.5]`) gives width by `inked = |s| < tone / 2`, so the area law is exact on constant tone; hairlines (width under a texel) are drawn as partial coverage by an antialiasing ramp the width of a texel (as `f_halftone` ADR-3); tone 0 gives exactly 0 and tone 1 exactly 1. The tone is read at the line's centre (the pixel moved by `-s * pitch` along the line normal), one `nearest` tap, so a line's width varies along it only with the tone along its centreline. Lines thin to nothing in highlights; whether a line also *ends* is deferred (the `ends` control in the spec's User Story 6).
 
 ### ADR-5: Direction input (spec P1, P2, P6, P7)
 
@@ -87,7 +87,7 @@ Each at two tone levels (flat 0.5 and a ramp) and with a small perturbation copy
 
 ### ADR-7: Bounds, alpha, bypass, units (spec FR-008 to FR-011)
 
-**Decision**: output clamped to 0..1; non-finite input zapped; alpha from in1; `bypass` is the codebox `bypass_gate` Param (never native `@bypass`); lengths in frame heights (shared with `f_vf_erode` and `f_screen`).
+**Decision**: output clamped to 0..1; non-finite input zapped; alpha from in1; `bypass` is the codebox `bypass_gate` Param (never native `@bypass`); lengths in frame heights (shared with `f_vf_erode` and `f_halftone`).
 
 ---
 

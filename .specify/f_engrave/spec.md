@@ -15,7 +15,7 @@ _Origin: `ideas/f_print_styles.md` (stage 2, the form-following line module for 
 - **Separate from `f_tf_hatch`.** This is its own module and does not evolve hatch. Hatch is stable and stays as it is; it may later pick up some of this module's flexibility (Matt, 2026-11-08).
 - **The method is a Phase 0 gate** (Matt, 2026-11-08): the three candidates are tried in a scratch spike and chosen by looking and by the criteria below, not by reasoning in advance.
 - **Plates are RGB channels, up to three;** alpha is not a plate. Each plate carries one ink's tone.
-- **Fixed-angle screens belong to `f_screen`.** Marks that follow the image's form belong here (the tentative decision in the idea file).
+- **Fixed-angle screens belong to `f_halftone`.** Marks that follow the image's form belong here (the tentative decision in the idea file).
 - **Dot-stretching is not this module's job;** the continuous, evenly spaced line field is.
 
 ### Preliminary decisions taken by Claude (Matt, 2026-11-08: "accept your own recommendations for preliminary gates")
@@ -29,8 +29,8 @@ These are Claude's recommendations accepted in place so the spec can proceed; no
 - **P5 Shared pitch** for all plates; angle offset per plate.
 - **P6 Direction smoothing is upstream** (`f_tf_smooth`, `f_tf_aniso_blur`); the module uses the tensor as given.
 - **P7 Low-coherence fallback:** where the tensor has no usable direction, lines take a fixed `fallback_angle`, blended over a coherence ramp (as `f_tf_hatch`'s Coh Floor idea), so shadows without structure still get tone.
-- **P8 Area law:** on a region of constant tone and direction, the fraction inked equals the tone (as for `f_screen`).
-- **P9 Width from the tone at the line's centre,** so a line's width is set at the line, not per pixel (as `f_screen` P2).
+- **P8 Area law:** on a region of constant tone and direction, the fraction inked equals the tone (as for `f_halftone`).
+- **P9 Width from the tone at the line's centre,** so a line's width is set at the line, not per pixel (as `f_halftone` P2).
 - **P10 Output bounded 0..1,** and frame-relative units (gate G3).
 - **P11 Stateless is preferred;** a stateful method needs a stated reason (G4).
 - **P12 Bypass** passes the tone plates (in1) through.
@@ -39,13 +39,13 @@ These are Claude's recommendations accepted in place so the spec can proceed; no
 
 - **G1 Verification tiers.** The first Phase 0 task. Proposal: tier 1 mirrors the geometry criteria (SC-001 to SC-005) in NumPy; tier 2 benches the real codebox; tier 3 live. A scratch spike comes before any of it (G2).
 - **G2 Line-field method.** The module's core and the unsolved problem: evenly spaced, coherent parallel lines whose phase is continuous along a direction field (the phase must be integrated, and it breaks at singularities). Candidates, none tried: (a) LIC over a line-pattern seed; (b) a line pattern warped by a smoothed luma field, so the lines are iso-lines of tone; (c) lines spaced by distance to the previous line; the plan (`plan.md` ADR-3) adds two more for the spike, a global phase solve on a coarse grid and oriented Gabor or phasor-style kernels. **Stop rule:** if no candidate meets SC-001 to SC-004 in the spike, the module is not built and the spec is parked with the result recorded.
-- **G3 Units.** Frame widths or frame heights for `pitch`; shared with `f_vf_erode` and `f_screen`.
+- **G3 Units.** Frame widths or frame heights for `pitch`; shared with `f_vf_erode` and `f_halftone`.
 - **G4 State.** Whether the chosen method needs frame-to-frame state (for example an integrated phase). A stateless method is preferred (P11); a stateful one changes the bench and the bypass behaviour.
 - **G5 Singularity policy.** What the lines do at degenerate points of the field (knots, wedges, swirls, which `f_tf_hatch` shows as topology): converge, fade, or leave a gap. Measure the spacing distortion around them.
 - **G6 Fallback blend.** The coherence ramp and `fallback_angle` of P7, and the visible seam where direction switches.
 - **G7 Tone to width.** The mapping near 0 (hairlines, lines thinner than a texel) and near 1 (merge into a solid), and whether a line ends or only thins in highlights.
 - **G8 Per-line versus per-pixel tone.** Preliminary P9. Which taps and how many (about 16 reads per stage; `ideas/f_deflicker.md`).
-- **G9 `sample()` behaviour.** Shared with `f_vf_erode` G4 and `f_screen` G8.
+- **G9 `sample()` behaviour.** Shared with `f_vf_erode` G4 and `f_halftone` G8.
 - **G10 Codebox budget and cost.** About 250 statements per function and about 450 per program (`skills/jit-gen-codebox/SKILL.md`); a long march is the likely cost. For scale, `f_tf_hatch`'s reference doc gives its streamline stage as about 5 to 12 ms (hardware not stated); this module's cost is unmeasured.
 - **G11 Linear-light versus encoded tone.** Deferred (Matt), as for `f_vf_erode`.
 - **G12 Code sharing with `f_tf_hatch`.** The tensor decode is reusable; whether code can be shared between modules in this build system is unverified.
@@ -182,7 +182,7 @@ Numeric limits marked `[set in Phase 0]` are fixed from the spike's measurements
 
 ## Out of Scope (This Version)
 
-- Fixed-angle screens and dots (`f_screen`).
+- Fixed-angle screens and dots (`f_halftone`).
 - Image-to-plate separation (`f_separate`) and the tensor itself (`f_tf_tensormap`, smoothing).
 - Ink body (`f_vf_erode`), misregistration, paper and emboss (`f_paper`).
 - Tone-gated crosshatch inside the module (P4: made with plates).

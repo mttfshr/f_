@@ -20,14 +20,14 @@ Settled (Matt unless noted):
 8. **Immediate interest is stage 3 (ink body),** the static look first, bleed over time second. (2026-11-08)
 9. **Spec first, but not yet:** Matt wants time to think. No scratch spike until he says. (2026-11-08)
 
-Tentative (Matt: "a decision but I'm not sure it's the decision", 2026-11-08): `f_screen` does fixed-angle round and line screens only, one angle per plate. Marks that follow the image's form (stretched dots, hatching, engraving) belong to the tensor family and the line module. Reason: a dot stretched along a direction until its neighbours merge is a hatch stroke.
+Tentative (Matt: "a decision but I'm not sure it's the decision", 2026-11-08): `f_halftone` does fixed-angle round and line screens only, one angle per plate. Marks that follow the image's form (stretched dots, hatching, engraving) belong to the tensor family and the line module. Reason: a dot stretched along a direction until its neighbours merge is a hatch stroke.
 
 ## The five stages
 
 | Stage | Job | Module (placeholder) |
 |---|---|---|
 | 1 Separation | full-colour image to plates | `f_separate` |
-| 2 Tone-to-mark | plate tone to dots, grain, threshold or lines | `f_screen`; `f_engrave` (form-following, later) |
+| 2 Tone-to-mark | plate tone to dots, grain, threshold or lines | `f_halftone`; `f_engrave` (form-following, later) |
 | 3 Ink body | ink that runs and pools over a terrain (built 2026-11-10; dot gain, mottle, dropout, flecks, banding are not in it) | `f_vf_erode` |
 | 4 Process artifacts | per-plate misregistration, wobble, ghosting | `f_misregister` |
 | 5 Substrate | plates x ink colours onto paper: overprint, tint, tooth, show-through, emboss | `f_paper` |
@@ -42,9 +42,9 @@ Not a swizzle. Vsynth's RGB swizzle plus a recolour gives at most three plates t
 
 That app (Matt, 2026-11-08) is specific to riso machines' halftone and overprint options and gives a live composite preview showing the colour shift caused by the palette clamping your ink choices create. Consequences (inferred from his description, not the app):
 
-- **Update 2026-11-08 (Matt, `f_separate` review; supersedes the multiply and paper wording in this section):** "paper is a metaphor": the background is black and inks are colours of light that ADD. `f_separate` outputs one coloured texture per ink (coverage times ink colour) plus a summed preview, so a later `f_paper` inherits addition, not a subtractive overprint. `f_screen` and `f_engrave` work on the RGB channels of each texture, with a Channels / Single toggle (Single = one screen for a spot colour).
+- **Update 2026-11-08 (Matt, `f_separate` review; supersedes the multiply and paper wording in this section):** "paper is a metaphor": the background is black and inks are colours of light that ADD. `f_separate` outputs one coloured texture per ink (coverage times ink colour) plus a summed preview, so a later `f_paper` inherits addition, not a subtractive overprint. `f_halftone` and `f_engrave` work on the RGB channels of each texture, with a Channels / Single toggle (Single = one screen for a spot colour).
 - Separation and overprint are one coupled decision: `f_separate` and `f_paper` must share one overprint model, `f_separate` inverting what `f_paper` applies.
-- The preview is a chain: `f_separate` into `f_paper` with no screen between shows the gamut-clamped image; inserting `f_screen` gives the real look.
+- The preview is a chain: `f_separate` into `f_paper` with no screen between shows the gamut-clamped image; inserting `f_halftone` gives the real look.
 - A test: separate and recompose a flat patch of each ink; it should come back unchanged.
 - Riso inks are translucent and overprint order-dependently, so the overprint model (multiply or something else) is an explicit spec decision.
 
@@ -54,7 +54,7 @@ That app (Matt, 2026-11-08) is specific to riso machines' halftone and overprint
 
 Dithering, halftoning and hatching are largely **one operation**: compare tone to a threshold field. A clustered-dot screen is a threshold field of dots at an angle, a line screen is stripes, ordered dither is a Bayer or blue-noise field, and engraving is stripes that follow the image's form. What differs is the field generator (the hard part), the scale (dither works at pixel scale with a hard compare; halftone marks are larger and want a soft compare for dot gain and antialiased edges) and the output levels. Error diffusion (Floyd-Steinberg) is the exception: it is sequential and does not fit a per-pixel GPU pass; a blue-noise threshold approximates the look. All of this is inferred.
 
-**`f_screen` and `ideas/f_dither_grain.md`:** both are cell fields with size, shape and a regularity dial (`jitter`) and a compare per cell. They differ in colour model: `f_dither_grain` resolves each grain to exactly one hue, so a dithered image never overprints, while print separates into inks and layers them. Print also needs several plates at different angles, and a soft compare. Current lean: keep them separate and share only the cell vocabulary (`density`, `size`, `shape`, `jitter`). Whether to fold them together stays open (question 6).
+**`f_halftone` and `ideas/f_dither_grain.md`:** both are cell fields with size, shape and a regularity dial (`jitter`) and a compare per cell. They differ in colour model: `f_dither_grain` resolves each grain to exactly one hue, so a dithered image never overprints, while print separates into inks and layers them. Print also needs several plates at different angles, and a soft compare. Current lean: keep them separate and share only the cell vocabulary (`density`, `size`, `shape`, `jitter`). Whether to fold them together stays open (question 6).
 
 **The line module (`f_engrave`, intaglio and form-following lines), later phase:**
 
@@ -78,7 +78,7 @@ Dithering, halftoning and hatching are largely **one operation**: compare tone t
 
 ### Stages 4 and 5
 
-**`f_misregister`, 2026-11-10 (Matt): paused, not parked.** Vsynth already has offset, rotation, displacement, sample-and-hold, noise and delay, so a transform module would duplicate a chain. What a chain lacks is one coherent control surface over the plates' shared random event; `ideas/f_util_scoped_presets.md` is the way to find out whether `f_misregister` needs to be a module at all. **Folded into `ideas/f_util_vary.md` (Matt, 2026-11-11): `f_misregister` is a preset of a general randomizer, not a module.** Experiment (2026-11-10): `scratch/experiments/misregister_chain/` composes the phenomenon from existing modules; what it cannot do is the gap. Candidates that may survive: a registration source (seeded per-plate offset, rotation and a smooth paper-warp field, with a sheet-change trigger) and registration marks and color bars as a small generator. Sharp halftone shifts belong in `f_screen` as a phase input, not here.
+**`f_misregister`, 2026-11-10 (Matt): paused, not parked.** Vsynth already has offset, rotation, displacement, sample-and-hold, noise and delay, so a transform module would duplicate a chain. What a chain lacks is one coherent control surface over the plates' shared random event; `ideas/f_util_scoped_presets.md` is the way to find out whether `f_misregister` needs to be a module at all. **Folded into `ideas/f_util_vary.md` (Matt, 2026-11-11): `f_misregister` is a preset of a general randomizer, not a module.** Experiment (2026-11-10): `scratch/experiments/misregister_chain/` composes the phenomenon from existing modules; what it cannot do is the gap. Candidates that may survive: a registration source (seeded per-plate offset, rotation and a smooth paper-warp field, with a sheet-change trigger) and registration marks and color bars as a small generator. Sharp halftone shifts belong in `f_halftone` as a phase input, not here.
 
 `f_misregister` gives each plate its own offset, rotation and scale (riso passes are separate drums, so each plate drifts independently), plus wobble and ghosting. `f_paper` composites plates by their ink colours with the shared overprint model, and adds tint, tooth, show-through and emboss. Banding can live in `f_vf_erode`.
 
@@ -96,13 +96,13 @@ Dithering, halftoning and hatching are largely **one operation**: compare tone t
 
 Riso signature (general knowledge): one to three spot-colour passes, each its own drum with its own misregistration; a grainy "grain touch" screen or a coarse halftone; heavily mottled ink with dropout; translucent inks that overprint into mixed colours; uncoated warm paper; slight banding.
 
-- **Chain:** `f_separate` (N spot inks) then `f_screen` (grain or coarse AM, per-plate angle) then `f_vf_erode` (mottle, dropout, gain) then `f_misregister` then `f_paper` (overprint, tint, tooth).
+- **Chain:** `f_separate` (N spot inks) then `f_halftone` (grain or coarse AM, per-plate angle) then `f_vf_erode` (mottle, dropout, gain) then `f_misregister` then `f_paper` (overprint, tint, tooth).
 - **Done when:** a photo through a two-ink chain reads as riso on Matt's live look. Nothing else counts as done.
 - **Module count is open:** the spike could be built as these modules, or as a scratch patch first to find which stages really are separate (scratch before spec). Because `f_vf_erode` stands alone, it is also a natural first piece.
 
 ## Other styles as recipes (later; cost is mostly presets)
 
-Offset (four plates, rosette halftone at 15/75/0/45 degrees, small misregistration, moiré for free); xerox (threshold, toner flecks, edge boost, streaks, feedback loop); newspaper (one coarse 45-degree plate, high gain, show-through); screen print (flat spots, mesh, fray); letterpress (squash rim, deboss); linocut and woodcut (hard threshold, carved gouge marks, grain direction; probably another `f_screen` mode); gravure (cell grid, visible walls).
+Offset (four plates, rosette halftone at 15/75/0/45 degrees, small misregistration, moiré for free); xerox (threshold, toner flecks, edge boost, streaks, feedback loop); newspaper (one coarse 45-degree plate, high gain, show-through); screen print (flat spots, mesh, fray); letterpress (squash rim, deboss); linocut and woodcut (hard threshold, carved gouge marks, grain direction; probably another `f_halftone` mode); gravure (cell grid, visible walls).
 
 ## Possible later: more mark character in `f_tf_hatch` (parked, not scoped)
 
@@ -115,8 +115,8 @@ Matt thinks hatch could use more control over the character of the individual ma
 3. **`f_separate`:** the separation method (luma into one plate, nearest ink colour, or channel invert to CMY; Matt: "I don't know yet"); CMYK scope (real CMYK with black generation, or palettes only); the overprint model; how much palette UI (compact panel, see `G-ui-density`). Matt's prepress app is the reference for what it offers.
 4. **Per-plate parameters:** one param set per plate on a single module (many dials), or one module instance per plate. Tagged-texture inputs (`P-mod-textures`) could drive mottle or misregistration.
 5. **Mottle:** one `f_vf_erode` feature, or a shared `f_util_mod_texture`-style generator other stages can use?
-6. **`f_screen` and `f_dither_grain`:** fold together, share a cell core, or stay separate? Matt: "maybe, let's discuss". Whether this build system can share code between modules is unverified.
-7. **Oriented marks (tentative above):** is it right that `f_screen` stays fixed-angle and all form-following marks go to the tensor family?
+6. **`f_halftone` and `f_dither_grain`:** fold together, share a cell core, or stay separate? Matt: "maybe, let's discuss". Whether this build system can share code between modules is unverified.
+7. **Oriented marks (tentative above):** is it right that `f_halftone` stays fixed-angle and all form-following marks go to the tensor family?
 8. **Stage 3 scope:** static only first, with bleed over time a later stateful module, or both from the start?
 
 ## Gates this touches (scanned `.specify/gates.md`; none cleared or reopened)
