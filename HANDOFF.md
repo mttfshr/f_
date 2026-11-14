@@ -38,4 +38,5 @@
 - **Gate sweep:** T015, T018 ticked; spec control table brought up to the build (`67b754d`); Matt confirmed every remaining PRELIMINARY gate, so `f_halftone` is off `G-print-prelim` (`026a197`).
 - **T028 benches:** the contract bench found Seed 370 arriving as 256; Matt capped Seed at 1-256 (`cf99f69`); re-run clean (`aa788eb`). Cost row gained Dot at jitter 1, which hit BenchBusy twice; Matt closed T028 with that as a note.
 - **T032 part 1 (Matt accepted Claude's points):** Pitch floor 0.009; Dot and Line floor each plate's pitch x scale at 0.009 in the codebox and mirror, dithers not (`62cb5a7`); benched green, codebox 19/19, module 9/9 (`tests/logs/20261114-135904-bench.log`).
+- **Session end:** records reconciled; `test_gates.py` 5/5 with Matt's go (`tests/logs/20261114-140312-offline.log`).
 - **Next:** T031 / rest of T032 live sitting (default Pitch at 640, jitter at high tone, softness), T011 decision, then T040 / T041.
