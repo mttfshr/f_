@@ -23,17 +23,17 @@ _Origin: `ideas/f_print_styles.md` (stage 2 of the print-styles family, "tone to
 These are not Matt's calls. They are Claude's recommendations, accepted in place so the spec can proceed, and each is open to Matt's reversal.
 
 - **P1 (accepted by Matt, 2026-11-13; the staircase is still measured in the mirror first) Per-cell tone sampling for dots.** A dot's size comes from one tone value per cell, sampled at the cell centre, so dots are regular and uniform within a cell (gate G4). Per-pixel comparison, where tone varies inside a cell and distorts the dot, is not the default.
-- **P2 Line screen samples along the line.** Line width comes from the tone at the nearest point on the line's centre.
-- **P3 Area coverage equals tone.** On a flat patch, the fraction of the area inked equals the tone (exactly at 0 and at 1).
-- **P4 Rotation about the frame centre.** The lattice is fixed to the frame, never to the image, so an animated input moves under a static screen. A per-plate phase offset (FR-016) shifts a plate's lattice without rotating it.
+- **P2 (confirmed by Matt, 2026-11-14) Line screen samples along the line.** Line width comes from the tone at the nearest point on the line's centre.
+- **P3 (confirmed by Matt, 2026-11-14) Area coverage equals tone.** On a flat patch, the fraction of the area inked equals the tone (exactly at 0 and at 1).
+- **P4 (confirmed by Matt, 2026-11-14) Rotation about the frame centre.** The lattice is fixed to the frame, never to the image, so an animated input moves under a static screen. A per-plate phase offset (FR-016) shifts a plate's lattice without rotating it.
 - **P5 (reversed by Matt, 2026-11-14) Pitch is a master with a scale per plate.** One `pitch` dial sweeps all three plates; each plate multiplies it by its own `scale_r` / `scale_g` / `scale_b` (FR-022). The angle and phase are per plate as before.
 - **P6 (accepted by Matt, 2026-11-13) Default angles 15, 75 and 45 degrees** for R, G and B (inferred from the offset convention, which separates screens by 30 degrees or more to limit moiré; not tested).
-- **P7 Output is bounded to 0..1** by construction (coverage), with input above 1 saturating to full and below 0 giving none. This differs from `f_vf_erode` (unclamped) because a mark is either there or not.
-- **P8 No driver inlets in v1** (G12). The plate inlets (User Story 9, Matt 2026-11-14) are not driver inlets: each is a source to screen, not a control signal.
+- **P7 (confirmed by Matt, 2026-11-14) Output is bounded to 0..1** by construction (coverage), with input above 1 saturating to full and below 0 giving none. This differs from `f_vf_erode` (unclamped) because a mark is either there or not.
+- **P8 (confirmed by Matt, 2026-11-14) No driver inlets in v1** (G12). The plate inlets (User Story 9, Matt 2026-11-14) are not driver inlets: each is a source to screen, not a control signal.
 - **P9 (reversed by Matt, 2026-11-14) Noise dithers are in scope.** Was: stochastic (FM) screening out of scope (`f_stipple` is a hash-field stipple that reads only the red channel). Now: Blue noise and Random are two more screens (User Story 10), with Levels for the dithers (User Story 11), after Claude's review of the dithers listed on pixelsynth.art/algorithms (2026-11-14). Error diffusion stays out (sequential; Blue noise is its parallel stand-in). Spatial stippling (dots placed by a point process, `f_stipple`) is unchanged.
-- **P10 Units are frame-relative,** as for `f_vf_erode` (A4 there; gate G2).
-- **P11 Polarity as in `f_vf_erode`:** high channel value = more ink.
-- **P12 Bypass** passes the source through.
+- **P10 (confirmed by Matt, 2026-11-14) Units are frame-relative,** as for `f_vf_erode` (A4 there; gate G2).
+- **P11 (confirmed by Matt, 2026-11-14) Polarity as in `f_vf_erode`:** high channel value = more ink.
+- **P12 (confirmed by Matt, 2026-11-14) Bypass** passes the source through.
 
 ### Open, decided in Phase 0 (gates; to be carried into `tasks.md`)
 
