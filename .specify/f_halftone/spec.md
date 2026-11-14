@@ -30,7 +30,7 @@ These are not Matt's calls. They are Claude's recommendations, accepted in place
 - **P6 (accepted by Matt, 2026-11-13) Default angles 15, 75 and 45 degrees** for R, G and B (inferred from the offset convention, which separates screens by 30 degrees or more to limit moiré; not tested).
 - **P7 Output is bounded to 0..1** by construction (coverage), with input above 1 saturating to full and below 0 giving none. This differs from `f_vf_erode` (unclamped) because a mark is either there or not.
 - **P8 No driver inlets in v1** (G12). The plate inlets (User Story 9, Matt 2026-11-14) are not driver inlets: each is a source to screen, not a control signal.
-- **P9 Stochastic (FM) stipple is out of scope.** `f_stipple` is a hash-field stipple (its doc, read 2026-11-08), and it reads only the red channel.
+- **P9 (reversed by Matt, 2026-11-14) Noise dithers are in scope.** Was: stochastic (FM) screening out of scope (`f_stipple` is a hash-field stipple that reads only the red channel). Now: Blue noise and Random are two more screens (User Story 10), with Levels for the dithers (User Story 11), after Claude's review of the dithers listed on pixelsynth.art/algorithms (2026-11-14). Error diffusion stays out (sequential; Blue noise is its parallel stand-in). Spatial stippling (dots placed by a point process, `f_stipple`) is unchanged.
 - **P10 Units are frame-relative,** as for `f_vf_erode` (A4 there; gate G2).
 - **P11 Polarity as in `f_vf_erode`:** high channel value = more ink.
 - **P12 Bypass** passes the source through.
@@ -49,6 +49,7 @@ These are not Matt's calls. They are Claude's recommendations, accepted in place
 - **G10 Name and menu.** DECIDED (Matt, 2026-11-13): `f_halftone`. Menu category still under `G-menu`.
 - **G11 Control set.** Pitch, three angles, type, shape, softness, jitter, level, seed: about ten dials plus the type menu (`G-ui-density`).
 - **G12 Drivers.** Preliminary P8: none. A later optional modulation inlet (pitch or size by a texture) is possible and would be a new version. Pitch by a texture was discussed 2026-11-14 and held by Matt (notes under "Pitch modulated by a texture" above).
+- **G14 Blue-noise method** *(Matt, 2026-11-14; open, Claude to spike)*: closed form (interleaved gradient noise; the R2 low-discrepancy sequence) or a precomputed void-and-cluster pattern as a texture (needs the module to load a file, a build step it lacks). Decided by a mirror spike: the radially averaged spectrum (low-frequency energy) and the area law, with images for Matt to judge; the texture route only if the closed forms look wrong. Plan ADR-10.
 - **G13 Naming alignment.** `softness`, `jitter`, `shape`, `angle` follow `docs/f-reference/discrete_item_conventions.md` (not opened this session); check that the names mean the same here.
 
 - **Plates from `f_separate`, and the plate toggle (Matt, 2026-11-08):** `f_separate` outputs three textures, each carrying one spot colour as its RGB channels; this module operates on the RGB channels of each of those textures. Because a real spot-colour screen is ONE screen, a `plate` toggle chooses how a texture is read: **Channels** (the spec as written: R, G and B are separate plates, each with its own angle) or **Single** (the whole texture is one plate with one angle: the tone is the brightest channel, `t = max(r, g, b)`; the colour is normalised to full brightness, `rgb / t`; the output is that colour times the mark, so a teal plate gets one set of teal dots and its two non-zero channels are not split). Matt chose the brightest-channel tone with normalised colour over keeping the plate's original brightness (which would cap the dot area): a dimmer plate colour is restored with a gain downstream. Black (`t` near 0) gives black. Alpha passes through. Default: Channels (a full-colour texture), Single for spot-colour plates. Details (which angle param Single reads, default) are gate G-plate in `tasks.md`.
@@ -141,6 +142,26 @@ A performer connects `f_separate`'s three plate outlets to `f_halftone`'s plate 
 3. **Given** one plate's angle or phase changed, **Then** the other two plates' marks are unchanged.
 4. **Given** Plate set to Channels or Single, **Then** the module reads inlet 0 exactly as before and the plate inlets are ignored.
 
+### User Story 10: Noise dithers, Blue and Random (Priority: P2; Matt, 2026-11-14; not built)
+
+Two more screens beside Bayer: `Blue` (a blue-noise threshold: even, fine grain, no visible grid; the look of error diffusion, computed in parallel) and `Random` (a white-noise threshold: coarse, clumpy grain, the crude end). Both are ordered dithers in the Bayer sense: each grain cell compares its tone with a threshold that does not depend on the image, so they are stateless and per pixel.
+
+**Acceptance Scenarios**:
+1. **Given** `Blue` or `Random` and a flat tone, **Then** the fraction of lit grain cells equals the tone (exactly for Blue within its pattern's resolution over a whole number of tiles; within a stated statistical tolerance for Random).
+2. **Given** `Blue`, **Then** the output's spectrum has little low-frequency energy (no visible clumps or grid) compared with `Random` at the same tone (measured on the mirror; the method is gate G14).
+3. **Given** Channels mode and a grey input, **Then** the three plates' grain patterns differ (each plate offsets the pattern), so a grey does not dither as one black-and-white pattern in all three channels.
+4. **Given** a different `seed`, **Then** the pattern changes; the same seed gives a bit-identical frame (stateless).
+
+### User Story 11: Levels for the dithers (Priority: P2; Matt, 2026-11-14; not built)
+
+A `levels` control (2 to 16, default 2) for Bayer, Blue and Random: the dither steps between that many evenly spaced output values per channel instead of only 0 and 1, the posterized-with-dither look of retro palettes. Mapping to named palettes is not this module's (a colour-map module such as `f_cmap`).
+
+**Acceptance Scenarios**:
+1. **Given** `levels` 2, **Then** the output is exactly today's (one-bit) output for Bayer.
+2. **Given** `levels` L and a flat tone t, **Then** every output value is one of k / (L - 1), only the two values around t occur, and the mean equals t within the dither's resolution.
+3. **Given** tone 0 or 1, **Then** the output is exactly 0 or 1.
+4. **Given** Dot, Line or Threshold, **Then** `levels` changes nothing.
+
 ### User Story 8: Standard f_ module behaviour (Priority: P3)
 
 `bypass`, `#0_` scoped names, helpfile, menu entry, README row.
@@ -172,6 +193,11 @@ A performer connects `f_separate`'s three plate outlets to `f_halftone`'s plate 
 - **FR-021** *(Matt, 2026-11-14)*: In Plates mode: Plates is chosen from the menu only (connecting a plate inlet does not switch modes); inlet 0 is ignored; alpha is the largest of the three plates' alphas; bypass passes inlet 0 (P12), so with nothing on inlet 0 a bypassed Plates module shows black.
 - **FR-020**: An unconnected plate inlet MUST contribute nothing (an unconnected `jit.gl.pix` inlet reads black with alpha 1: `skills/jit-gen-codebox`, verified 2026-10-07; Vsynth's own unconnected handling to be checked on the bench).
 - **FR-022** *(Matt, 2026-11-14; not built)*: Each plate's lattice period MUST be `pitch × scale_<plate>` (`scale_r`, `scale_g`, `scale_b`, 0.25 to 4, default 1, so the defaults give today's output exactly). The plate's phase stays in units of its own pitch (FR-016), jitter displaces by its own cells, and Bayer's cell follows its own pitch. Single uses `scale_b` (as FR-016 uses `phase_b`). In Plates mode the three scales serve plates 1 to 3. Panel (Matt, 2026-11-14): one table row per plate (Angle, Scale, X, Y number boxes), so the plate's row label is the one label that reads R / G / B or 1 / 2 / 3 (FR-018). The smallest usable pitch (G5, about 10 texels) applies to each plate's own pitch.
+- **FR-023** *(Matt, 2026-11-14; not built)*: `screen` MUST gain `Blue` and `Random`, appended after Bayer (indices 4 and 5, so saved values of the existing screens keep their meaning).
+- **FR-024**: `Blue` and `Random` MUST be threshold dithers on a grain cell that follows Pitch as Bayer's does (a cell of `pitch × scale / 8` frame heights, whole pixels, at least 1; preliminary, Claude: so Pitch sets the grain for every dither), and MUST honour the Read control (Cell: one tone per grain cell; Pixel: the tone per pixel). Lit where tone > threshold(cell), the threshold in 0..1 with a uniform distribution.
+- **FR-025**: The threshold pattern MUST differ per plate (a fixed per-plate offset of the pattern) and with `seed`; the plate phase x / y MUST shift the pattern by whole grain cells per pitch unit (preliminary, Claude: as phase shifts the lattice); angles do not apply (as for Bayer).
+- **FR-026**: `Blue`'s threshold MUST come from a stateless pattern with a blue-noise character; the method (a closed-form low-discrepancy pattern such as interleaved gradient noise or the R2 sequence, or a precomputed void-and-cluster pattern read from a texture) is gate G14. `Random`'s threshold MUST be a hash of the grain cell, plate and seed (the sin hash the jitter uses).
+- **FR-027** *(Matt, 2026-11-14; not built)*: `levels` (int, 2 to 16, default 2) MUST quantize the output of Bayer, Blue and Random to L evenly spaced values per channel: with q = tone × (L - 1), output = (floor(q) + [fract(q) > threshold]) / (L - 1), clamped to 0..1, tone <= 0 exactly 0 and tone >= 1 exactly 1; at L = 2 this MUST equal the one-bit output exactly. Dot, Line and Threshold ignore it. In Single and Plates, the quantized value takes the plate's colour as coverage does today.
 - **FR-015**: Standard behaviour: `#0_`-scoped names, `routepass` / `route` / `autopattr` with `varname`, `definition.py` as the source of truth.
 
 ### Non-Functional Requirements
@@ -193,7 +219,9 @@ A performer connects `f_separate`'s three plate outlets to `f_halftone`'s plate 
 | `shape` | 0-1 | 0 | round to square (P2) |
 | `jitter` | 0-1 | 0 | regular to hash-displaced (P2) |
 | `level` | 0-1 | 0.5 | Threshold type only |
-| `seed` | int | 1 | for jitter |
+| `seed` | int | 1 | for jitter, and the Blue and Random patterns (FR-025) |
+| `screen` (added) | + Blue / Random | | FR-023, not built; indices 4 and 5 |
+| `levels` | 2-16 int | 2 | Bayer, Blue, Random only (FR-027, not built); 2 = one-bit |
 | `plate` | Channels / Single | Channels | how the texture is read; Single is one plate (tone = brightest channel, colour normalised); reads `angle_b` (default 45) and `phase_b` as its one angle and phase: 45 degrees is the common single-plate screen angle (black plate, newspaper); inferred from print convention, not checked against a source |
 | `plate_mode` | Channels / Single / Plates | Channels | Plates (User Story 9, not built): inlets 1 to 3, one plate each at the R, G and B angle and phase |
 | `bypass` | toggle | 0 | passthrough |
@@ -224,7 +252,8 @@ A performer connects `f_separate`'s three plate outlets to `f_halftone`'s plate 
 ## Out of Scope (This Version)
 
 - Marks that follow the image's form: stretched dots, hatching, engraving (`f_engrave`, the tensor family).
-- Stochastic (FM) stipple (`f_stipple`) and error diffusion (sequential; a blue-noise threshold is the stand-in).
+- Error diffusion (sequential; the Blue screen is the parallel stand-in) and point-process stipple (`f_stipple`). Noise dithers are IN scope since P9 was reversed (2026-11-14).
+- Named palettes (a colour-map module); Levels is evenly spaced per channel.
 - Image-to-plate separation (`f_separate`).
 - Ink behaviour: dot gain, mottle, dropout, edge pooling (`f_vf_erode`); misregistration (`f_misregister`); colour and overprint (`f_paper`).
 - A fourth (CMYK black) plate.

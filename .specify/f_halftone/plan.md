@@ -85,6 +85,17 @@ A pixel is inked where `T(f) < tone`, where `T` is a threshold field with the pr
 
 **Decision**: Threshold is `coverage = smoothstep(level - w, level + w, tone)` with `w` from `softness`. Bayer is an 8×8 ordered matrix evaluated from the texel coordinates by the bit-interleave formula in a three-iteration loop, compared with `(M + 0.5) / 64`; its cell is a texel, so it is the one type in texel units, not frame units (documented in the spec's G-notes).
 
+### ADR-10: Blue and Random screens (spec User Story 10, FR-023 to FR-026, P9 reversed; Matt 2026-11-14; not built; details preliminary, Claude)
+
+**Decision**: two more branches of the Bayer path: the same grain cell (`bay_cell`, Pitch / 8 per plate, whole pixels, Read Cell / Pixel), the same comparison `tone > threshold`, with the threshold from a function of the cell index, plate and seed instead of the Bayer matrix. Per-plate decorrelation by a fixed offset of the cell index per plate (and the plate phase in grain cells), so Channels mode does not stack three identical patterns.
+**Blue (gate G14)**: spike first in the mirror (NumPy), no codebox: interleaved gradient noise `fract(52.9829189 · fract(0.06711056 x + 0.00583715 y))` and the R2 sequence `fract(0.7548777 x + 0.5698403 y)` (both closed forms, one line, from the literature: not verified here), against a void-and-cluster pattern computed in NumPy as the reference. Measure the radially averaged power spectrum and the area law on flat patches; render ramps and a photo for Matt. A texture pattern only if both closed forms fail the look (the build would need a texture load, a new builder step).
+**Random**: the sin hash of (cell, plate, seed) already used by jitter. Known: it cannot match the mirror per pixel on the GPU (HANDOFF findings), so its bench rows compare means and the lit fraction, as the jitter rows do.
+**Cost**: one or two arithmetic lines per plate on top of Bayer's path; no extra reads.
+
+### ADR-11: Levels (spec User Story 11, FR-027; Matt 2026-11-14; not built)
+
+**Decision**: one integer Param `levels` (2-16). For the dither screens the comparison becomes `q = tone · (L - 1); out = (floor(q) + (fract(q) > thr)) / (L - 1)`, with the existing exact extremes. At L = 2 and tone < 1, floor(q) = 0 and the test is `tone > thr`, so today's Bayer output is unchanged bit for bit. Single and Plates multiply the quantized value by the plate colour, as coverage. Control: a `live.numbox` in the global row (placement Claude's; `G-ui-density`).
+
 ### ADR-7: Bounds, alpha, bypass (spec FR-011, FR-013, FR-014)
 
 **Decision**: output clamped to 0..1 by construction; non-finite tone zapped to 0; alpha copied from the source; `bypass` is the codebox `bypass_gate` Param (never native `@bypass`) passing the source through.
