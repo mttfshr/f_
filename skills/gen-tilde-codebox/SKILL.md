@@ -1,6 +1,6 @@
 ---
 name: gen-tilde-codebox
-description: Reference for writing gen~ codebox code (GenExpr at audio rate, on the CPU) in Max/MSP. Use when writing, reviewing, or debugging any codebox inside a gen~ object. Covers reserved-word collisions, Data/peek/poke behavior, signal inlets vs Param, History and latch pitfalls, known-good idioms for scratch-test patches, and testing-methodology lessons for audio-rate and slow-envelope signals. Distinct from jit-gen-codebox, which covers the jit.gl.pix GPU dialect — the two share some syntax (Param, twopi, Constants) but have different reserved words, different available keywords (History exists in gen~, not documented for jit.gl.pix), and different failure shapes. Do not assume a jit.gl.pix finding carries over to gen~ without re-verifying it here.
+description: Empirically verified rules for gen~ codebox code (GenExpr at audio rate, on the CPU) in Max/MSP. Use this skill whenever writing, reviewing, or debugging code inside a gen~ object, or building a scratch patch to test one, even if the user only says "gen~", "codebox" or "GenExpr". Load it especially on these symptoms: "patchcord inlet out of range" on a codebox; "extra arguments for message" on a Param; a gen~ patch that compiles but stays silent; a latch or History feedback loop stuck at 0; a Data/peek wavetable that steps or won't null; a scope~ that goes blank or a peakamp~ reading that makes no sense. Covers Param vs in1...inN inlets, reserved names, Data/peek/poke, History and latch, self-timed noise() randomization, and how to verify slow audio signals. For jit.gl.pix (the GPU dialect) use jit-gen-codebox instead: the two share syntax but not rules (noise() works in gen~ and fails on the GPU), so a finding from one does not carry over to the other unverified.
 ---
 
 # gen~ Codebox Reference (audio domain)
@@ -17,6 +17,40 @@ is an easy mistake if most of your codebox experience is GPU-side.
 
 Findings are dated and were observed on Max 9. Items marked unverified or
 hypothesis are exactly that.
+
+---
+
+## Quick rules
+
+Each rule links to the section with the evidence; read that section when a
+rule's reason matters for the case at hand.
+
+1. **Use `in1`...`inN` in the code body for independent signal inlets;
+   `Param` is only the single message inlet.** Extra `Param`s never create
+   inlets, and Max deletes the extra patchcords. (Inlets)
+2. **Keep at least one `in N` object in the gen~ subpatcher**, even if the
+   code reads no signal; without it, `Param` messages never arrive and the
+   patch is silently mute. (Inlets)
+3. **Name one-shot trigger Params `trig`, not `reset`:** `reset` is a gen~
+   built-in message and errors on every trigger. Suspect the same with other
+   built-in-sounding names. (Reserved-word collisions)
+4. **Don't use `latch` in a self-dependent feedback loop:** it starts at 0
+   whatever the `History` initializer, and can deadlock. Use
+   `x = trig ? target : held;`. (History and latch pitfalls)
+5. **Read a `History` into a local before writing it** when its old value is
+   needed after other work in the same block. (History and latch pitfalls)
+6. **`peek` floors fractional indices; it doesn't interpolate.** Size `Data`
+   tables generously before blaming the logic around them. (Data / poke / peek)
+7. **`noise()` works in gen~** (fresh value in [-1, 1] per call); the GPU
+   sin-hash workaround doesn't apply here. (Relationship to jit-gen-codebox)
+8. **`pfft~` needs its subpatch as a separate file on disk;** `gen~`,
+   `poly~` and `bpatcher` can embed theirs inline. (pfft~ as a gen~ container)
+9. **When testing, freeze time behind a `run` Param, log to the console
+   rather than reading live numbers, and use low test frequencies.**
+   (Known-good patterns; Testing-methodology lessons)
+10. **When a scope or meter looks wrong, check the meter first:** `scope~`
+    blanks above about 200 Hz at default settings, and `peakamp~` is linear,
+    not dB. (Testing-methodology lessons)
 
 ---
 
