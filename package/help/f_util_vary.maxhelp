@@ -13,7 +13,7 @@
             100.0,
             99.0,
             871.0,
-            780.0
+            840.0
         ],
         "gridonopen": 2,
         "toolbarvisible": 0,
@@ -600,9 +600,9 @@
                         338.0,
                         684.0,
                         380.0,
-                        76.0
+                        130.0
                     ],
-                    "text": "Groups: rows with the same grp number (1-4) share one random draw, so their params move together instead of independently. The g dial for that number sets how much: 0 = each row draws on its own, 1 = every member gets the same draw (same direction and size, scaled by its own amount). Try: rows on out 1 and out 2, both param x, both grp 1, g1 at 1, then roll. Grp 0 = never shared.",
+                    "text": "The draw and groups: each roll, a row picks a number from -1 to +1 (its draw): how far, and which way, to move its one param on its one outlet. Value sent = base + draw x amount x range; the base is the last value In 0 got for that param. Rows in a group (grp 1-4) can share one draw instead of each picking their own; the g dial sets how much: 1 = identical draws, 0 = independent, between = a mix. Grp 0 is never shared.",
                     "saved_attribute_attributes": {
                         "textcolor": {
                             "expression": "themecolor.live_control_fg"

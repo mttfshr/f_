@@ -49,25 +49,54 @@ effective = clamp(base + trim + offset * amount + wobble, lo, hi)     (in units 
   recalls a draw.
 - Rows run across outlets: a group is how plates share a draw.
 
+### The draw
+
+On every `roll` each row picks a **draw**: a random number from -1 to +1. It is a fraction of
+the row's allowed swing, with a direction: +1 is the full swing up, -1 the full swing down,
+0 no change, +0.5 half the swing up. The row then sends
+
+    value = base + trim + draw * amount * range  (+ wobble, clamped to lo..hi)
+
+- **Which value:** the base is the last value received on inlet 0 for the row's one param
+  (`x 0.5` makes the base of `x` 0.5). A row varies one param on one outlet; every other
+  param, and every other outlet, still gets the plain base.
+- **Amount** is the allowed swing (percent of the range); the draw is where in that swing
+  this roll lands. Example: base 0.5, range 0-1, amount 20%: draw +1 gives 0.7, 0 gives 0.5,
+  -1 gives 0.3, +0.5 gives 0.6.
+
 ### Groups
 
-A group links rows so they vary together. Give rows the same group number (1-4 in the row's
-group box; 0 = none) and the engine makes one shared draw per group per roll. Each member's
-draw is `corr * shared + (1 - corr) * own`, where `corr` is that group's dial (g1-g4,
-0-1; a group the engine creates itself starts at 0.5).
+A group links rows by sharing the draw. Give rows the same group number (1-4 in the row's
+group box; 0 = none). On each roll the engine picks one **shared draw** per group, and each
+member's draw is `corr * shared + (1 - corr) * own`, where `corr` is that group's dial
+(g1-g4, 0-1; a group the engine creates itself starts at 0.5).
 
-- **corr 1:** every member gets the same draw, so the rows move in the same direction and
-  proportion (each still scaled by its own amount, range, trim and sign).
+- **corr 1:** every member takes the same draw, so they push the same direction and the same
+  fraction of their swings. Each still has its own amount, range, trim and sign, so the
+  values sent differ if those differ.
 - **corr 0:** the group does nothing; each row draws on its own, as if ungrouped.
-- **in between:** a shared component plus an individual one: related, not identical.
-- A row with no group is always independent. The group only changes the draw; it does not
-  change which param or outlet a row varies, so members can sit on different outlets (the
-  intended use: the same param on out 1 and out 2 moving together, or `x` and `y` coupled)
-  or on different params.
+- **in between:** a shared part plus an individual part: related, not identical. Mixing two
+  random numbers also shrinks the draw (inferred from the formula, not measured): it is
+  widest at corr 0 or 1 and narrowest at 0.5, about 70% of the typical size.
+- A row with no group is always independent.
+- A group shares the draw, not the param: members can sit on different outlets (the same
+  param on out 1 and out 2 moving together), on different params (`x` and `y` coupled), or
+  both. The group never changes which param or outlet a row varies.
 - A group of one row is not useful: with corr above 0 it only replaces part of that row's
   own draw with another random one.
-- Try it: rows out 1 / `x` and out 2 / `x`, both group 1, g1 at 1, then `roll`: both outlets
-  send the same offset. Lower g1 and they drift apart.
+
+Worked example, five rows with made-up draws (base 0.5, amount 20%, range 0-1, g1 = 1,
+g2 = 0.5): row 1 is group 0; rows 2 and 3 are group 1; rows 4 and 5 are group 2.
+
+| Roll | Row 1 (own) | Rows 2, 3 (g1 = 1) | Row 4 | Row 5 |
+|---|---|---|---|---|
+| shared | none | s1 | s2 | s2 |
+| 1 (s1 +0.8, s2 -0.6) | draw +0.3, sends 0.56 | +0.8, both send 0.66 | +0.15, 0.53 | -0.40, 0.42 |
+| 2 (s1 -0.5, s2 +0.4) | -0.7, 0.36 | -0.5, both 0.40 | +0.25, 0.55 | +0.50, 0.60 |
+| 3 (s1 +0.2, s2 +0.9) | +0.5, 0.60 | +0.2, both 0.54 | +0.05, 0.51 | +0.20, 0.54 |
+
+Rows 2 and 3 are identical every roll; rows 4 and 5 are pulled together by s2 but their own
+draws still pull them apart; row 1 is unrelated to the others.
 
 ---
 
