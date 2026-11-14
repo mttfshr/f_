@@ -26,7 +26,7 @@ These are not Matt's calls. They are Claude's recommendations, accepted in place
 - **P2 Line screen samples along the line.** Line width comes from the tone at the nearest point on the line's centre.
 - **P3 Area coverage equals tone.** On a flat patch, the fraction of the area inked equals the tone (exactly at 0 and at 1).
 - **P4 Rotation about the frame centre.** The lattice is fixed to the frame, never to the image, so an animated input moves under a static screen. A per-plate phase offset (FR-016) shifts a plate's lattice without rotating it.
-- **P5 One shared pitch** for all three plates; the angle is per plate.
+- **P5 (reversed by Matt, 2026-11-14) Pitch is a master with a scale per plate.** One `pitch` dial sweeps all three plates; each plate multiplies it by its own `scale_r` / `scale_g` / `scale_b` (FR-022). The angle and phase are per plate as before.
 - **P6 (accepted by Matt, 2026-11-13) Default angles 15, 75 and 45 degrees** for R, G and B (inferred from the offset convention, which separates screens by 30 degrees or more to limit moiré; not tested).
 - **P7 Output is bounded to 0..1** by construction (coverage), with input above 1 saturating to full and below 0 giving none. This differs from `f_vf_erode` (unclamped) because a mark is either there or not.
 - **P8 No driver inlets in v1** (G12). The plate inlets (User Story 9, Matt 2026-11-14) are not driver inlets: each is a source to screen, not a control signal.
@@ -48,11 +48,13 @@ These are not Matt's calls. They are Claude's recommendations, accepted in place
 - **G9 Linear-light versus encoded tone.** Deferred (Matt, for `f_vf_erode`; the same call applies here). It changes how a mid-tone maps to dot area.
 - **G10 Name and menu.** DECIDED (Matt, 2026-11-13): `f_halftone`. Menu category still under `G-menu`.
 - **G11 Control set.** Pitch, three angles, type, shape, softness, jitter, level, seed: about ten dials plus the type menu (`G-ui-density`).
-- **G12 Drivers.** Preliminary P8: none. A later optional modulation inlet (pitch or size by a texture) is possible and would be a new version.
+- **G12 Drivers.** Preliminary P8: none. A later optional modulation inlet (pitch or size by a texture) is possible and would be a new version. Pitch by a texture was discussed 2026-11-14 and held by Matt (notes under "Pitch modulated by a texture" above).
 - **G13 Naming alignment.** `softness`, `jitter`, `shape`, `angle` follow `docs/f-reference/discrete_item_conventions.md` (not opened this session); check that the names mean the same here.
 
 - **Plates from `f_separate`, and the plate toggle (Matt, 2026-11-08):** `f_separate` outputs three textures, each carrying one spot colour as its RGB channels; this module operates on the RGB channels of each of those textures. Because a real spot-colour screen is ONE screen, a `plate` toggle chooses how a texture is read: **Channels** (the spec as written: R, G and B are separate plates, each with its own angle) or **Single** (the whole texture is one plate with one angle: the tone is the brightest channel, `t = max(r, g, b)`; the colour is normalised to full brightness, `rgb / t`; the output is that colour times the mark, so a teal plate gets one set of teal dots and its two non-zero channels are not split). Matt chose the brightest-channel tone with normalised colour over keeping the plate's original brightness (which would cap the dot area): a dimmer plate colour is restored with a gain downstream. Black (`t` near 0) gives black. Alpha passes through. Default: Channels (a full-colour texture), Single for spot-colour plates. Details (which angle param Single reads, default) are gate G-plate in `tasks.md`.
 - **Plate inlets (Matt, 2026-11-14; a later feature, not built):** three more inlets so one `f_halftone` screens all three of `f_separate`'s plates, in place of three copies in Single mode added together. Four inlets in all: inlet 0 the main texture (Channels and Single, unchanged), inlets 1 to 3 the plates. User Story 9, FR-017 to FR-020, gate G-plates in `tasks.md`.
+- **Per-plate pitch (Matt, 2026-11-14; not built):** Pitch stays the master and each plate gets a scale (×0.25 to ×4, default 1), so the plates can run at different rulings while one dial still sweeps the look (FR-022, plan ADR-9, tasks T029a-T029b). Matt chose the master-plus-scales form over three independent Pitch dials.
+- **Pitch modulated by a texture: HELD (Matt, 2026-11-14).** Discussed, not specified. Claude's notes for when it returns (G12): a raw per-pixel pitch tears the lattice far from the frame center, because `q = R p / pitch` multiplies a pitch change by the distance from the center (at the default pitch the frame edge is about 75 cells out, so a 10% change moves the cell index by about 7; inferred from the formula, not tested); the recommended method is an octave crossfade between two nested lattices per plate (stable under motion, the mean still tracks the tone, about twice the per-plate cost), with a raw "bend" as a possible extra mode; the texture would be a tagged `pitch_tex` on inlet 0 (`P-mod-textures`), its R / G / B driving the R / G / B plates, with a `pitch_depth` in octaves.
 
 ---
 
@@ -153,7 +155,7 @@ A performer connects `f_separate`'s three plate outlets to `f_halftone`'s plate 
 - **FR-002**: The module MUST be stateless: the output is a pure function of in0, the params, the seed and the render size. No feedback texture.
 - **FR-003**: For the Dot and Line types, the fraction of area inked on a flat patch of tone `t` in 0..1 MUST equal `t` (P3, G3), within a tolerance fixed by the mirror.
 - **FR-004**: Tone 0 or below MUST give output exactly 0, and tone 1 or above MUST give exactly 1, for every type.
-- **FR-005**: The lattice MUST have period `pitch` in frame units and the orientation of the channel's own angle, rotating about the frame centre (P4), and MUST be fixed to the frame.
+- **FR-005**: The lattice MUST have period `pitch` times the plate's scale (FR-022) in frame units and the orientation of the channel's own angle, rotating about the frame centre (P4), and MUST be fixed to the frame.
 - **FR-006**: The Dot type MUST take its tone from one sample per cell (P1, G4), so every dot in a cell is the same size and a smooth ramp gives a stepped sequence of dot sizes.
 - **FR-007**: The Line type MUST take its tone from the nearest point on the line's centre (P2), so a line's width is constant across the line's local cell.
 - **FR-008**: `softness` MUST set the width of the edge ramp between ink and no ink; at the smallest value the edge is as sharp as the antialiasing (G5) allows.
@@ -165,10 +167,11 @@ A performer connects `f_separate`'s three plate outlets to `f_halftone`'s plate 
 - **FR-014**: Bypass MUST use a codebox `bypass_gate` Param (never native `@bypass`) and pass the source through (P12).
 - **FR-016** *(Matt, 2026-11-13)*: Each plate MUST have its own lattice phase offset in x and y (`phase_r/g/b` x and y, in pitch units, default 0), so a plate shifted by misregistration keeps whole, sharp marks instead of a resampled blur. In Single mode the blue plate's phase is the one used.
 - **FR-017** *(Matt, 2026-11-14; not built)*: The module MUST have four inlets: inlet 0 the main texture (Channels and Single) and inlets 1 to 3 the plates. A third `plate_mode` value, **Plates**, screens inlets 1 to 3.
-- **FR-018**: In Plates mode each plate inlet MUST be read as Single reads a texture (tone the brightest channel, colour normalised to full brightness, black stays black), with plate 1 at `angle_r` / `phase_r`, plate 2 at `angle_g` / `phase_g`, plate 3 at `angle_b` / `phase_b` (Matt, 2026-11-14: the existing dials serve the three plates, no new dials; their labels read 1 / 2 / 3 when Plate is set to Plates, and R / G / B otherwise). Pitch, type, shape, softness, jitter, level and seed are shared by the three plates.
+- **FR-018**: In Plates mode each plate inlet MUST be read as Single reads a texture (tone the brightest channel, colour normalised to full brightness, black stays black), with plate 1 at `angle_r` / `phase_r`, plate 2 at `angle_g` / `phase_g`, plate 3 at `angle_b` / `phase_b` (Matt, 2026-11-14: the existing dials serve the three plates, no new dials; their labels read 1 / 2 / 3 when Plate is set to Plates, and R / G / B otherwise). Pitch, type, shape, softness, jitter, level and seed are shared by the three plates (each plate keeps its own pitch scale, FR-022).
 - **FR-019**: In Plates mode the output MUST be the sum of the three screened plates, clamped to 0..1 (preliminary, Claude: as `f_separate`'s preview outlet sums its plates, the additive-light model of `f_separate`'s spec; P7 keeps the output bounded).
 - **FR-021** *(Matt, 2026-11-14)*: In Plates mode: Plates is chosen from the menu only (connecting a plate inlet does not switch modes); inlet 0 is ignored; alpha is the largest of the three plates' alphas; bypass passes inlet 0 (P12), so with nothing on inlet 0 a bypassed Plates module shows black.
 - **FR-020**: An unconnected plate inlet MUST contribute nothing (an unconnected `jit.gl.pix` inlet reads black with alpha 1: `skills/jit-gen-codebox`, verified 2026-10-07; Vsynth's own unconnected handling to be checked on the bench).
+- **FR-022** *(Matt, 2026-11-14; not built)*: Each plate's lattice period MUST be `pitch × scale_<plate>` (`scale_r`, `scale_g`, `scale_b`, 0.25 to 4, default 1, so the defaults give today's output exactly). The plate's phase stays in units of its own pitch (FR-016), jitter displaces by its own cells, and Bayer's cell follows its own pitch. Single uses `scale_b` (as FR-016 uses `phase_b`). In Plates mode the three scales serve plates 1 to 3 and their labels switch with the angle and phase labels (FR-018). The smallest usable pitch (G5, about 10 texels) applies to each plate's own pitch.
 - **FR-015**: Standard behaviour: `#0_`-scoped names, `routepass` / `route` / `autopattr` with `varname`, `definition.py` as the source of truth.
 
 ### Non-Functional Requirements
@@ -183,6 +186,7 @@ A performer connects `f_separate`'s three plate outlets to `f_halftone`'s plate 
 |---|---|---|---|
 | `screen` | Dot / Line / Threshold / Bayer | Dot | Threshold and Bayer are P2 |
 | `pitch` | frame units | 0.012 | lattice period; the smallest usable value is G5 |
+| `scale_r`, `scale_g`, `scale_b` | 0.25-4 | 1 | per-plate multiplier on `pitch` (FR-022, Matt 2026-11-14; not built); dial curve exponent 2 puts ×1 near the middle (Claude, preliminary) |
 | `angle_r`, `angle_g`, `angle_b` | degrees | 15, 75, 45 | per plate (P6) |
 | `phase_r_x`, `phase_r_y`, `phase_g_x`, `phase_g_y`, `phase_b_x`, `phase_b_y` | -1 to 1 pitches | 0 | per-plate lattice shift (FR-016); six dials, so a candidate for a compact pair control (`G-ui-density`) |
 | `softness` | 0-1 | 0.1 | edge ramp width |
@@ -199,7 +203,7 @@ A performer connects `f_separate`'s three plate outlets to `f_halftone`'s plate 
 - **SC-001**: Area law: on flat patches at several tones, the mean output equals the tone within the mirror's tolerance, for Dot and Line, at several pitches and angles.
 - **SC-002**: Extremes: tone 0 gives exactly 0 and tone 1 exactly 1, for every type.
 - **SC-003**: Monotone: along a 0-to-1 ramp the local inked area never decreases.
-- **SC-004**: Lattice: the output's autocorrelation shows the period `pitch` along the channel's angle; plates with different angles show their own orientations.
+- **SC-004**: Lattice: the output's autocorrelation shows the period `pitch` times the plate's scale along the channel's angle; plates with different angles show their own orientations.
 - **SC-005**: Plate independence: changing one channel's angle or tone leaves the other channels' outputs unchanged.
 - **SC-006**: Stability: two frames of the same input are bit-identical; a render-size change scales the lattice with the frame.
 - **SC-007**: Jitter: at 0 the lattice is exact; at 1 the mean coverage still equals the tone.

@@ -98,6 +98,14 @@ A pixel is inked where `T(f) < tone`, where `T` is a threshold field with the pr
 **Statement budget**: the Single path must move into a function taking the inlet as a channel-select argument, since `nearest(in2, ...)` and `nearest(in3, ...)` differ by inlet name; a function per inlet, or one function reading all three and selecting, is the open implementation choice.
 **Decided (gate G-plates, Matt 2026-11-14; spec FR-021)**: alpha is the largest of the three plates' alphas; bypass passes inlet 0 (P12; black when inlet 0 is empty); Plates is chosen from the menu only; inlet 0 is ignored in Plates mode; the R / G / B angle and phase dials serve plates 1 to 3, and their labels read 1 / 2 / 3 in Plates mode, R / G / B otherwise. The labels are comments in the panel; a change with the mode needs a small patcher step (the menu's value to `set` messages on the nine label comments, or a `js`), not a codebox change: the implementation is T028's to choose, and the builder may need a raw-box block (as `f_separate`'s swatches).
 
+### ADR-9: Per-plate pitch scale (spec FR-022, P5 reversed; Matt 2026-11-14; not built; details preliminary, Claude)
+
+**Decision**: three Params `scale_r`, `scale_g`, `scale_b` (0.25-4, default 1). The codebox computes each plate's pitch as `max(pitch * scale, 0.0001)` and passes it where the shared `pit` goes now: lattice, phase, edge ramp (`aa` from the plate's pitch in texels), jitter and Bayer's cell size. Single takes `scale_b`. No new stage, no new reads.
+**Defaults**: scale 1 must reproduce the current output exactly, so every existing tier-1 and bench row stays valid unchanged.
+**Dial**: the builder supports `exponent` (`build/build_patcher.py:583`); exponent 2 puts ×1 near the dial's middle (about ×1.19 at the center; inferred from the curve, not seen in Max). Tuning at T032.
+**Panel**: three more dials, one under each plate's angle / phase pair (Claude's placement, `G-ui-density`). In Plates mode their labels switch to 1 / 2 / 3 with the others (ADR-8), so T028 should follow this.
+**Not in**: pitch by a texture (held by Matt 2026-11-14; spec "Pitch modulated by a texture").
+
 ## Stage and wiring sketch
 
 ```
