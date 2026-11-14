@@ -84,7 +84,7 @@ Design (Matt, chat): outlet 0 combined as now; outlets 1-3 the R / G / B plates 
 ## Phase 3: docs and registration
 
 - [x] T040 (2026-11-14, offline Claude; the helpfile's look is Matt's, preflight Part 2) Reference doc `docs/f-reference/f_halftone.md`, helpfile (the `f-helpfile` skill), menu placement (T012), README row (110 characters; regenerate the launcher), inventory rows.
-- [ ] T041 `ideas/f_print_styles.md` stage 2 status; INDEX entry; `.specify/gates.md` rows; module-preflight checklist before `.specify/stable/`.
+- [x] T041 (2026-11-14: Part 1 offline Claude, Part 2 Matt live "passes") `ideas/f_print_styles.md` stage 2 status; INDEX entry; `.specify/gates.md` rows; module-preflight checklist before `.specify/stable/`.
 
 ## Dependencies and order
 
@@ -159,4 +159,4 @@ Phase 0 gates, then the mirror (T017) before any codebox; T020 to T022 in order;
 - 2026-11-14 (live, Matt, in chat): T039 passes (plate outlets through `f_vf_erode`; the alpha, Single-on-outlet-4 and bypass calls stand). Matt: `f_vf_erode` has a significant learning curve and will take a while to learn; noted for its helpfile and for T031, which stays open.
 - 2026-11-14 (live, Matt, in chat): T031 and T032 pass. The defaults and ranges stand as built (Pitch 0.009-0.2 default 0.012, Seed 1-256, the rest unchanged); the jitter-1 cost was judged by eye, not measured.
 - 2026-11-14 (offline Claude, Matt: "do T040 and 41"): T040 done: `docs/f-reference/f_halftone.md`; `package/help/f_halftone.maxhelp` (from `f_separate.maxhelp`: sources -> module -> four previews, screen and plates 1-3; module box 290 x 164, its panel's footprint); menu Color / Tone beside Separate and Erode (Claude, provisional, `G-menu`), `f_modules` and `f_addmod.js` regenerated; README row; launcher regenerated (51 clickable, `test_launch.py` 8/8); inventory rows. T041: `ideas/f_print_styles.md` stage 2 status, `ideas/INDEX.md` entry, `G-menu` row. Preflight Part 1 passes (drift reproduces exactly, conventions 40/40, launch 8/8, menu up to date, helpfile box = panel footprint, bypass by `bypass_gate`, reference doc current). Part 2 (open the module and helpfile in Max, judge the digest and wiring) is Matt's; the move to `.specify/stable/` waits on it.
-
+- 2026-11-14 (Matt, live: helpfile and module pass preflight Part 2, "move to stable"): T041 ticked; `.specify/f_halftone/` moved to `.specify/stable/f_halftone/`; path references updated (HANDOFF, plan, gates, reference doc, idea file, mirror, definition comment). T011 stays open, deferred (`G-linear-light`).

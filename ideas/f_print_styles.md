@@ -52,7 +52,7 @@ That app (Matt, 2026-11-08) is specific to riso machines' halftone and overprint
 
 ### Stage 2: screens, thresholds, and the line module
 
-**Status 2026-11-14: `f_halftone` built, benched and looked at** (Dot, Line, Threshold, Bayer, Blue, Random; Channels / Single / Plates from `f_separate`; plate outlets, gray or color, for per-plate effects such as `f_vf_erode`). Reference `docs/f-reference/f_halftone.md`; record `.specify/f_halftone/tasks.md`. `f_engrave` (form-following lines) is still specified only (`G-engrave-method`).
+**Status 2026-11-14: `f_halftone` built, benched and looked at** (Dot, Line, Threshold, Bayer, Blue, Random; Channels / Single / Plates from `f_separate`; plate outlets, gray or color, for per-plate effects such as `f_vf_erode`). Reference `docs/f-reference/f_halftone.md`; record `.specify/stable/f_halftone/tasks.md`. `f_engrave` (form-following lines) is still specified only (`G-engrave-method`).
 
 Dithering, halftoning and hatching are largely **one operation**: compare tone to a threshold field. A clustered-dot screen is a threshold field of dots at an angle, a line screen is stripes, ordered dither is a Bayer or blue-noise field, and engraving is stripes that follow the image's form. What differs is the field generator (the hard part), the scale (dither works at pixel scale with a hard compare; halftone marks are larger and want a soft compare for dot gain and antialiased edges) and the output levels. Error diffusion (Floyd-Steinberg) is the exception: it is sequential and does not fit a per-pixel GPU pass; a blue-noise threshold approximates the look. All of this is inferred.
 

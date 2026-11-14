@@ -7,7 +7,7 @@ phase. Dot, Line, Threshold and Bayer, shape and jitter (T020-T025), the Single 
 Blue and Random screens and Levels (T035, Matt 2026-11-14): Blue reads the void-and-cluster pattern shipped as
 package/media/f_bluenoise64.jxf, through a static mod inlet (gen in5; no outer inlet).
 Stateless, one stage. A texture processor: four inlets (0 the texture, 1-3 the plates), one outlet; the output follows the render size (render_dim: Params
-`width` and `height`). Spec, plan and tasks: .specify/f_halftone/{spec,plan,tasks}.md.
+`width` and `height`). Spec, plan and tasks: .specify/stable/f_halftone/{spec,plan,tasks}.md.
 Mirror: tests/modules/halftone/halftone_mirror.py.
 
 The panel (Matt, 2026-11-14: "put x, y, angle and scale for each plate together", in the row style of f_util_vary; sizes

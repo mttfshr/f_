@@ -1,7 +1,7 @@
 # Implementation Plan: f_halftone
 
 **Date**: 2026-11-08
-**Spec**: .specify/f_halftone/spec.md
+**Spec**: .specify/stable/f_halftone/spec.md
 
 All gate decisions below are **preliminary**: Claude's recommendations, accepted in place on Matt's instruction (2026-11-08). Matt has not confirmed them. Derivations marked inferred are worked out, not run.
 

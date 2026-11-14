@@ -1,5 +1,5 @@
 """halftone_mirror.py -- tier-1 NumPy mirror of the not-yet-built f_halftone module (spec:
-.specify/f_halftone/spec.md, plan ADR-1 to ADR-7, tasks T017 and T016c). Float32, per pixel, stateless, in the order a codebox
+.specify/stable/f_halftone/spec.md, plan ADR-1 to ADR-7, tasks T017 and T016c). Float32, per pixel, stateless, in the order a codebox
 would compute it. Written 2026-11-13 (Claude, offline); nothing here has been run on a bench, and the preliminary
 decisions it follows (P1 per-cell tone, G2 frame-height units, G6 centre rotation) are the spec's.
 
