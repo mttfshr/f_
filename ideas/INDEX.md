@@ -597,6 +597,12 @@ there, then the chapter-specific files for depth.
   (substantially filled). Explicitly calls out what's *not* worth pursuing
   (compositing/color/WFG variants — already comprehensive).
 
+- **[gallery_playback_hardware.md](gallery_playback_hardware.md)** 🔵 — Running a piece in a gallery
+  without the personal laptop. Not on an Arduino (no OS or GPU; Max is macOS/Windows only, and
+  `f_` is GPU Jitter). Routes: a cheap Mac running a Max standalone (lean), a rendered video on
+  a player, RNBO to a Pi (audio only), porting shaders to a Pi/Jetson/browser; the Arduino as
+  the input side. Captured 2026-11-14; nothing tried, third-party claims not verified.
+
 ## webgpgpu-derived ideas (2026-10-23)
 
 Eight themes mined from michaelerule/webgpgpu by the omp run `webgpgpu-ideas-1`
