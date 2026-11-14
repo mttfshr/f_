@@ -12,6 +12,9 @@ fed every frame at the render size, 640 x 640 (bench_modules.RENDER_DIM_SIZE); e
 Asserted:
   - load, no messages: the output is the render size and matches the mirror at the definition's defaults. This is the row that
     proves `width` and `height` arrive: at the codebox defaults (1920 x 1080) the lattice would be a different one.
+  - T035 (2026-11-14, written before the first run): Blue through the shipped patcher, so the .jxf really loads from
+    package/media through the static inlet (jit.matrix 1 float32 -> jit.gl.texture -> gen in5): Blue matches the mirror, which
+    reads the same file; the Levels box; Random by means.
   - the Screen menu (Line, Threshold, Bayer), the Plate menu (Single, T016b), Plates (T028, inlets 2-3 cabled), pitch, softness, shape, level, jitter, seed (T023-T025, 2026-11-14), the three angles and the six phase dials each reach the pix: the frame matches the
     mirror with that value, and differs from the frame before it.
 A picture is compared as a fraction of values within TOL (bench_halftone.py explains why edge pixels can flip cells).
@@ -43,8 +46,8 @@ TOL = 2e-3
 FRAC_BAD = 5e-3
 DEFAULTS = {"screen": 0, "pitch": 0.012, "softness": 0.1, "dot_shape": 0.0, "jitter": 0.0, "seed": 1, "level": 0.5, "plate_mode": 0, "bayer_cell": 1, "angle_r": 15.0, "angle_g": 75.0, "angle_b": 45.0,
             "phase_r_x": 0.0, "phase_r_y": 0.0, "phase_g_x": 0.0, "phase_g_y": 0.0, "phase_b_x": 0.0, "phase_b_y": 0.0,
-            "scale_r": 1.0, "scale_g": 1.0, "scale_b": 1.0}
-SCREENS = {0: "dot", 1: "line", 2: "threshold", 3: "bayer"}
+            "scale_r": 1.0, "scale_g": 1.0, "scale_b": 1.0, "levels": 2}
+SCREENS = {0: "dot", 1: "line", 2: "threshold", 3: "bayer", 4: "blue", 5: "random"}
 
 
 def photo(seed=6, n=N):
@@ -104,6 +107,7 @@ def matches(got, label, **deltas):
                           scales=(p["scale_r"], p["scale_g"], p["scale_b"]),
                           softness=p["softness"], shape=p["dot_shape"], jitter=p["jitter"],
                           seed=int(p["seed"]), level=p["level"], bayer_read="cell" if p["bayer_cell"] > 0.5 else "pixel",
+                          levels=int(p["levels"]),
                           plate_mode="single" if p["plate_mode"] > 0.5 else "channels")
     err = np.abs(got[..., :3].astype(np.float64) - want[..., :3].astype(np.float64))
     bad = float((err > TOL).mean())
@@ -174,6 +178,28 @@ def test_types_jitter_seed_level():
         check(f"{label}: mean coverage is the mirror's", dmean, 0.04)   # the seed-to-seed spread: bench_halftone.py JIT_MEAN
     differs(jit, base, "Jitter")
     differs(sd, jit, "Seed")
+
+
+def test_blue_random_levels():
+    """T035: the one row that sees the shipped .jxf load. If the texture never arrives, Blue reads black (threshold 0) and
+    every tone above 0 lights; if its value is not in .x, or its rows run the other way, the frame differs from the mirror."""
+    f = job([{"params": [["pitch", 0.03]], "wait": 60, "snap": "base"},
+             {"params": [["screen", 4]], "wait": SETTLE, "snap": "blue"},
+             {"params": [["levels", 4]], "wait": SETTLE, "snap": "blue4"},
+             {"params": [["screen", 5]], "wait": SETTLE, "snap": "rnd4"},
+             {"params": [["levels", 2]], "wait": SETTLE, "snap": "rnd"}])
+    base, blue, blue4, rnd4, rnd = (snap(f, t) for t in ("base", "blue", "blue4", "rnd4", "rnd"))
+    note("Blue: mean output (all lit would be about 1)", float(blue[..., :3].mean()))
+    matches(blue, "Screen menu: Blue (the .jxf loaded)", pitch=0.03, screen=4)
+    differs(blue, base, "Blue")
+    matches(blue4, "Levels 4, Blue", pitch=0.03, screen=4, levels=4)
+    differs(blue4, blue, "Levels")
+    for got, label, L in ((rnd4, "Random, Levels 4", 4), (rnd, "Random", 2)):
+        want = halftone_stage(SRC, screen="random", pitch=0.03, levels=L)
+        dmean = max(abs(float(got[..., c].mean()) - float(want[..., c].mean())) for c in range(3))
+        note(f"{label}: worst channel mean minus the mirror's", dmean)
+        check(f"{label}: mean output is the mirror's", dmean, 0.02)
+    differs(rnd4, blue4, "Random")
 
 
 def test_plate_menu():

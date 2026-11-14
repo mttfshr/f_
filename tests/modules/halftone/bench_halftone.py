@@ -30,6 +30,13 @@ Gates measured here: G8 / T010 (reads inside a function and a loop; sample() aga
 
 T028 (2026-11-14, offline Claude, not run): test_plates, the Plates mode on inputs 2-4 with the connected flags pinned.
 
+T035 (2026-11-14, offline Claude, written before the first run): test_blue, test_random, test_levels. The bench has four input
+cords (bench.maxpat), and Blue reads gen in5, so these rows run CODE_IN4: the codebox with `in5` renamed `in4`, the
+void-and-cluster pattern fed as input 4 at 2 x 2 texels per cell (128 = 2 x 64, so nearest() at a cell's centre reads that
+cell). Channels and Single only (Plates reads in4). The shipped load of the .jxf (one float plane, through jit.matrix and
+jit.gl.texture) is the module bench's to test. Blue and Bayer at any level are compared at every pixel (deterministic
+thresholds, the same float32 values); Random by means, as jitter (the sin hash cannot match the mirror per cell).
+
 Not here: non-finite input (the bench's input path for NaN is unproven, and the mirror tests the zap); the shipped patcher (bench_halftone_module.py).
 
 Needs Max with tests/bench/bench.maxpat open.
@@ -55,8 +62,8 @@ PITCH = 16.0 / H       # 16 texels
 PINNED = {"screen": 0.0, "pitch": PITCH, "angle_r": 15.0, "angle_g": 75.0, "angle_b": 45.0,
           "phase_r_x": 0.0, "phase_r_y": 0.0, "phase_g_x": 0.0, "phase_g_y": 0.0, "phase_b_x": 0.0, "phase_b_y": 0.0,
           "softness": 0.0, "dot_shape": 0.0, "jitter": 0.0, "seed": 1.0, "level": 0.5, "plate_mode": 0.0, "bayer_cell": 1.0, "bypass_gate": 0.0,
-          "scale_r": 1.0, "scale_g": 1.0, "scale_b": 1.0, "plate1_on": 0.0, "plate2_on": 0.0, "plate3_on": 0.0}
-SCREENS = {0: "dot", 1: "line", 2: "threshold", 3: "bayer"}
+          "scale_r": 1.0, "scale_g": 1.0, "scale_b": 1.0, "plate1_on": 0.0, "plate2_on": 0.0, "plate3_on": 0.0, "levels": 2.0}
+SCREENS = {0: "dot", 1: "line", 2: "threshold", 3: "bayer", 4: "blue", 5: "random"}
 LATTICE = {0: "dot", 1: "line"}
 
 
@@ -114,7 +121,7 @@ def mirror(src, plates=(None, None, None), **deltas):
                           scales=(p["scale_r"], p["scale_g"], p["scale_b"]),
                           softness=p["softness"], shape=p["dot_shape"], jitter=p["jitter"], seed=int(p["seed"]),
                           level=p["level"], bayer_read="cell" if p["bayer_cell"] > 0.5 else "pixel", plate_mode=PLATE_MODES[int(round(p["plate_mode"]))],
-                          bypass=bool(p["bypass_gate"]), plates=plates)
+                          levels=int(round(p["levels"])), bypass=bool(p["bypass_gate"]), plates=plates)
 
 
 def mx(a, b):
@@ -394,6 +401,95 @@ def test_plates():
     t = photo()
     check("Channels: the plate inputs change nothing", mx(gpu(t), gpu(t, plates=pics, **flags1)), 0.0)
     check("Single: the plate inputs change nothing", mx(gpu(t, plate_mode=1.0), gpu(t, plates=pics, plate_mode=1.0, **flags1)), 0.0)
+
+
+CODE_IN4 = CODE.replace("in5", "in4")
+assert CODE_IN4.count("in4") == CODE.count("in4") + CODE.count("in5")
+
+
+def blue_input(w=W, h=H):
+    """The shipped pattern as an RGBA input, value in r, each cell 2 x 2 texels (W = H = 128 = 2 x 64)."""
+    from halftone_mirror import bluenoise64
+    assert (w, h) == (128, 128)
+    t = np.zeros((h, w, 4), np.float32)
+    t[..., 0] = np.kron(bluenoise64(), np.ones((2, 2), np.float32))
+    t[..., 3] = 1
+    return t
+
+
+def blue_gpu(src, **deltas):
+    z = np.zeros_like(src)
+    return gpu(src, code=CODE_IN4, plates=[z, z, blue_input()], **deltas)
+
+
+def blue_rows(label, src, **deltas):
+    got, want = blue_gpu(src, **deltas), mirror(src, **deltas)
+    worst = mx(got[..., :3], want[..., :3])
+    bad = float((np.abs(got[..., :3].astype(np.float64) - want[..., :3]) > TOL).mean())
+    note(f"{label}: worst rgb error", worst)
+    note(f"{label}: fraction beyond {TOL}", bad)
+    check(f"{label}: rgb vs mirror at every pixel", worst, TOL)
+    check(f"{label}: alpha is the source's", mx(got[..., 3], src[..., 3]), 1e-6)
+    return got
+
+
+def test_blue():
+    """T035: Blue against the mirror, which reads the same file. A transposed or flipped read, a wrong plate offset or seed
+    step, or the phase rounding all show at every pixel."""
+    t, p = flat(0.3, 0.5, 0.8), photo()
+    blue_rows("blue, flat, 1-pixel cells", t, screen=4.0, pitch=8.0 / H)
+    blue_rows("blue, picture, 1-pixel cells", p, screen=4.0, pitch=8.0 / H)
+    blue_rows("blue, picture, Cell, pitch 24 texels", p, screen=4.0, pitch=24.0 / H)
+    blue_rows("blue, picture, Pixel, pitch 24 texels", p, screen=4.0, pitch=24.0 / H, bayer_cell=0.0)
+    blue_rows("blue, picture, seed 3", p, screen=4.0, pitch=8.0 / H, seed=3.0)
+    blue_rows("blue, picture, phases", p, screen=4.0, pitch=16.0 / H, phase_r_x=0.25, phase_g_y=-0.5, phase_b_x=0.7, phase_b_y=0.1)
+    blue_rows("blue, picture, levels 4", p, screen=4.0, pitch=8.0 / H, levels=4.0)
+    blue_rows("blue, Single, spot plates, levels 3", spot(), screen=4.0, pitch=8.0 / H, plate_mode=1.0, levels=3.0)
+    for tone in (0.1, 0.5, 0.9):
+        got = blue_gpu(flat(tone, tone, tone), screen=4.0, pitch=8.0 / H)
+        note(f"blue, flat {tone}: lit fraction minus tone", float(got[..., :3].mean()) - tone)
+
+
+RND_MEAN = 0.02   # inferred: 16k one-pixel cells per channel, binomial sd about .004; the hash differs per cell, not in law
+
+
+def random_row(label, src, **deltas):
+    got, want = gpu(src, **deltas), mirror(src, **deltas)
+    dmean = max(abs(float(got[..., c].mean()) - float(want[..., c].mean())) for c in range(3))
+    note(f"{label}: worst channel mean minus the mirror's", dmean)
+    check(f"{label}: mean output is the mirror's", dmean, RND_MEAN)
+    check(f"{label}: alpha is the source's", mx(got[..., 3], src[..., 3]), 1e-6)
+    return got
+
+
+def test_random():
+    t, p = flat(0.3, 0.5, 0.8), photo()
+    got = random_row("random, flat, 1-pixel cells", t, screen=5.0, pitch=8.0 / H)
+    for c, tone in enumerate((0.3, 0.5, 0.8)):
+        note(f"random, flat: lit fraction minus tone {tone}", float(got[..., c].mean()) - tone)
+    check("random, levels 2: output is 0 or 1", float(np.abs(got[..., :3] * (1 - got[..., :3])).max()), 0.0)
+    random_row("random, picture", p, screen=5.0, pitch=8.0 / H)
+    random_row("random, picture, levels 5", p, screen=5.0, pitch=8.0 / H, levels=5.0)
+    a, b = gpu(t, screen=5.0, pitch=8.0 / H, seed=1.0), gpu(t, screen=5.0, pitch=8.0 / H, seed=2.0)
+    check("random: same seed, the same frame", mx(a, gpu(t, screen=5.0, pitch=8.0 / H, seed=1.0)), 0.0)
+    check("random: another seed changes the frame", float(mx(a, b) < 0.5), 0.0)
+    g = gpu(flat(0.5, 0.5, 0.5), screen=5.0, pitch=8.0 / H) > 0.5
+    ov = float((g[..., 0] & g[..., 1]).mean())
+    note("random, grey .5: red and green both lit (independent = .25)", ov)
+    check("random: the plates are not one pattern", abs(ov - 0.25), 0.03)
+
+
+def test_levels():
+    """T035 (FR-027): Bayer at any level is deterministic, so every pixel; levels 2 is the one-bit Bayer (test_bayer)."""
+    p = photo()
+    for L in (3.0, 5.0, 16.0):
+        got = everywhere(f"bayer, picture, levels {L:g}", p, screen=3.0, pitch=8.0 / H, levels=L, bayer_cell=0.0)
+        k = got[..., :3] * (L - 1)
+        check(f"bayer, levels {L:g}: outputs are levels", float(np.abs(k - np.round(k)).max()), 1e-5)
+    for tone in (0.0, 1.0):
+        got = gpu(flat(tone, tone, tone), screen=3.0, levels=7.0)
+        check(f"bayer, levels 7, flat {tone:g}: exactly {tone:g}", float(np.abs(got[..., :3] - tone).max()), 0.0)
+    check("dot ignores levels", mx(gpu(p, levels=7.0), gpu(p)), 0.0)
 
 
 def test_bypass():
