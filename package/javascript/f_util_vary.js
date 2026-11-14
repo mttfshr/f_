@@ -1,4 +1,4 @@
-// f_util_vary.js -- engine of f_util_vary (control-side variation). Spec: .specify/f_util_vary/spec.md; design: ideas/f_util_vary.md.
+// f_util_vary.js -- engine of f_util_vary (control-side variation). Spec: .specify/stable/f_util_vary/spec.md; design: ideas/f_util_vary.md.
 //
 // Inlet 0: bases, any `<param> <value>` (the ordinary control messages a module takes). Every base goes out of EVERY outlet as `<param> <value>`;
 //          an outlet's table row adds variation to its own copy. No row, amount 0 and chance 0 all give the plain base: with an empty table

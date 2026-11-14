@@ -1,6 +1,6 @@
 # Tasks: f_util_vary
 
-_Spec_: `.specify/f_util_vary/spec.md`. Record who observed what, and when.
+_Spec_: `.specify/stable/f_util_vary/spec.md`. Record who observed what, and when.
 
 ## Phase 1: engine and patcher
 - [x] T001 Engine rework from the scratch prototype: rows keyed by outlet + param; 4 outlets; passthrough to every outlet; per-row wobble; `param` range defaults. Done 2026-11-12 by Claude (offline only): `package/javascript/f_util_vary.js`; check `tests/modules/f_util_vary/vary_engine_check.js` via `test_vary_engine.py`, passes (`tests/logs/20261112-220305-offline.log`). Not run in Max (T003). The table file loader is dropped (embedded `text` instead, T002); everything sits in one closure so a base named like a function cannot call it.

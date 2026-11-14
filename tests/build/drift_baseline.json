@@ -56,7 +56,7 @@
    "status": "out_of_scope"
   },
   "f_util_vary": {
-   "reason": "Hand-built control utility (js engine f_util_vary.js, scripted per-row bpatchers (f_util_vary_row), live.dial strip, multislider); no jit.gl.pix codebox, so the schema cannot express it. Source: src/f_util_vary/build_vary_patcher.py; spec in .specify/f_util_vary/.",
+   "reason": "Hand-built control utility (js engine f_util_vary.js, scripted per-row bpatchers (f_util_vary_row), live.dial strip, multislider); no jit.gl.pix codebox, so the schema cannot express it. Source: src/f_util_vary/build_vary_patcher.py; spec in .specify/stable/f_util_vary/.",
    "status": "out_of_scope"
   }
  }

@@ -5511,7 +5511,7 @@
 										150.0,
 										20.0
 									],
-									"text": "Control utility -- varies named control values per destination (amount, chance, groups, wobble); draft status",
+									"text": "Control utility -- varies named control values per destination (amount, chance, groups, wobble)",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,

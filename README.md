@@ -122,7 +122,7 @@ This table is also the source for the package's launcher patcher (`package/extra
 | `f_texrouter` | 4x4 texture routing matrix with preset system |
 | `f_util_matrix_2` | Modulation routing matrix (2-source MVP) -- textures in, scalar per-param routing messages out; draft status |
 | `f_util_profile` | CPU-side dual-axis luminance profiler -- outputs row/column profile textures for modulation |
-| `f_util_vary` | Control utility -- varies named control values per destination (amount, chance, groups, wobble); draft status |
+| `f_util_vary` | Control utility -- varies named control values per destination (amount, chance, groups, wobble) |
 
 ### Audio (`gen~`)
 
