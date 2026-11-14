@@ -65,7 +65,7 @@ patcher = {
          "hint": "Dot only: round at 0, square at 1, the same inked area at every setting"},
         {"name": "jitter", "type": "float", "min": 0.0, "max": 1.0, "default": 0.0, "label": "Jitter",
          "hint": "Dot only: moves each dot off the lattice, from a regular screen at 0 toward a random one at 1. Above mid-tone it loses a little ink"},
-        {"name": "seed", "type": "int", "min": 1, "max": 999, "default": 1, "label": "Seed", "modmode": 0,
+        {"name": "seed", "type": "int", "min": 1, "max": 256, "default": 1, "label": "Seed", "modmode": 0,
          "hint": "Which random pattern: the jitter, and the Blue and Random grain"},
         {"name": "levels", "type": "int", "min": 2, "max": 16, "default": 2, "label": "Levels", "modmode": 0,
          "hint": "Bayer, Blue and Random: how many output values per channel. 2 is black and white; more steps between them, dithered"},
@@ -137,7 +137,7 @@ for _n, _x in _GLOBAL_X.items():
 _ov["seed.ctl"] = {"presentation_rect": [_SEED_X - 17.0, _DIAL_TOP - 2.0, 34.0, 15.0], "outlettype": ["", "int"],
                    "saved_attribute_attributes": {"valueof": {
                        "parameter_initial": [1.0], "parameter_initial_enable": 1, "parameter_linknames": 1,
-                       "parameter_longname": "seed", "parameter_mmax": 999.0, "parameter_mmin": 1.0, "parameter_modmode": 0,
+                       "parameter_longname": "seed", "parameter_mmax": 256.0, "parameter_mmin": 1.0, "parameter_modmode": 0,
                        "parameter_shortname": "seed", "parameter_type": 1, "parameter_unitstyle": 0}}}
 _ov["seed.label"] = {"presentation_rect": [_SEED_X - 19.0, _DIAL_TOP - 18.0, 38.0, 18.0]}
 _ov["levels.ctl"] = {"presentation_rect": [_SEED_X - 17.0, _DIAL_TOP + 29.0, 34.0, 15.0], "outlettype": ["", "int"],

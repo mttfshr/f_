@@ -219,7 +219,7 @@ A `levels` control (2 to 16, default 2) for Bayer, Blue and Random: the dither s
 | `dot_shape` (label Shape) | 0-1 | 0 | round to square (P2); token renamed from `shape`, which never received its value (2026-11-14) |
 | `jitter` | 0-1 | 0 | regular to hash-displaced (P2) |
 | `level` | 0-1 | 0.5 | Threshold type only |
-| `seed` | int | 1 | for jitter, and the Blue and Random patterns (FR-025) |
+| `seed` | int 1-256 | 1 | for jitter, and the Blue and Random patterns (FR-025) |
 | `levels` | 2-16 int | 2 | Bayer, Blue, Random only (FR-027, built); 2 = one-bit |
 | `bayer_cell` (label Read) | Pixel / Cell | Cell | Bayer, Blue and Random: one tone per cell (Cell) or per pixel (Pixel); Matt 2026-11-14 |
 | `plate_mode` | Channels / Single / Plates | Channels | Plates (User Story 9, built 2026-11-14): inlets 1 to 3, one plate each at the R, G and B angle and phase |

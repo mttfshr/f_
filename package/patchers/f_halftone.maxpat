@@ -1832,7 +1832,7 @@
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
 							"parameter_longname": "seed",
-							"parameter_mmax": 999.0,
+							"parameter_mmax": 256.0,
 							"parameter_mmin": 1.0,
 							"parameter_modmode": 0,
 							"parameter_shortname": "seed",
