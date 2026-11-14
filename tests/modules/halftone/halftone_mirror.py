@@ -29,7 +29,7 @@ connected) returns None: the build supplies black with alpha 0 (vs_black), which
 
 `bug` values are mutations the tests must catch: "no_extremes", "no_zap", "wrong_area" ((2r)^2 instead of A(r)), "per_pixel_tone",
 "ignore_phase", "shared_phase", "ignore_alpha", "single_reads_r", "line_centre_tone", "ignore_scale", "shared_scale",
-"plates_shared_angle", "plates_no_clamp", "plates_read_src", "plates_alpha_src", "no_jitter_clip", and for Blue / Random /
+"plates_shared_angle", "plates_no_clamp", "plates_read_src", "plates_alpha_src", "no_jitter_clip", "no_pitch_floor", and for Blue / Random /
 Levels (T034): "levels_one_bit", "dither_shared_plate", "dither_ignore_phase", "blue_transposed",
 "random_ignore_seed".
 
@@ -293,12 +293,20 @@ def plate(read, W, H, *, kind, pitch, theta, phase, softness, shape, jitter, see
     return best.astype(F32), out_i, out_j
 
 
-def _plate_pitch(pitch, scales, ch, bug=None):
-    """The plate's own pitch (FR-022): pitch * scale in float32, as the codebox forms it."""
+PITCH_FLOOR = 0.009   # T032 (Matt, 2026-11-14): Dot and Line only, frame heights (about 10 texels at 1080p)
+LATTICE_SCREENS = ("dot", "line")
+
+
+def _plate_pitch(pitch, scales, ch, bug=None, screen="dot"):
+    """The plate's own pitch (FR-022): pitch * scale in float32, as the codebox forms it; Dot and Line floor it at
+    PITCH_FLOOR (T032), the dithers are exact at any pitch."""
     if bug == "ignore_scale":
         return F32(pitch)
     sc = scales[0] if bug == "shared_scale" else scales[ch]
-    return F32(F32(pitch) * F32(sc))
+    p = F32(F32(pitch) * F32(sc))
+    if screen in LATTICE_SCREENS and bug != "no_pitch_floor":
+        p = max(p, F32(PITCH_FLOOR))
+    return F32(p)
 
 
 def _single(z, W, H, theta, phase, pitch, kw, plate_ix=2):
@@ -332,12 +340,12 @@ def halftone_stage(src, *, screen="dot", pitch=0.012, angles=(15.0, 75.0, 45.0),
               tone_mode=tone_mode, levels=levels, bug=bug)
     if plate_mode == "single":
         ch = 0 if bug == "single_reads_r" else 2
-        out[..., :3] = _single(z, W, H, angles[ch], phases[ch], _plate_pitch(pitch, scales, ch, bug), kw, ch)
+        out[..., :3] = _single(z, W, H, angles[ch], phases[ch], _plate_pitch(pitch, scales, ch, bug, screen), kw, ch)
     else:
         for ch in range(3):
             ph = phases[0] if bug == "shared_phase" else phases[ch]
             read = lambda i, j, ch=ch: z[j, i, ch]   # noqa: E731
-            cov, _, _ = plate(read, W, H, theta=angles[ch], phase=ph, pitch=_plate_pitch(pitch, scales, ch, bug), plate_ix=ch, **kw)
+            cov, _, _ = plate(read, W, H, theta=angles[ch], phase=ph, pitch=_plate_pitch(pitch, scales, ch, bug, screen), plate_ix=ch, **kw)
             out[..., ch] = cov
     out[..., 3] = F32(1) if bug == "ignore_alpha" else z[..., 3]
     return out.astype(F32)
@@ -373,7 +381,7 @@ def _plates_stage(src, plates, *, screen, pitch, angles, phases, scales, softnes
         p = np.asarray(p, dtype=F32)
         z = p if bug == "no_zap" else zap(p)
         ch = 2 if bug == "plates_shared_angle" else k
-        out[..., :3] += _single(z, W, H, angles[ch], phases[ch], _plate_pitch(pitch, scales, ch, bug), kw, ch)
+        out[..., :3] += _single(z, W, H, angles[ch], phases[ch], _plate_pitch(pitch, scales, ch, bug, screen), kw, ch)
         out[..., 3] = np.maximum(out[..., 3], z[..., 3])
     if bug != "plates_no_clamp":
         out[..., :3] = np.clip(out[..., :3], 0, 1)

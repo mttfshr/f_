@@ -419,6 +419,26 @@ def test_jitter_marks_stay_in_their_cell():
         check(f"jitter {jit}: the mark does not shrink from 0.999 to 1.0", float(n[0] > n[1]), 0)
 
 
+def test_pitch_floor():
+    """T032 (Matt, 2026-11-14): Dot and Line floor each plate's pitch * scale at PITCH_FLOOR frame heights; the dithers do not."""
+    from halftone_mirror import PITCH_FLOOR
+    pic = np.random.default_rng(12).uniform(0, 1, (256, 256, 4)).astype(F32)
+    for screen in ("dot", "line"):
+        a = halftone_stage(pic, screen=screen, pitch=PITCH_FLOOR, scales=(0.25, 0.5, 1), softness=0.05)
+        ref = halftone_stage(pic, screen=screen, pitch=PITCH_FLOOR, softness=0.05)
+        check(f"{screen}: scale 0.25 and 0.5 at the floor = scale 1", err(a, ref), 0)
+        b = halftone_stage(pic, screen=screen, pitch=0.003, softness=0.05)
+        check(f"{screen}: pitch 0.003 = the floor", err(b, ref), 0)
+        c = halftone_stage(pic, screen=screen, pitch=0.02, scales=(0.5, 1, 1), softness=0.05)
+        d = halftone_stage(pic, screen=screen, pitch=0.01, softness=0.05)
+        check(f"{screen}: above the floor, scale still applies", err(c[..., 0], d[..., 0]), 0)
+    tall = np.random.default_rng(13).uniform(0, 1, (2048, 32, 4)).astype(F32)   # cells: 1 px at 0.004, 2 px at the floor
+    for screen in ("bayer", "blue", "random"):
+        a = halftone_stage(tall, screen=screen, pitch=0.004)
+        b = halftone_stage(tall, screen=screen, pitch=PITCH_FLOOR)
+        check(f"{screen}: not floored (pitch 0.004 differs from the floor)", float(err(a, b) == 0), 0)
+
+
 def test_mutations():
     """Each plausible mistake changes an output the checks above look at."""
     nan = flat(0.5, 64, 64)
@@ -441,6 +461,7 @@ def test_mutations():
         "plates_read_src": (flat(0.2, 64, 64), dict(pitch=0.1, plate_mode="plates", plates=(flat(0.7, 64, 64), None, None))),
         "plates_alpha_src": (flat(0.2, 64, 64, a=0.3), dict(pitch=0.1, plate_mode="plates", plates=(flat(0.7, 64, 64), None, None))),
         "no_jitter_clip": (flat(0.95, 64, 64), dict(pitch=0.25, jitter=1.0, softness=0.0)),
+        "no_pitch_floor": (flat(0.4, 256, 256), dict(pitch=0.009, scales=(0.25, 1, 1), softness=0.0)),
     }
     for bug, (src, kw) in cases.items():
         a = halftone_stage(src, **kw)

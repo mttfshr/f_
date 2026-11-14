@@ -328,12 +328,14 @@ row1 = 1 + is_sg;
 en0 = max(is_ch, is_pl * step(0.5, plate1_on));
 en1 = max(is_ch, is_pl * step(0.5, plate2_on));
 en2 = max(max(is_ch, is_sg), is_pl * step(0.5, plate3_on));
-// T029b (FR-022): each plate's pitch is pitch * its scale
+// T029b (FR-022): each plate's pitch is pitch * its scale. T032 (Matt, 2026-11-14): Dot and Line floor it at 0.009 frame
+// heights (about 10 texels at 1080p, where the area law holds within 2%); the dithers are exact at any pitch, so not floored.
+pfl = switch(screen < 1.5, 0.009, 0.0001);
 ang0 = switch(row0 > 1.5, angle_b, angle_r);
 ang1 = switch(row1 > 1.5, angle_b, angle_g);
-pit0 = max(pitch * switch(row0 > 1.5, scale_b, scale_r), 0.0001);
-pit1 = max(pitch * switch(row1 > 1.5, scale_b, scale_g), 0.0001);
-pit2 = max(pitch * scale_b, 0.0001);
+pit0 = max(pitch * switch(row0 > 1.5, scale_b, scale_r), pfl);
+pit1 = max(pitch * switch(row1 > 1.5, scale_b, scale_g), pfl);
+pit2 = max(pitch * scale_b, pfl);
 phx0 = switch(row0 > 1.5, phase_b_x, phase_r_x);
 phy0 = switch(row0 > 1.5, phase_b_y, phase_r_y);
 phx1 = switch(row1 > 1.5, phase_b_x, phase_g_x);

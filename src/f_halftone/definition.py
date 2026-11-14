@@ -51,7 +51,7 @@ patcher = {
          "hint": "Dot: a lattice of dots, each sized by the tone at its center. Line: parallel lines whose width follows the tone. Threshold: ink where the tone is above Level. Bayer: an ordered dither. Blue: an even, grainy dither with no visible grid. Random: a coarse, clumpy dither"},
         {"name": "plate_mode", "type": "menu", "options": ["Channels", "Single", "Plates"], "default": 0, "label": "Plate",
          "hint": "Channels: red, green and blue are three plates, each at its own angle. Single: the texture is one spot-color plate, screened at the B row, in its own color. Plates: inlets 2-4 take f_separate's plates, screened at rows 1, 2, 3 and added (the main inlet is ignored)"},
-        {"name": "pitch", "type": "float", "min": 0.003, "max": 0.2, "default": 0.012, "label": "Pitch",
+        {"name": "pitch", "type": "float", "min": 0.009, "max": 0.2, "default": 0.012, "label": "Pitch",
          "hint": "Lattice period in frame heights, for all three plates (each plate's Scale multiplies it). Below about 10 pixels the inked area stops tracking the tone. Bayer, Blue, Random: the grain cell is Pitch / 8, in whole pixels"},
         {"name": "scale_r", "type": "float", "min": 0.25, "max": 4.0, "default": 1.0, "label": "Scale R", "widget": "numbox",
          "hint": "Multiplies Pitch for the red plate alone, so the plates can run at different rulings (1 = Pitch)"},
