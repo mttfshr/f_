@@ -1,6 +1,13 @@
 # HANDOFF archive
 
-Entries moved out of `HANDOFF.md` on 2026-10-31, 2026-11-04, 2026-11-08, 2026-11-10, 2026-11-11, 2026-11-12, 2026-11-13 and 2026-11-14 (newest first, as they were). Not read at session start: grep it for history. The full pre-trim `HANDOFF.md` is also in git (commit 76c2ab8).
+Entries moved out of `HANDOFF.md` on 2026-10-31, 2026-11-04, 2026-11-08, 2026-11-10, 2026-11-11, 2026-11-12, 2026-11-13 and 2026-11-14 (twice) (newest first, as they were). Not read at session start: grep it for history. The full pre-trim `HANDOFF.md` is also in git (commit 76c2ab8).
+
+## 2026-11-14: `f_halftone` finished its build tasks; Bayer reworked; plate inlets specified (moved out of HANDOFF.md 2026-11-14, later)
+
+- **Done and committed (Claude, with Matt's go), `cbe4492` to `5b34ad8`:** T030 ticked (Matt's look); T002 decided (straight screens); T023-T025 and T016b built and benched (shape, jitter, Threshold, Bayer, Single); a Bayer scale dial added then dropped for Pitch (Matt); the Bayer Cell / Pixel button; the plate-inlet feature written into spec, plan and tasks with Matt's answers (T026 closed).
+- **Found:** a Param named `shape` never received its value (renamed `dot_shape`); jittered dots match the mirror only in mean coverage (sin hash), so those rows compare means; one module-bench job timed out on an unchanged test (re-run once, green). `tests/bench/bench_module.maxpat` was resaved by Max during the runs and restored (Matt's go): close it without saving.
+- **Not run:** benches for Bayer-follows-Pitch and the Read button; the 1080p cost. `test_gates.py` 5/5 after the last gates edit (`tests/logs/20261114-083842-offline.log`).
+- **Not touched:** Matt's `ideas/INDEX.md` edit and `ideas/f_util_row_engine.md`.
 
 ## 2026-11-13 (evening): `f_halftone` built and benched (moved out of HANDOFF.md 2026-11-14)
 
