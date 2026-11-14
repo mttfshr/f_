@@ -1,0 +1,124 @@
+// codebox_halftone.gen -- f_halftone: the one stage. Tone to marks on a fixed-angle lattice, one plate per color channel.
+// Stateless, per pixel. Float32. Mirror: tests/modules/halftone/halftone_mirror.halftone_stage() (the conventions in its
+// docstring are the ones followed here). T020: Dot and Line, soft edge, exact extremes, zap, bypass, alpha; the per-plate
+// phase (FR-016) is in because it is part of the lattice formula. Not here yet: shape (T023), jitter (T024),
+// Threshold and Bayer (T025), the Single plate mode (T016b).
+//
+// Lattice (plan ADR-1): p = ((u - .5) * aspect, v - .5) in frame heights; q = R(-angle) p / pitch - phase;
+//   lattice cell = floor(q + .5), local f = q - that, in [-.5, .5]^2.
+// Spot functions (ADR-2): Dot T = A(r), the area of the radius-r circle inside the unit cell; Line T = 2 |f_y|.
+// Soft edge (ADR-3): coverage = clamp(.5 + (tone - T) / w, 0, 1), w = max(softness / 2, aa) * |dT/dd|,
+//   aa = 1 / (pitch in texels); then tone <= 0 gives exactly 0 and tone >= 1 exactly 1.
+// Tone (ADR-4): ONE nearest read per plate at a texel centre: Dot at the lattice cell's centre, Line at the pixel's own
+//   position along its centreline row. The reads are in the main body, the tone is passed to the functions (gate G8).
+// screen: 0 = Dot, 1 = Line. Angles in degrees. bypass_gate = 1: the (zapped) source.
+// Non-finite input is zapped to 0: abs(x) < 1e30 with switch() (NaN == NaN is TRUE on this GPU).
+// The render size is read from the first inlet's size, which is the render size in a chain; a bench job must feed a
+// first input of the output's size.
+zap(xv) {
+    return switch(abs(xv) < 1e30, xv, 0);
+}
+
+// cos and sin of exact quarter turns come out as 1e-8, not 0: snap, so 0 and 90 degrees sit on the pixel grid (G6)
+snap0(xv) {
+    return switch(abs(xv) < 0.000001, 0, xv);
+}
+
+area_round(rad) {
+    rc = min(rad, 0.70710678);
+    inner = pi * rc * rc;
+    ac = acos(clamp(1 / (2 * max(rc, 0.000001)), 0, 1));
+    seg = rc * rc * ac - 0.5 * sqrt(max(rc * rc - 0.25, 0));
+    area = switch(rc > 0.5, inner - 4 * seg, inner);
+    return switch(rad >= 0.70710678, 1, area);
+}
+
+area_slope(rad) {
+    rc = min(rad, 0.70710678);
+    ac = acos(clamp(1 / (2 * max(rc, 0.000001)), 0, 1));
+    slp = switch(rc <= 0.5, twopi * rc, rc * (twopi - 8 * ac));
+    return switch(rad >= 0.70710678, 0, slp);
+}
+
+// lattice coordinates of the position (px, py)
+lat_xy(px, py, cs, sn, pit, phx, phy) {
+    return (cs * px + sn * py) / pit - phx, (cs * py - sn * px) / pit - phy;
+}
+
+// where the plate's tone is read: normalized coordinates of a texel centre, clamped to the frame
+read_uv(qx, qy, is_line, cs, sn, pit, phx, phy, asp, wd, ht) {
+    xx = switch(is_line > 0.5, qx, floor(qx + 0.5)) + phx;
+    yy = floor(qy + 0.5) + phy;
+    ppx = (cs * xx - sn * yy) * pit;
+    ppy = (sn * xx + cs * yy) * pit;
+    ti = clamp(floor((ppx / asp + 0.5) * wd), 0, wd - 1);
+    tj = clamp(floor((ppy + 0.5) * ht), 0, ht - 1);
+    return (ti + 0.5) / wd, (tj + 0.5) / ht;
+}
+
+cover(qx, qy, is_line, tone, soft, aa) {
+    fx = qx - floor(qx + 0.5);
+    fy = qy - floor(qy + 0.5);
+    rad = sqrt(fx * fx + fy * fy);
+    thr = switch(is_line > 0.5, 2 * abs(fy), area_round(rad));
+    slp = switch(is_line > 0.5, 2, area_slope(rad));
+    wid = max(soft * 0.5, aa) * max(abs(slp), 0.000001);
+    cov = clamp(0.5 + (tone - thr) / wid, 0, 1);
+    return switch(tone <= 0, 0, switch(tone >= 1, 1, cov));
+}
+
+Param screen(0);
+Param pitch(0.012);
+Param angle_r(15);
+Param angle_g(75);
+Param angle_b(45);
+Param phase_r_x(0);
+Param phase_r_y(0);
+Param phase_g_x(0);
+Param phase_g_y(0);
+Param phase_b_x(0);
+Param phase_b_y(0);
+Param softness(0.1);
+Param bypass_gate(0);
+
+zr = zap(sample(in1, norm).x);
+zg = zap(sample(in1, norm).y);
+zb = zap(sample(in1, norm).z);
+za = zap(sample(in1, norm).w);
+
+wd = dim.x;
+ht = dim.y;
+asp = wd / ht;
+px = (norm.x - 0.5) * asp;
+py = norm.y - 0.5;
+pit = max(pitch, 0.0001);
+aa = 1 / (pit * ht);
+soft = clamp(softness, 0, 1);
+is_line = switch(abs(screen - 1) < 0.5, 1, 0);
+d2r = pi / 180;
+
+// red plate
+csr = snap0(cos(angle_r * d2r));
+snr = snap0(sin(angle_r * d2r));
+qxr, qyr = lat_xy(px, py, csr, snr, pit, phase_r_x, phase_r_y);
+ur, vr = read_uv(qxr, qyr, is_line, csr, snr, pit, phase_r_x, phase_r_y, asp, wd, ht);
+tone_r = zap(nearest(in1, vec(ur, vr)).x);
+cov_r = cover(qxr, qyr, is_line, tone_r, soft, aa);
+
+// green plate
+csg = snap0(cos(angle_g * d2r));
+sng = snap0(sin(angle_g * d2r));
+qxg, qyg = lat_xy(px, py, csg, sng, pit, phase_g_x, phase_g_y);
+ug, vg = read_uv(qxg, qyg, is_line, csg, sng, pit, phase_g_x, phase_g_y, asp, wd, ht);
+tone_g = zap(nearest(in1, vec(ug, vg)).y);
+cov_g = cover(qxg, qyg, is_line, tone_g, soft, aa);
+
+// blue plate
+csb = snap0(cos(angle_b * d2r));
+snb = snap0(sin(angle_b * d2r));
+qxb, qyb = lat_xy(px, py, csb, snb, pit, phase_b_x, phase_b_y);
+ub, vb = read_uv(qxb, qyb, is_line, csb, snb, pit, phase_b_x, phase_b_y, asp, wd, ht);
+tone_b = zap(nearest(in1, vec(ub, vb)).z);
+cov_b = cover(qxb, qyb, is_line, tone_b, soft, aa);
+
+out1 = mix(vec(cov_r, cov_g, cov_b, za), vec(zr, zg, zb, za), step(0.5, bypass_gate));

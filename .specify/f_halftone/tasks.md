@@ -41,7 +41,7 @@ package/patchers/f_halftone.maxpat    docs/f-reference/f_halftone.md    package/
 
 ## Phase 1: build
 
-- [ ] T020 [US1] [US3] [US4] `src/f_halftone/codebox_halftone.gen`: rotation, cell, tone read, spot functions for Dot and Line, soft edge, exact extremes, zap, bypass, alpha pass-through (plan ADR-1 to ADR-4, ADR-7). Follow `skills/jit-gen-codebox/SKILL.md`.
+- [ ] T020 (WRITTEN 2026-11-13, offline Claude; never compiled or benched, so unticked until T022 runs) [US1] [US3] [US4] `src/f_halftone/codebox_halftone.gen`: rotation, cell, tone read, spot functions for Dot and Line, soft edge, exact extremes, zap, bypass, alpha pass-through (plan ADR-1 to ADR-4, ADR-7). Follow `skills/jit-gen-codebox/SKILL.md`.
 - [ ] T021 `src/f_halftone/definition.py`: one stage, `render_dim`, Params (`pitch`, `angle_r/g/b`, `softness`, `screen` menu, `bypass_gate`), route, panel; then `build/py.sh build/build_patcher.py`, drift check, JSON validate, `tests/contracts/test_module_contracts.py` (offline only).
 - [ ] T022 `tests/modules/halftone/bench_halftone.py` and `bench_halftone_module.py` (read `skills/bench-test-authoring` first). Written offline; run only with Matt's go, `-q`. First bench items: T010 and T007.
 - [ ] T023 [US5] Shape morph and `shape` Param (plan ADR-2), mirror and bench.
@@ -74,4 +74,5 @@ Phase 0 gates, then the mirror (T017) before any codebox; T020 to T022 in order;
   - **G6 / T008 (evidence, gate left for Matt):** 90 degrees is the 0 degree output turned a quarter (1e-4); 45 is its own quarter turn; on a 400 x 200 frame the period is pitch x H = 20 texels in both directions.
   - **Softness 0.5:** area-law error 0.041 (tolerance set at 0.05).
   - Mirror note: a NaN tone is dropped by the Dot path's running maximum even without the zap, so the zap mutation is tested on the Line path. The codebox must not rely on that.
+- 2026-11-13 (offline, Claude; nothing compiled or run): `src/f_halftone/codebox_halftone.gen` written from the mirror (T020): Dot and Line, the six `phase_*` Params (T016c's Phase 1 half, codebox side only), soft edge, extremes, zap, `bypass_gate`, alpha. Tone reads are in the main body (G8). Two things the mirror does not do, both to check on the bench: `cos`/`sin` below 1e-6 are snapped to 0 (the mirror is exact at multiples of 90 by table), and `pitch` is floored at 0.0001. The render size comes from `dim`, so a bench job needs a first input of the output's size. Param `screen` is assumed not to be a `jit.gl.pix` attribute (inferred, not checked in Max). Not in: shape, jitter, Threshold, Bayer, Single.
 - 2026-11-13 (Matt, chat): about 10 texels accepted as the practical pitch floor for now, no ADR-3 change, the bench (T022) repeats the measurement, so T007 stays open; the jitter ink loss above mid-tone is accepted for now and spec US6 scenario 2 is reworded.
