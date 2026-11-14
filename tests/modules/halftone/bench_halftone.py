@@ -83,11 +83,15 @@ def photo(w=W, h=H, seed=4):
     return t
 
 
-def gpu(src, code=CODE, **deltas):
+def gpu(src, code=CODE, probe=None, **deltas):
+    """probe: the whole Param dict for a codebox that is not the module's (a Param it does not declare is an invalid message
+    and fails the job: first run, 2026-11-13)."""
     h, w = src.shape[:2]
     params = dict(PINNED)
     params.update(deltas)
     params["width"], params["height"] = float(w), float(h)
+    if probe is not None:
+        params = dict(probe)
     outs, r = bc.run_pass(code, [src], dim=(w, h), params=params, timeout_ms=30000, all_outputs=True)
     if r["status"] != "ok" or outs[0] is None:
         raise AssertionError(f"bench job failed: {r['status']} {r['errors']} ({r['job_dir']})")
@@ -245,14 +249,14 @@ out1 = vec(sample(in1, norm).x, nearest(in1, norm).x, sample(in1, norm).y, neare
 
 def test_reads_in_functions_and_loops():
     t = photo()
-    got = gpu(t, code=PROBE_READS)
+    got = gpu(t, code=PROBE_READS, probe={"width": float(W)})
     check("a read inside a function equals the main-body read", mx(got[..., 0], got[..., 1]), 0.0)
     check("the read is the texel itself", mx(got[..., 1], t[..., 0]), 1e-6)
     check("a four-tap loop inside a function equals the main-body loop", mx(got[..., 2], got[..., 3]), 0.0)
     want = np.mean([np.take(t[..., 1], np.arange(W) + k, axis=1, mode="clip") for k in range(4)], axis=0)
     inner = slice(0, W - 4)       # past the right edge the read wraps or clamps: not this gate's question
     check("the loop reads the four texels to the right", mx(got[:, inner, 3], want[:, inner]), 1e-6)
-    got = gpu(t, code=PROBE_INTERP)
+    got = gpu(t, code=PROBE_INTERP, probe={})
     note("sample() minus nearest() at texel centres, 1:1, worst", mx(got[..., 0], got[..., 1]))
     check("sample() at a texel centre is that texel", max(mx(got[..., 0], got[..., 1]), mx(got[..., 2], got[..., 3])), 1e-6)
 
