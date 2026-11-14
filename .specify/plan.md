@@ -38,7 +38,6 @@ Closed 2026-10-30/31: the `render_dim` migration (all tensor modules, vorticity,
 - **Decisions:** Batch 4: the remaining calls are the optical_flow / seeds passthrough details and the vortex mod-inlet gating (Matt: later).
 - **Optional cleanup:** `scratch/experiments/f_weave_character/` (local, gitignored) is redundant with the shipped `f_weave`; delete whenever.
 - **Later, no date:** the `f_weave` name (`G-weave-scope`, question 6): revisit once the module is better known.
-- **Uploads:** re-upload `skills/jit-gen-codebox/SKILL.md` and `skills/vsynth-bpatcher/SKILL.md` (lines written 2026-11-14), then run `skills/check.sh stamp`.
 
 ## Conventions in force
 
