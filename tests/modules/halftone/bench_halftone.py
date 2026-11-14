@@ -52,7 +52,7 @@ FRAC_BAD = 5e-3
 PITCH = 16.0 / H       # 16 texels
 PINNED = {"screen": 0.0, "pitch": PITCH, "angle_r": 15.0, "angle_g": 75.0, "angle_b": 45.0,
           "phase_r_x": 0.0, "phase_r_y": 0.0, "phase_g_x": 0.0, "phase_g_y": 0.0, "phase_b_x": 0.0, "phase_b_y": 0.0,
-          "softness": 0.0, "dot_shape": 0.0, "jitter": 0.0, "seed": 1.0, "level": 0.5, "plate_mode": 0.0, "bypass_gate": 0.0}
+          "softness": 0.0, "dot_shape": 0.0, "jitter": 0.0, "seed": 1.0, "level": 0.5, "plate_mode": 0.0, "bayer_cell": 1.0, "bypass_gate": 0.0}
 SCREENS = {0: "dot", 1: "line", 2: "threshold", 3: "bayer"}
 LATTICE = {0: "dot", 1: "line"}
 
@@ -106,7 +106,7 @@ def mirror(src, **deltas):
                           phases=((p["phase_r_x"], p["phase_r_y"]), (p["phase_g_x"], p["phase_g_y"]),
                                   (p["phase_b_x"], p["phase_b_y"])),
                           softness=p["softness"], shape=p["dot_shape"], jitter=p["jitter"], seed=int(p["seed"]),
-                          level=p["level"], plate_mode="single" if p["plate_mode"] > 0.5 else "channels",
+                          level=p["level"], bayer_read="cell" if p["bayer_cell"] > 0.5 else "pixel", plate_mode="single" if p["plate_mode"] > 0.5 else "channels",
                           bypass=bool(p["bypass_gate"]))
 
 
@@ -274,7 +274,8 @@ def test_bayer():
         got = everywhere(f"bayer, picture, {w} x {h}", p, screen=3.0)
         check(f"bayer {w} x {h}: output is 0 or 1", float(np.abs(got[..., :3] * (1 - got[..., :3])).max()), 0.0)
     for px in (8.0, 16.0, 24.0, 43.0):      # cells of 1, 2, 3 and 5 pixels (pitch / 8, rounded; Matt, 2026-11-14)
-        everywhere(f"bayer, picture, pitch {px:g} pixels", photo(), screen=3.0, pitch=px / H)
+        everywhere(f"bayer, Cell, picture, pitch {px:g} pixels", photo(), screen=3.0, pitch=px / H)
+        everywhere(f"bayer, Pixel, picture, pitch {px:g} pixels", photo(), screen=3.0, pitch=px / H, bayer_cell=0.0)
     for tone in (0.1, 0.3, 0.5, 0.8):
         got = gpu(flat(tone, tone, tone), screen=3.0)
         note(f"bayer, flat {tone}: lit fraction minus tone", float(got[..., :3].mean()) - tone)

@@ -48,6 +48,8 @@ patcher = {
          "hint": "Which random jitter pattern"},
         {"name": "level", "type": "float", "min": 0.0, "max": 1.0, "default": 0.5, "label": "Level",
          "hint": "Threshold only: the tone above which there is ink. Soft widens the cut"},
+        {"name": "bayer_cell", "type": "text_button", "options": ["Pixel", "Cell"], "default": 1, "label": "Read",
+         "hint": "Bayer only. Cell: one tone per dither cell, so each cell is wholly lit or dark (an ordered dither). Pixel: the tone per pixel, so the image cuts through each cell. The same at 1-pixel cells"},
         {"name": "angle_r", "type": "float", "min": 0.0, "max": 180.0, "default": 15.0, "label": "Angle R",
          "hint": "Screen angle of the red plate, in degrees"},
         {"name": "angle_g", "type": "float", "min": 0.0, "max": 180.0, "default": 75.0, "label": "Angle G",
@@ -113,4 +115,6 @@ _ov["seed.ctl"] = {"presentation_rect": [_PLATE_X["r"] + 37.0 - 17.0, _ROW_LOW +
                        "parameter_longname": "seed", "parameter_mmax": 999.0, "parameter_mmin": 1.0, "parameter_modmode": 0,
                        "parameter_shortname": "seed", "parameter_type": 1, "parameter_unitstyle": 0}}}
 _ov["seed.label"] = {"presentation_rect": [_PLATE_X["r"] + 37.0 - 25.0, _ROW_LOW + 62.0 - 4.0, 50.0, 18.0]}
+# Matt, 2026-11-14: the Bayer Cell / Pixel button, third row right of Level
+_ov["bayer_cell.ctl"] = {"presentation_rect": [_PLATE_X["g"] + 37.0 - 22.0, _ROW_LOW + 62.0 + 13.0, 44.0, 17.0]}   # shows Cell / Pixel itself
 patcher["overrides"] = _ov

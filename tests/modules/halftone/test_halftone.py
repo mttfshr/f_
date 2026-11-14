@@ -305,6 +305,16 @@ def test_threshold_and_bayer():
     worst = max(abs(float(halftone_stage(flat(float(tn), 96, 96), screen="bayer", pitch=24.0 / 96)[..., 0].mean()) - float(tn))
                 for tn in np.linspace(0, 1, 23))
     check("Bayer at 3-pixel cells: lit fraction = tone within 1/64", worst, 1 / 64)
+    # Cell / Pixel read (Matt, 2026-11-14): Cell reads one tone per cell, so every cell is wholly lit or dark on any picture
+    src = ramp(96, 96)
+    oc = halftone_stage(src, screen="bayer", pitch=24.0 / 96)[..., 0]
+    blocks = oc[:96, :96].reshape(32, 3, 32, 3)
+    check("Bayer, Cell: each 3 x 3 cell is one value on a ramp", float(np.abs(blocks - blocks[:, :1, :, :1]).max()), 0)
+    op = halftone_stage(src, screen="bayer", pitch=24.0 / 96, bayer_read="pixel")[..., 0]
+    check("Bayer, Pixel: cells are cut by the ramp (not all one value)", float(np.abs(op.reshape(32, 3, 32, 3)
+          - op.reshape(32, 3, 32, 3)[:, :1, :, :1]).max() == 0), 0)
+    check("Bayer: Cell equals Pixel at 1-pixel cells",
+          err(halftone_stage(src, screen="bayer", pitch=0.01), halftone_stage(src, screen="bayer", pitch=0.01, bayer_read="pixel")), 0)
     src = ramp(256, 8)
     o = halftone_stage(src, screen="threshold", level=0.4, softness=0.0)[..., 0]
     check("Threshold, hard: 1 above the level, 0 below", err(o, (src[..., 0] > 0.4).astype(F32)), 0)

@@ -18,7 +18,8 @@
 // Threshold (ADR-6): smoothstep(level - w, level + w, tone), w = softness / 2 (a hard step at softness 0), per pixel.
 // Bayer: the 8 x 8 ordered matrix by texel, M = sum over bits b of 4^(2-b) (2 (x_b xor y_b) + y_b); lit where tone > (M + .5) / 64.
 //   The matrix repeats once per pitch (Matt, 2026-11-14): a cell is pitch / 8 frame heights, rounded to whole pixels, at
-//   least 1; the tone stays per pixel.
+//   least 1. bayer_cell 1 (default; Matt, 2026-11-14) reads one tone per cell at its centre pixel, a true ordered dither;
+//   0 reads it per pixel (a threshold at each cell's level). Identical at 1-pixel cells.
 // Single plate (T016b, plate_mode 1; spec "Plates from f_separate"): the whole texture is ONE plate at angle_b and phase_b.
 //   Its tone is the brightest channel, t = max(r, g, b), at the read texel; the colour is rgb / t there (black when t <= 0); the
 //   output is that colour times the coverage. The colour texel is the one the tone came from: the cell centre (displaced when
@@ -170,6 +171,7 @@ Param jitter(0);
 Param seed(1);
 Param level(0.5);
 Param plate_mode(0);
+Param bayer_cell(1);
 Param bypass_gate(0);
 Param width(1920);
 Param height(1080);
@@ -232,9 +234,13 @@ if (use_jit > 0.5) {
 bsc = max(floor(pit * ht / 8 + 0.5), 1);
 ixb = floor(floor(norm.x * wd) / bsc);
 iyb = floor(floor(norm.y * ht) / bsc);
-cov_r = switch(is_thr > 0.5, thresh(zr, level, soft), switch(is_bay > 0.5, bayer(zr, ixb, iyb), cov_r));
-cov_g = switch(is_thr > 0.5, thresh(zg, level, soft), switch(is_bay > 0.5, bayer(zg, ixb, iyb), cov_g));
-cov_b = switch(is_thr > 0.5, thresh(zb, level, soft), switch(is_bay > 0.5, bayer(zb, ixb, iyb), cov_b));
+bcx = min(ixb * bsc + floor(bsc / 2), wd - 1);
+bcy = min(iyb * bsc + floor(bsc / 2), ht - 1);
+bu = switch(bayer_cell > 0.5, (bcx + 0.5) / wd, norm.x);
+bv = switch(bayer_cell > 0.5, (bcy + 0.5) / ht, norm.y);
+cov_r = switch(is_thr > 0.5, thresh(zr, level, soft), switch(is_bay > 0.5, bayer(rd(bu, bv, 0), ixb, iyb), cov_r));
+cov_g = switch(is_thr > 0.5, thresh(zg, level, soft), switch(is_bay > 0.5, bayer(rd(bu, bv, 1), ixb, iyb), cov_g));
+cov_b = switch(is_thr > 0.5, thresh(zb, level, soft), switch(is_bay > 0.5, bayer(rd(bu, bv, 2), ixb, iyb), cov_b));
 
 // T016b: Single, one plate at the blue plate's angle and phase
 is_single = switch(plate_mode > 0.5, 1, 0);
@@ -247,9 +253,9 @@ if (use_jit > 0.5) {
     cu, cv = jit_uv(qxb, qyb, csb, snb, pit, phase_b_x, phase_b_y, asp, wd, ht, jit, seed);
 }
 tone_p = max(max(zr, zg), zb);
-cov_s = switch(is_thr > 0.5, thresh(tone_p, level, soft), switch(is_bay > 0.5, bayer(tone_p, ixb, iyb), cov_s));
-cu = switch(is_thr + is_bay > 0.5, norm.x, cu);
-cv = switch(is_thr + is_bay > 0.5, norm.y, cv);
+cov_s = switch(is_thr > 0.5, thresh(tone_p, level, soft), switch(is_bay > 0.5, bayer(rd(bu, bv, 3), ixb, iyb), cov_s));
+cu = switch(is_thr > 0.5, norm.x, switch(is_bay > 0.5, bu, cu));
+cv = switch(is_thr > 0.5, norm.y, switch(is_bay > 0.5, bv, cv));
 cr = zap(nearest(in1, vec(cu, cv)).x);
 cg = zap(nearest(in1, vec(cu, cv)).y);
 cb = zap(nearest(in1, vec(cu, cv)).z);

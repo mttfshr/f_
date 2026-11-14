@@ -18,7 +18,8 @@ Jitter (ADR-5): each cell centre moves by jitter * .25 * 2 * (hash - .5) cells; 
   wins; jitter 0 tests one cell. (Dot only; a Line has no jitter.)
 Threshold (ADR-6): smoothstep(level - w, level + w, tone), w = softness / 2, per pixel, no lattice. Bayer: 8 x 8 ordered matrix by texel,
   lit where tone > (M + .5) / 64; the 8 x 8 matrix repeats once per pitch (Matt, 2026-11-14): a cell is
-  pitch / 8 frame heights, rounded to whole pixels, at least 1; the tone stays per pixel.
+  pitch / 8 frame heights, rounded to whole pixels, at least 1. bayer_read "cell" (default) reads one tone per cell at its
+  centre pixel; "pixel" reads it per pixel (Matt, 2026-11-14: a toggle).
 plate "channels": each of R, G, B is its own plate with its own angle and phase; the output channel is its coverage.
 plate "single" (Matt, 2026-11-08, T016a): one plate with angle_b and phase_b; tone t = max(r, g, b) at the read texel, the colour
   rgb / t, output = colour * coverage; t <= 0 gives black.
@@ -130,7 +131,7 @@ def _cover(T, dT, tone, softness, aa, extremes=True):
     return c.astype(F32)
 
 
-def plate(read, W, H, *, kind, pitch, theta, phase, softness, shape, jitter, seed, level, tone_mode, bug=None):
+def plate(read, W, H, *, kind, pitch, theta, phase, softness, shape, jitter, seed, level, tone_mode, bayer_read="cell", bug=None):
     """One plate. read(i, j) -> tone at texel indices. Returns (coverage, i_read, j_read): the texel the tone came from."""
     if bug == "ignore_phase":
         phase = (0.0, 0.0)
@@ -138,9 +139,15 @@ def plate(read, W, H, *, kind, pitch, theta, phase, softness, shape, jitter, see
     ii, jj = np.meshgrid(np.arange(W), np.arange(H))
     if kind == "bayer":
         sc = max(np.floor(F32(pitch) * F32(H) / F32(8) + F32(0.5)), 1)   # the matrix repeats once per pitch (Matt, 2026-11-14)
-        m = bayer8_bits(np.floor(ii / sc).astype(np.int64), np.floor(jj / sc).astype(np.int64))
-        tone = read(ii, jj)
-        return (tone > (m.astype(F32) + F32(0.5)) / F32(64)).astype(F32), ii, jj
+        ci, cj = np.floor(ii / sc).astype(np.int64), np.floor(jj / sc).astype(np.int64)
+        m = bayer8_bits(ci, cj)
+        if bayer_read == "cell":      # Matt, 2026-11-14: one tone per cell, at its centre pixel (a true ordered dither)
+            ri = np.minimum(ci * int(sc) + int(sc) // 2, W - 1)
+            rj = np.minimum(cj * int(sc) + int(sc) // 2, H - 1)
+        else:                         # "pixel": the tone per pixel, a threshold at each cell's level
+            ri, rj = ii, jj
+        tone = read(ri, rj)
+        return (tone > (m.astype(F32) + F32(0.5)) / F32(64)).astype(F32), ri, rj
     if kind == "threshold":
         tone = read(ii, jj)
         w = F32(softness) * F32(0.5)
@@ -212,7 +219,7 @@ def plate(read, W, H, *, kind, pitch, theta, phase, softness, shape, jitter, see
 
 
 def halftone_stage(src, *, screen="dot", pitch=0.012, angles=(15.0, 75.0, 45.0), phases=((0, 0), (0, 0), (0, 0)),
-                   softness=0.1, shape=0.0, jitter=0.0, seed=1, level=0.5, plate_mode="channels",
+                   softness=0.1, shape=0.0, jitter=0.0, seed=1, level=0.5, bayer_read="cell", plate_mode="channels",
                    tone_mode="center", bypass=False, bug=None):
     """src: (H, W, 4) float32 (R, G, B, A) or None. Returns (H, W, 4) float32."""
     if src is None:
@@ -224,7 +231,7 @@ def halftone_stage(src, *, screen="dot", pitch=0.012, angles=(15.0, 75.0, 45.0),
         return z.astype(F32)
     out = np.zeros((H, W, 4), dtype=F32)
     kind = {"dot": "dot", "line": "line", "threshold": "threshold", "bayer": "bayer"}[screen]
-    kw = dict(kind=kind, pitch=pitch, softness=softness, shape=shape, jitter=jitter, seed=seed, level=level,
+    kw = dict(kind=kind, pitch=pitch, softness=softness, shape=shape, jitter=jitter, seed=seed, level=level, bayer_read=bayer_read,
               tone_mode=tone_mode, bug=bug)
     if plate_mode == "single":
         ch = 0 if bug == "single_reads_r" else 2
