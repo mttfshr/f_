@@ -2,6 +2,14 @@
 
 Entries moved out of `HANDOFF.md` on 2026-10-31, 2026-11-04, 2026-11-08, 2026-11-10, 2026-11-11, 2026-11-12, 2026-11-13 and 2026-11-14 (three times) and 2026-11-15 (newest first, as they were). Not read at session start: grep it for history. The full pre-trim `HANDOFF.md` is also in git (commit 76c2ab8).
 
+## 2026-11-15: skill trigger evals; `.claude/settings.json`
+
+- **Why:** discussion of Lilian Weng's harness-engineering post (2026-07-04). Four proposals: (1) trigger evals per skill, (2) each skill edit's commit names the symptom fixed and the behavior at risk, (3) stable IDs on Quick rules, (4) a line budget for this START HERE block. Matt chose 1 first; 2-4 not started.
+- **Done:** `skills/evals/<skill>.json`, 7 should-trigger plus 5 near-miss prompts each, skill-creator's `run_eval.py` format, outside the skill folders so `check.sh` hashes are unchanged (`91574a6`). `.claude/settings.json`: bench, `tests/check.sh full`, `release.sh` and `skills/check.sh stamp` ask; named offline tests, `bg.sh status/log/list`, `skills/check.sh` and the generators' `--check` allowed; `settings.local.json` gitignored (`d2faf2c`). Not yet observed in a live session; whether `ask` rules prompt in auto mode is unverified.
+- **Failed run, discarded:** the first baseline gave 0/72 triggers because every `claude -p` returned "Credit balance is too low": `~/.zshrc` line 8 exports `ANTHROPIC_API_KEY` (Matt uses his Pro login, not a key). Results deleted, never committed.
+- **Runner notes (offline by Claude, 2026-11-15):** stock `run_eval.py` picks its root by walking up to a `.claude/` folder, which before `d2faf2c` meant `~`; it also scores a call to the installed `anthropic-skills:<name>` copy as a miss. A patched copy in the session scratchpad (may be cleared) fixed both: count `:<name>"` or a Read of `skills/<name>/SKILL.md` as a hit. Re-patch the second point for the rerun. Each query is killed at its first tool call, so nothing in the repo runs.
+- **Next:** rerun the two codebox skills with `env -u ANTHROPIC_API_KEY` (72 calls), record the baseline in `skills/evals/`, then the other eight.
+
 ## 2026-11-14 (late afternoon): sharing skills on Discord; `boundmode` resolved
 
 - **Goal (Matt):** share gen-tilde-codebox, jit-gen-codebox and maxpat-json-authoring with other developers, posted directly on Discord; no attribution needed; max-patch-notation and pfft-spectral-processing are not shared yet.
