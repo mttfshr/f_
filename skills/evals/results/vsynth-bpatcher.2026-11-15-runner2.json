@@ -1,0 +1,298 @@
+{
+  "skill_name": "vsynth-bpatcher",
+  "description": "Conventions for building and changing f_ modules, the Vsynth bpatchers in package/patchers/ built from each module's definition.py by build/build_patcher.py. Use this skill whenever creating a module, changing a shipped patcher or its definition.py, choosing an archetype (processor or dual-mode generator), adding a texture inlet, wiring params, dials or bypass, naming a control, adding a module to the f_modules menu, fixing drift, or making a scratch patch in Vsynth, even if the user only says \"new module\", \"add a dial\", \"wire this up\" or \"rebuild f_name\". Load it especially on these symptoms: a module that renders nothing or flips white/black when unconnected; bypass that leaves outlet 2 flipped or wrong; \"name X_pix already in use\" with two instances; \"patchcord source not found\" or \"type is not a sampler\" on load; a hand edit in Max lost on rebuild; a full -1 field from an empty vecfield inlet. For the code inside the pix see jit-gen-codebox; for .maxpat JSON text see maxpat-json-authoring.",
+  "settings": {
+    "model": "opus",
+    "timeout": 120,
+    "num_workers": 6,
+    "runs_should_trigger": 1,
+    "runs_near_miss": 1,
+    "max_reruns": 2,
+    "threshold": 0.5,
+    "flags": [
+      "--strict-mcp-config"
+    ]
+  },
+  "results": [
+    {
+      "query": "new module: f_vf_ripple, a processor that displaces along the field. set it up",
+      "should_trigger": true,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 3,
+      "first_run_hit": false,
+      "pass": false,
+      "run_log": [
+        {
+          "reason": "other_tool",
+          "hit": false,
+          "seconds": 7.1,
+          "tool": "Bash",
+          "input": "{\"command\": \"sed -n 1,60p HANDOFF.md; echo ----; cat .specify/plan.md; echo ----; grep -n -i \\\"ripple\\\\|vf_\\\\|vecfield\\\" .specify/gates.md |",
+          "text": "Starting with the session files CLAUDE.md requires, plus the canonical skill in the repo (memory points to `skills/vsynth-bpatcher`; several"
+        },
+        {
+          "reason": "other_tool",
+          "hit": false,
+          "seconds": 6.3,
+          "tool": "Bash",
+          "input": "{\"command\": \"sed -n 1,60p HANDOFF.md && echo ---PLAN && cat .specify/plan.md && echo ---GATES && cat .specify/gates.md && echo ---SKILL && l",
+          "text": "I'll start by reading the session files and the canonical skill (per memory, `skills/vsynth-bpatcher` in the repo is the canonical version, "
+        },
+        {
+          "reason": "other_tool",
+          "hit": false,
+          "seconds": 4.2,
+          "tool": "Bash",
+          "input": "{\"command\": \"sed -n 1,60p HANDOFF.md && echo ---- && cat .specify/plan.md && echo ---- && cat .specify/gates.md | head -80 && echo ---- && l"
+        }
+      ]
+    },
+    {
+      "query": "add a Strength dial to f_vf_glow and wire it to the pix",
+      "should_trigger": true,
+      "trigger_rate": 1.0,
+      "triggers": 1,
+      "runs": 1,
+      "first_run_hit": true,
+      "pass": true,
+      "run_log": [
+        {
+          "reason": "hit_installed",
+          "hit": true,
+          "seconds": 4.4,
+          "tool": "Skill",
+          "input": "{\"skill\": \"anthropic-skills:vsynth-bpatcher\"}"
+        }
+      ]
+    },
+    {
+      "query": "two instances of f_tf_hatch give 'name hatch_pix already in use'",
+      "should_trigger": true,
+      "trigger_rate": 1.0,
+      "triggers": 1,
+      "runs": 1,
+      "first_run_hit": true,
+      "pass": true,
+      "run_log": [
+        {
+          "reason": "hit_command",
+          "hit": true,
+          "seconds": 2.3,
+          "tool": "Skill",
+          "input": "{\"skill\": \"vsynth-bpatcher-skill-552f1353\"}"
+        }
+      ]
+    },
+    {
+      "query": "f_caustic renders white when nothing is plugged into inlet 1",
+      "should_trigger": true,
+      "trigger_rate": 0.5,
+      "triggers": 1,
+      "runs": 2,
+      "first_run_hit": false,
+      "pass": true,
+      "run_log": [
+        {
+          "reason": "other_tool",
+          "hit": false,
+          "seconds": 5.4,
+          "tool": "Bash",
+          "input": "{\"command\": \"ls src/f_caustic/ skills/vsynth-bpatcher/ && grep -n -i -B2 -A12 \\\"white\\\\|unconnected\\\\|empty inlet\\\" skills/vsynth-bpatcher/S"
+        },
+        {
+          "reason": "hit_installed",
+          "hit": true,
+          "seconds": 3.8,
+          "tool": "Skill",
+          "input": "{\"skill\": \"anthropic-skills:vsynth-bpatcher\"}"
+        }
+      ]
+    },
+    {
+      "query": "bypass leaves outlet 2 flipped on f_vf_prism",
+      "should_trigger": true,
+      "trigger_rate": 1.0,
+      "triggers": 1,
+      "runs": 1,
+      "first_run_hit": true,
+      "pass": true,
+      "run_log": [
+        {
+          "reason": "hit_sibling_command",
+          "hit": true,
+          "seconds": 3.8,
+          "tool": "Skill",
+          "input": "{\"skill\": \"vsynth-bpatcher-skill-552f1353\"}"
+        }
+      ]
+    },
+    {
+      "query": "I moved the jsui in Max and saved, but the rebuild lost it \u2014 how do I keep that",
+      "should_trigger": true,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 3,
+      "first_run_hit": false,
+      "pass": false,
+      "run_log": [
+        {
+          "reason": "other_tool",
+          "hit": false,
+          "seconds": 5.7,
+          "tool": "Bash",
+          "input": "{\"command\": \"grep -n -i -A3 \\\"capture\\\" build/spec.md | head -60; ls build/capture.py\", \"description\": \"Find capture workflow in build spec\""
+        },
+        {
+          "reason": "other_tool",
+          "hit": false,
+          "seconds": 5.9,
+          "tool": "Bash",
+          "input": "{\"command\": \"grep -n -i -A3 \\\"capture\\\" build/spec.md | head -60; ls build/capture.py && build/py.sh build/capture.py --help 2>&1 | head -30"
+        },
+        {
+          "reason": "other_tool",
+          "hit": false,
+          "seconds": 3.3,
+          "tool": "Bash",
+          "input": "{\"command\": \"grep -n -i -A3 \\\"capture\\\" build/spec.md | head -60; ls build/capture.py\", \"description\": \"Find capture.py usage in build spec\""
+        }
+      ]
+    },
+    {
+      "query": "make a dual-mode generator version of f_chladni with a texture inlet",
+      "should_trigger": true,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 3,
+      "first_run_hit": false,
+      "pass": false,
+      "run_log": [
+        {
+          "reason": "other_tool",
+          "hit": false,
+          "seconds": 5.7,
+          "tool": "Bash",
+          "input": "{\"command\": \"sed -n 1,40p HANDOFF.md; echo ----; cat .specify/plan.md; echo ----; grep -n -i chladni .specify/gates.md ideas/INDEX.md README"
+        },
+        {
+          "reason": "other_tool",
+          "hit": false,
+          "seconds": 5.7,
+          "tool": "Bash",
+          "input": "{\"command\": \"ls skills/vsynth-bpatcher src/f_chladni .specify | head -50; sed -n 1,40p HANDOFF.md; cat .specify/plan.md\", \"description\": \"Li"
+        },
+        {
+          "reason": "other_tool",
+          "hit": false,
+          "seconds": 5.4,
+          "tool": "Bash",
+          "input": "{\"command\": \"ls skills/vsynth-bpatcher/ src/f_chladni/ && sed -n 1,60p HANDOFF.md && cat .specify/plan.md && grep -n -i chladni .specify/gat"
+        }
+      ]
+    },
+    {
+      "query": "write the help patch for f_vf_erode",
+      "should_trigger": false,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 1,
+      "first_run_hit": false,
+      "pass": true,
+      "run_log": [
+        {
+          "reason": "other_tool",
+          "hit": false,
+          "seconds": 1.6,
+          "tool": "Skill",
+          "input": "{\"skill\": \"anthropic-skills:f-helpfile\"}"
+        }
+      ]
+    },
+    {
+      "query": "is f_weave ready to move to stable?",
+      "should_trigger": false,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 1,
+      "first_run_hit": false,
+      "pass": true,
+      "run_log": [
+        {
+          "reason": "other_tool",
+          "hit": false,
+          "seconds": 1.9,
+          "tool": "Skill",
+          "input": "{\"skill\": \"anthropic-skills:module-preflight\", \"args\": \"f_weave\"}"
+        }
+      ]
+    },
+    {
+      "query": "the pix code in f_quasi returns NaN from atan2",
+      "should_trigger": false,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 1,
+      "first_run_hit": false,
+      "pass": true,
+      "run_log": [
+        {
+          "reason": "other_tool",
+          "hit": false,
+          "seconds": 2.1,
+          "tool": "Skill",
+          "input": "{\"skill\": \"anthropic-skills:jit-gen-codebox\"}"
+        }
+      ]
+    },
+    {
+      "query": "write a bench test for f_vf_seeds cost at 1080p",
+      "should_trigger": false,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 1,
+      "first_run_hit": false,
+      "pass": true,
+      "run_log": [
+        {
+          "reason": "other_tool",
+          "hit": false,
+          "seconds": 2.0,
+          "tool": "Skill",
+          "input": "{\"skill\": \"anthropic-skills:bench-test-authoring\"}"
+        }
+      ]
+    },
+    {
+      "query": "change one box's presentation_rect in a maxpat JSON by hand, minimal diff",
+      "should_trigger": false,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 1,
+      "first_run_hit": false,
+      "pass": true,
+      "run_log": [
+        {
+          "reason": "no_tool",
+          "hit": false,
+          "seconds": 8.4,
+          "text": "I need three things before I edit:\n\n1. **Which file?** The only modified `.maxpat` in the tree is `package/examples/f_demo_halftone.maxpat`."
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "total": 12,
+    "passed": 9,
+    "failed": 3,
+    "total_runs": 19,
+    "should_trigger_first_run_hits": "3/7",
+    "reasons": {
+      "other_tool": 14,
+      "hit_installed": 2,
+      "hit_command": 1,
+      "hit_sibling_command": 1,
+      "no_tool": 1
+    }
+  }
+}

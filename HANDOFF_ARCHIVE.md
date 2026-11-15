@@ -1,6 +1,15 @@
 # HANDOFF archive
 
-Entries moved out of `HANDOFF.md` on 2026-10-31, 2026-11-04, 2026-11-08, 2026-11-10, 2026-11-11, 2026-11-12, 2026-11-13 and 2026-11-14 (three times) and 2026-11-15 (newest first, as they were). Not read at session start: grep it for history. The full pre-trim `HANDOFF.md` is also in git (commit 76c2ab8).
+Entries moved out of `HANDOFF.md` on 2026-10-31, 2026-11-04, 2026-11-08, 2026-11-10, 2026-11-11, 2026-11-12, 2026-11-13 and 2026-11-14 (three times) and 2026-11-15 (twice) (newest first, as they were). Not read at session start: grep it for history. The full pre-trim `HANDOFF.md` is also in git (commit 76c2ab8).
+
+## 2026-11-15 (evening): eval runner 2, gen~ re-baseline
+
+- **Runner (offline by Claude):** `skills/evals/runner/scripts/run_eval.py`, derived from skill-creator's (Apache-2.0, license copied). It logs each run's reason (`hit_installed`, `hit_command`, `hit_sibling_command`, `hit_read`, `other_tool` + tool name and short input, `no_tool` + text, `timeout`, `exited`), adds `--strict-mcp-config`, and runs near-misses once and should-trigger prompts once with up to 2 reruns on a miss. Usage in `skills/evals/README.md`. Location confirmed by Matt 2026-11-15.
+- **Plumbing (Haiku, 4 runs):** 4/4, all reasons logged, temporary command files cleaned up.
+- **gen~ baseline (Opus, 12 runs, Matt's go):** 12/12, every should-trigger prompt hit on its first run via `anthropic-skills:gen-tilde-codebox`; near-misses went to jit-gen-codebox, maxpat-json-authoring, pfft-spectral-processing, or a plain text answer. `skills/evals/results/gen-tilde-codebox.2026-11-15-runner2.json`.
+- **Gap with the old 7/12 (inferred, not verified):** the description is unchanged, so the old misses are probably runner artifacts: 10 parallel runs whose temporary skill copies all show up in every session (observed), with a call to another run's copy scored as a miss; MCP servers loaded; a 30 s timeout. Details in `skills/evals/results/README.md`.
+- **No description edited.** gen~ needs no fix on this evidence.
+- Session end: `test_gates.py` 5/5 with Matt's go (`tests/logs/20261115-102325-offline.log`).
 
 ## 2026-11-15 (later): trigger-eval baseline, all ten skills
 

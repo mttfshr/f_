@@ -1,0 +1,289 @@
+{
+  "skill_name": "max-patch-notation",
+  "description": "Notation for describing a Max/MSP or Vsynth patch in text so it can be built by hand: one canonical label per object, [class args @attr val] // label definitions, explicit 0-indexed `label outN \u2192 label inN` connections, codebox text inline, and a declared interface for each bpatcher. Use this skill whenever writing out a patch for someone to build or wire in Max, describing a patch in a design, debugging session, task note or handoff, or reading such a description back, even if the user only says \"how do I wire this\" or \"sketch the patch\". Not for editing .maxpat JSON directly (maxpat-json-authoring) or for the code inside a codebox (gen-tilde-codebox, jit-gen-codebox).",
+  "settings": {
+    "model": "opus",
+    "timeout": 120,
+    "num_workers": 6,
+    "runs_should_trigger": 1,
+    "runs_near_miss": 1,
+    "max_reruns": 2,
+    "threshold": 0.5,
+    "flags": [
+      "--strict-mcp-config"
+    ]
+  },
+  "results": [
+    {
+      "query": "how do I wire a feedback delay with a tap tempo, sketch the patch so I can build it",
+      "should_trigger": true,
+      "trigger_rate": 1.0,
+      "triggers": 1,
+      "runs": 1,
+      "first_run_hit": true,
+      "pass": true,
+      "run_log": [
+        {
+          "reason": "hit_installed",
+          "hit": true,
+          "seconds": 2.5,
+          "tool": "Skill",
+          "input": "{\"skill\": \"anthropic-skills:max-patch-notation\"}"
+        }
+      ]
+    },
+    {
+      "query": "write out the scratch patch for testing two f_vf_glow instances in Vsynth, I'll build it by hand",
+      "should_trigger": true,
+      "trigger_rate": 1.0,
+      "triggers": 1,
+      "runs": 1,
+      "first_run_hit": true,
+      "pass": true,
+      "run_log": [
+        {
+          "reason": "hit_installed",
+          "hit": true,
+          "seconds": 2.7,
+          "tool": "Skill",
+          "input": "{\"skill\": \"anthropic-skills:max-patch-notation\"}"
+        }
+      ]
+    },
+    {
+      "query": "put the debugging patch in the task note so the next session can rebuild it",
+      "should_trigger": true,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 3,
+      "first_run_hit": false,
+      "pass": false,
+      "run_log": [
+        {
+          "reason": "other_tool",
+          "hit": false,
+          "seconds": 3.7,
+          "tool": "Bash",
+          "input": "{\"command\": \"sed -n 1,60p HANDOFF.md && git diff --stat && grep -rn -i \\\"debug\\\" .specify/*/tasks.md .specify/plan.md | grep -v paused | hea"
+        },
+        {
+          "reason": "other_tool",
+          "hit": false,
+          "seconds": 4.0,
+          "tool": "Bash",
+          "input": "{\"command\": \"sed -n 1,60p HANDOFF.md && git diff --stat && grep -rln -i \\\"debug\\\" .specify --include=tasks.md | grep -v paused | head\", \"des"
+        },
+        {
+          "reason": "other_tool",
+          "hit": false,
+          "seconds": 4.3,
+          "tool": "Bash",
+          "input": "{\"command\": \"sed -n 1,60p HANDOFF.md && echo ---- && cat .specify/plan.md && echo ---- && git diff --stat && ls -t /private/tmp/claude-501/-"
+        }
+      ]
+    },
+    {
+      "query": "here's my patch description from last session, read it back and tell me what's wrong with the connections",
+      "should_trigger": true,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 3,
+      "first_run_hit": false,
+      "pass": false,
+      "run_log": [
+        {
+          "reason": "other_tool",
+          "hit": false,
+          "seconds": 3.2,
+          "tool": "Read",
+          "input": "{\"file_path\": \"/Users/matt/Github/f_/HANDOFF.md\"}",
+          "text": "No patch description came through with your message, so I'll look for it in the handoff notes first.No patch description came through with y"
+        },
+        {
+          "reason": "other_tool",
+          "hit": false,
+          "seconds": 3.2,
+          "tool": "Bash",
+          "input": "{\"command\": \"sed -n '1,60p' HANDOFF.md; git status --short; git log -3 --stat --format='%h %s' | head -40\", \"description\": \"Read handoff and"
+        },
+        {
+          "reason": "other_tool",
+          "hit": false,
+          "seconds": 3.6,
+          "tool": "Read",
+          "input": "{\"file_path\": \"/Users/matt/Github/f_/HANDOFF.md\"}"
+        }
+      ]
+    },
+    {
+      "query": "describe the f_cymascope front end as a patch: LFO texture into inlet 1 plus strike triggers",
+      "should_trigger": true,
+      "trigger_rate": 1.0,
+      "triggers": 1,
+      "runs": 1,
+      "first_run_hit": true,
+      "pass": true,
+      "run_log": [
+        {
+          "reason": "hit_installed",
+          "hit": true,
+          "seconds": 3.2,
+          "tool": "Skill",
+          "input": "{\"skill\": \"anthropic-skills:max-patch-notation\"}"
+        }
+      ]
+    },
+    {
+      "query": "sketch how to route three textures through jit.gl.texture into a bpatcher's inlets",
+      "should_trigger": true,
+      "trigger_rate": 1.0,
+      "triggers": 1,
+      "runs": 1,
+      "first_run_hit": true,
+      "pass": true,
+      "run_log": [
+        {
+          "reason": "hit_sibling_command",
+          "hit": true,
+          "seconds": 4.2,
+          "tool": "Skill",
+          "input": "{\"skill\": \"max-patch-notation-skill-0bb49255\"}"
+        }
+      ]
+    },
+    {
+      "query": "write the handoff's patch for the boundmode probe in text",
+      "should_trigger": true,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 3,
+      "first_run_hit": false,
+      "pass": false,
+      "run_log": [
+        {
+          "reason": "other_tool",
+          "hit": false,
+          "seconds": 3.0,
+          "tool": "Bash",
+          "input": "{\"command\": \"grep -n -i \\\"boundmode\\\" HANDOFF.md .specify/plan.md .specify/gates.md | head -40\", \"description\": \"Find boundmode probe mentio"
+        },
+        {
+          "reason": "other_tool",
+          "hit": false,
+          "seconds": 3.9,
+          "tool": "Bash",
+          "input": "{\"command\": \"grep -n -i \\\"boundmode\\\" HANDOFF.md .specify/plan.md .specify/gates.md | head -40\", \"description\": \"Find boundmode probe mentio"
+        },
+        {
+          "reason": "other_tool",
+          "hit": false,
+          "seconds": 3.3,
+          "tool": "Read",
+          "input": "{\"file_path\": \"/Users/matt/Github/f_/HANDOFF.md\"}"
+        }
+      ]
+    },
+    {
+      "query": "generate the .maxpat file for the boundmode probe",
+      "should_trigger": false,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 1,
+      "first_run_hit": false,
+      "pass": true,
+      "run_log": [
+        {
+          "reason": "other_tool",
+          "hit": false,
+          "seconds": 2.6,
+          "tool": "Bash",
+          "input": "{\"command\": \"grep -ril \\\"boundmode\\\" --include=*.md --include=*.py --include=*.txt . | grep -v node_modules | head -30; sed -n '1,60p' HANDO"
+        }
+      ]
+    },
+    {
+      "query": "write the gen~ codebox for the strike envelope",
+      "should_trigger": false,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 1,
+      "first_run_hit": false,
+      "pass": true,
+      "run_log": [
+        {
+          "reason": "other_tool",
+          "hit": false,
+          "seconds": 3.3,
+          "tool": "Bash",
+          "input": "{\"command\": \"sed -n 1,40p HANDOFF.md; echo ---; cat .specify/plan.md; echo ---; grep -ril \\\"strike\\\" .specify ideas src docs --include=*.md "
+        }
+      ]
+    },
+    {
+      "query": "add a dial to f_masonry's definition.py",
+      "should_trigger": false,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 1,
+      "first_run_hit": false,
+      "pass": true,
+      "run_log": [
+        {
+          "reason": "other_tool",
+          "hit": false,
+          "seconds": 2.4,
+          "tool": "Bash",
+          "input": "{\"command\": \"ls src/f_masonry/ && cat src/f_masonry/definition.py && ls .specify | grep -i mason; ls .specify/paused | grep -i mason\", \"desc"
+        }
+      ]
+    },
+    {
+      "query": "write a mermaid diagram of the build pipeline from definition.py to package/patchers",
+      "should_trigger": false,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 1,
+      "first_run_hit": false,
+      "pass": true,
+      "run_log": [
+        {
+          "reason": "other_tool",
+          "hit": false,
+          "seconds": 3.1,
+          "tool": "Bash",
+          "input": "{\"command\": \"ls build/ && wc -l build/build_patcher.py build/spec.md && grep -nE \\\"^def |^class |^import|^from|open\\\\(|write|\\\\.gen|override"
+        }
+      ]
+    },
+    {
+      "query": "fix the patchcord indices in this maxpat JSON",
+      "should_trigger": false,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 1,
+      "first_run_hit": false,
+      "pass": true,
+      "run_log": [
+        {
+          "reason": "other_tool",
+          "hit": false,
+          "seconds": 3.6,
+          "tool": "Bash",
+          "input": "{\"command\": \"git diff --stat package/examples/f_demo_halftone.maxpat && git diff package/examples/f_demo_halftone.maxpat | head -80\", \"descr"
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "total": 12,
+    "passed": 9,
+    "failed": 3,
+    "total_runs": 18,
+    "should_trigger_first_run_hits": "4/7",
+    "reasons": {
+      "hit_installed": 3,
+      "other_tool": 14,
+      "hit_sibling_command": 1
+    }
+  }
+}

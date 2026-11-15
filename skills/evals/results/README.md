@@ -22,12 +22,15 @@ skill) scores as a miss.
 | gen-tilde-codebox | 2026-11-15 (old runner) | 7/12 | 9/21 | 0/15 |
 | bench-test-authoring | 2026-11-15 | 12/12 | 21/21 | 0/15 |
 | f-helpfile | 2026-11-15 | 12/12 | 21/21 | 0/15 |
-| max-advanced-object-methodology | 2026-11-15 | 10/12 | 14/21 | 0/15 |
-| max-patch-notation | 2026-11-15 | 9/12 | 13/21 | 0/15 |
+| max-advanced-object-methodology | 2026-11-15 (runner 2) | 11/12 | 6/7 first run | 0/5 |
+| max-advanced-object-methodology | 2026-11-15 (old runner) | 10/12 | 14/21 | 0/15 |
+| max-patch-notation | 2026-11-15 (runner 2) | 9/12 | 4/7 first run | 0/5 |
+| max-patch-notation | 2026-11-15 (old runner) | 9/12 | 13/21 | 0/15 |
 | maxpat-json-authoring | 2026-11-15 | 12/12 | 20/21 | 0/15 |
 | module-preflight | 2026-11-15 | 12/12 | 21/21 | 0/15 |
 | pfft-spectral-processing | 2026-11-15 | 11/12 | 16/21 | 0/15 |
-| vsynth-bpatcher | 2026-11-15 | 8/12 | 9/21 | 0/15 |
+| vsynth-bpatcher | 2026-11-15 (runner 2) | 9/12 | 3/7 first run | 0/5 |
+| vsynth-bpatcher | 2026-11-15 (old runner) | 8/12 | 9/21 | 0/15 |
 
 **2026-11-15 (offline by Claude):** both skills are precise (no near-miss ever
 triggered) and gen~ is under-triggering. jit misses: the GLSL port (1/3) and the
@@ -72,3 +75,30 @@ the old hit check scored a call to another run's copy as a miss; MCP servers loa
 (`hit_sibling_command`; none occurred). Which of these caused the old misses is unknown,
 since the old runner did not record reasons; settling it would mean rerunning with the
 old settings.
+
+**2026-11-15, three more on runner 2 (offline by Claude, Opus, 51 runs, Matt's go):**
+vsynth-bpatcher 9/12 (old 8/12, 19 runs), max-patch-notation 9/12 (old 9/12, 18 runs),
+max-advanced-object-methodology 11/12 (old 10/12, 14 runs). Still 0 near-miss hits; every
+near-miss went to the right sibling skill, to plain repo work or to a text answer.
+Now hit on the first run: Strength dial, bypass flip, jit.gl.mesh. Still 0/3: the jsui
+capture, dual-mode f_chladni, the task-note patch, the read-back, mc.* stereo chain; new
+0/3: f_vf_ripple (old 2/3); boundmode went from 1/3 to 0/3.
+
+**Why they missed (from `run_log`; the cause is inferred):** none of the 22 missed runs
+answered in text, timed out or called a wrong skill. Every one opened with a repo read
+(Bash or Read, about 3-7 s) and the runner stops at the first tool call:
+- *Orientation first* (f_vf_ripple, f_chladni, task note, read-back, mc.*): `sed -n 1,60p
+  HANDOFF.md; cat .specify/plan.md; ... gates.md`, the read order `CLAUDE.md` gives a
+  fresh session. Each `claude -p` run is a fresh session in this repo.
+- *Finding the referent* (boundmode, mc.* "the stereo chain", "the debugging patch",
+  read-back with no description attached): grep or Read of HANDOFF/plan for the thing the
+  prompt names. Read-back's text: "No patch description came through with your message".
+- *Reading the skill straight from the repo* (vsynth: f_vf_ripple, f_chladni, the
+  f_caustic first run): `ls skills/vsynth-bpatcher` or a grep of its `SKILL.md`. The
+  f_vf_ripple text says the memory file `feedback_max_patch_editing.md` points to
+  `skills/vsynth-bpatcher` as canonical. The runner scores a Bash read of the skill as a miss.
+- *Answered from CLAUDE.md* (jsui capture, 3/3): grep `build/spec.md` for `capture`;
+  `CLAUDE.md` itself names `build/capture.py` for this exact case.
+So these misses look like the repo's own session rules, memory and the first-tool-only
+scoring, not the descriptions (inferred, not verified: no run went past its first call).
+No description edited.
