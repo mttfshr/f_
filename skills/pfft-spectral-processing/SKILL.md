@@ -1,6 +1,6 @@
 ---
 name: pfft-spectral-processing
-description: Canonical reference for building spectral/FFT-domain audio processors with pfft~ in f_a_ modules (e.g. f_a_decorrelate). Use when writing, reviewing, or debugging any pfft~ subpatch. RESOLVED 2026-08-07 -- getting a live control value into per-bin pfft~ processing does NOT work reliably via a gen~ nested inside pfft~ (four architectures tried, all failed identically, root cause never found). The working solution uses buffer~/index~/peek~/expr instead -- see "THE WORKING PATTERN" below, which supersedes any gen~-inside-pfft~ approach for this purpose. See gen-tilde-codebox for codebox syntax that still applies to any gen~ used elsewhere (e.g. the carrier/control-value generators outside pfft~).
+description: Verified patterns for spectral (FFT-domain) audio processing with pfft~ in Max/MSP, from the f_a_ modules (f_a_ripple, f_a_decorrelate): getting a live control value into per-bin processing with buffer~/index~ filled by a message-rate uzi/expr/peek~ sweep, the external-file requirement for pfft~ subpatches, fftin~/fftout~ arguments, bin frequency, and AM without cartopol~. Use this skill whenever writing, reviewing or debugging a pfft~ subpatch or any spectral audio effect in Max, even if the user only says "FFT", "spectral", "per-bin" or "phase vocoder". Load it especially on these symptoms: a control value or Param that has no effect inside pfft~; a gen~ nested in pfft~ that compiles but ignores its messages; "pfft~ no patcher" or "bad number" on load; a pfft~ box that loses its inlets after a save; a gen~ plus snapshot~ fed by uzi that skips or averages values. For gen~ code itself see gen-tilde-codebox.
 ---
 
 # pfft~ Spectral Processing Reference
@@ -20,6 +20,24 @@ and `/Applications/Max.app/Contents/Resources/Examples/fft-fun/lib/
 fp_fft.maxpat` — these two show the actual working idiom for getting a
 live, externally-controllable value into per-bin `pfft~` processing, and
 reading reference prose alone never surfaced it.
+
+## Quick rules
+
+1. **Don't route control values into a `gen~` inside `pfft~`.** Four architectures all
+   failed and the cause is unknown. Put a per-bin curve in a named `buffer~` and read it
+   inside with `index~ <bufname>` driven by `fftin~`'s bin-index outlet. (The working pattern)
+2. **Fill the buffer at message rate:** `uzi <fftsize/2> 0` → `expr` → `pack` → `peek~`.
+   A `gen~` + `snapshot~` at `uzi` speed skips values. Sample live signals with
+   `snapshot~` once per sweep, before the burst. (The working pattern)
+3. **`expr` has no statements or named temporaries;** gate a term with a 0/1 comparison
+   product instead of a conditional. (The working pattern)
+4. **A `pfft~` subpatch must be a separate `.maxpat` on disk,** named in the box text;
+   an inline `"patcher"` key gives "no patcher". (Container behavior)
+5. **Use overlap 4.** Inlet and outlet counts come from the `fftin~`/`fftout~` objects
+   inside. (Arguments)
+6. **AM needs no polar conversion:** multiply real and imaginary by the same gain. PM does
+   need `cartopol~`/`poltocar~` and phase continuity across frames (open). (AM, PM)
+7. **`freq = bin * sr / fftsize`;** pass the sample rate in from outside. (Bin frequency)
 
 ---
 

@@ -23,7 +23,7 @@
 - `f_vf_erode` open, not blocking: the cost at a 1920 x 3840 atlas is unmeasured; the menu category is provisional (`G-menu`).
 - `f_vf_fluid` fails the contract bench as a whole on its frame size (bypassed frame 640 x 640 against an expected 512 x 512): update the expectation or fix the module (Matt's call).
 - **Skills for sharing (in progress, latest entry below):** all three split; upload owed.
-- **Skills, skill-creator pass (2026-11-15):** group 1 done (bench-test-authoring, max-advanced-object-methodology, module-preflight, max-patch-notation: symptom-led description, Quick rules, stale pointers fixed); re-upload owed. Left: pfft-spectral-processing and f-helpfile (group 2), vsynth-bpatcher (1081 lines, split into references/ like jit-gen-codebox).
+- **Skills, skill-creator pass (2026-11-15):** group 1 done (bench-test-authoring, max-advanced-object-methodology, module-preflight, max-patch-notation: symptom-led description, Quick rules, stale pointers fixed); group 2 done (pfft-spectral-processing, f-helpfile); re-upload owed for all six. Left: vsynth-bpatcher (1081 lines, split into references/ like jit-gen-codebox).
 - Skills: written 2026-11-14 (night), uploaded and stamped by Matt the same night: `skills/jit-gen-codebox/SKILL.md` (call sites of big functions count toward the GL3 "too many captures" budget; `Param shape`; the sin hash vs the mirror; `exp(-(a + b))`) and `skills/vsynth-bpatcher/SKILL.md` (the `vs_black` wording: 1x1, does not trigger a render; relaunch Max for new package files; `package/media/` and the `static` key). `docs/vsynth-reference/patterns.md` `vs_black` wording fixed too.
 - `f_vf_seeds` cost at 1080p is unmeasured; optional cap on the `f_vf_advect` Trail dial.
 

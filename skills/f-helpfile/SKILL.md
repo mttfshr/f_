@@ -1,6 +1,6 @@
 ---
 name: f-helpfile
-description: Conventions for writing .maxhelp files for the f_ Vsynth bpatcher library. Use when creating or editing any file in /Users/matt/Github/f_/package/help/. Covers layout, fonts, object structure, tab mechanics, signal flow conventions, and the reference block pattern. f_droste.maxhelp is the canonical template.
+description: Layout, font, object and text conventions for the f_ library's .maxhelp files (package/help/f_<name>.maxhelp): the two-column flat pane, canonical rects and varnames, the External Control Messages and References blocks, processor vs generator signal flow, the vs_wfg_s LFO wiring, and sizing the module bpatcher to its real footprint. Use this skill whenever creating, editing, fixing or reviewing an f_ helpfile, or writing the docs/f-reference/f_name.md it draws from, even if the user only says "write the help for f_name" or "the helpfile looks wrong". Load it especially when a module's UI is cropped in its helpfile, a time_s LFO does nothing, or a helpfile's text says what a module is but not what it is for. For the .maxpat JSON mechanics underneath, also use maxpat-json-authoring.
 ---
 
 # f_ Helpfile Skill
@@ -8,7 +8,29 @@ description: Conventions for writing .maxhelp files for the f_ Vsynth bpatcher l
 Conventions for `package/help/f_<name>.maxhelp` files in the f_ library. The canonical template is `package/help/f_droste.maxhelp` — read it before generating a new helpfile.
 
 **Helpfiles live at:** `/Users/matt/Github/f_/package/help/`
-**Template:** `/Users/matt/Github/f_/package/help/f_droste.maxhelp`
+**Template:** `/Users/matt/Github/f_/package/help/f_droste.maxhelp` (processor with a
+time inlet). `package/help/f_vf_stamp.maxhelp` is a recent example of a processor with
+no LFO and a bpatcher sized to a larger module.
+
+## Quick rules
+
+1. **Write or update `docs/f-reference/f_name.md` first;** the helpfile's prose comes
+   from it. (Prerequisite)
+2. **Size the module bpatcher (`d-4`) to the module's presentation footprint,** not
+   droste's 154 x 91, and move everything below it down. (Canonical Rects)
+3. **Title is the short name ("Droste"), `varname autohelp_top_digest[4]`; digest is
+   `[3]`.** Ableton Sans Medium 36 on the title, Ableton Sans Light everywhere else,
+   `fontface 0`. (Title, Digest, Fonts)
+4. **The digest says what the module is for,** not just its mechanism (see
+   module-preflight Part 2).
+5. **External Control Messages lists only message-addressable params,** with en-dash
+   ranges; `bypass` only if the `route` has that selector. (External Control Messages)
+6. **References are plain ASCII and match the f-reference doc's `## References`.** (References)
+7. **Processors get `vs_sources_main`; generators don't. Wire `vs_wfg_s` outlet 1,
+   not 0, to `time_s`.** (Signal Flow, LFO)
+8. **One flat pane, no tabs,** unless the module has really distinct modes. (Tabs)
+9. **A Claude session writes the helpfile;** `build/generate_helpfiles.py` only builds
+   the prompt. (CLAUDE.md)
 
 ---
 
@@ -21,7 +43,7 @@ writing or generating any `.maxhelp` file:
 1. Confirm `docs/f-reference/f_name.md` exists and reflects the module's
    current stable state. If it doesn't exist yet, **that's the actual task**
    — write it first, synthesizing:
-   - Mechanical params from `.specify/f_name/definition.py` (or the built
+   - Mechanical params from `src/f_name/definition.py` (or the built
      `.maxpat` if no definition file exists)
    - Real signal flow from the built patcher
    - A Notes section distilled from that module's `spec.md`/`plan.md`/
@@ -29,8 +51,9 @@ writing or generating any `.maxhelp` file:
      limitations. See `f_vf_optical_flow.md` for a worked example of this
      synthesis.
 2. Only once that doc exists does `build/extract_params.py` +
-   `build/generate_helpfiles.py` have real material to draw prose from —
-   both refuse to queue/generate a module without it (see `build/spec.md`'s
+   `build/generate_helpfiles.py` have real material to draw prose from (the
+   script builds the prompt; the helpfile is written in a Claude session) —
+   both refuse to queue a module without it (see `build/spec.md`'s
    "Helpfile Generation Pipeline" section for the full rule and why).
 
 Skipping straight to helpfile generation without this doc produces a
@@ -74,10 +97,12 @@ Patcher window rect: `[100, 99, 871, 780]` (771×681 usable)
 | vs_sources_main | d-3 | `[338, 24, 296, 126]` |
 | LFO (vs_wfg_s) | d-6 | `[417, 196, 75, 74]` |
 | time_s bubble | d-7 | `[500, 221, 64, 26]` |
-| bpatcher | d-4 | `[338, 294, 154, 91]` |
+| bpatcher | d-4 | `[338, 294, w, h]`: w, h = the module's presentation footprint (154 x 91 is droste's own) |
 | vs_preview | d-5 | `[338, 405, 236, 249]` |
 
 Adjust References rect y based on actual External Control Messages height. Keep ~40px gap between sections in the left column.
+
+The module footprint is the bounding box of the shipped `.maxpat`'s `presentation: true` boxes' `presentation_rect`s. Copying 154 x 91 cropped 17 helpfiles before 2026-10-13 (module-preflight). When `d-4` is taller, move `vs_preview` (`d-5`) down to stay ~20px below it.
 
 ---
 
@@ -194,7 +219,7 @@ derived in development -- not from any external source.
 At twist=1, one revolution = one zoom level (Escher coupling).
 ```
 
-Each module's `docs/f_name.md` carries a `## References` section with full citations. The helpfile block is the summary — point users to docs for more.
+Each module's `docs/f-reference/f_name.md` carries a `## References` section with full citations. The helpfile block is the summary — point users to docs for more.
 
 ---
 
@@ -243,14 +268,15 @@ For everything else: single flat pane, references as a comment block below Exter
 
 ## Checklist: New Helpfile
 
-- [ ] File at `help/f_<name>.maxhelp`
+- [ ] File at `package/help/f_<name>.maxhelp`
 - [ ] Title text is short name without prefix ("Grain" not "f_grain")
 - [ ] `varname: autohelp_top_digest[4]` on title, `[3]` on digest
 - [ ] Ableton Sans Medium on title, Ableton Sans Light on everything else
 - [ ] Left column panel object present
 - [ ] External Control Messages lists only externally-addressable params with correct ranges
 - [ ] References block uses plain ASCII text
-- [ ] `docs/f_name.md` has `## References` section matching helpfile content
+- [ ] Module bpatcher `d-4` at least the module's presentation footprint
+- [ ] `docs/f-reference/f_name.md` has `## References` section matching helpfile content
 - [ ] Signal flow: processor uses `vs_sources_main`; generator does not
 - [ ] LFO wired from outlet 1 (scalar), not outlet 0 (texture)
 - [ ] Bubble label on time_s wire, bubbleside pointing toward wire
@@ -259,7 +285,7 @@ For everything else: single flat pane, references as a comment block below Exter
 
 ## docs/ References Convention
 
-Every working module's `docs/f_name.md` should have:
+Every working module's `docs/f-reference/f_name.md` should have:
 
 ```markdown
 ## References
