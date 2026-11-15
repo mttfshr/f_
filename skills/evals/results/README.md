@@ -3,7 +3,12 @@
 One JSON per run, `<skill>.<date>.json`: `run_eval.py` stdout (description tested,
 per-query trigger rate, summary). Newest baseline per skill in the table.
 
-Runner: skill-creator's `run_eval.py`, 3 `claude -p` runs per query, threshold 0.5,
+**Runner 2** (`skills/evals/runner/`, from 2026-11-15, file suffix `-runner2`): logs why
+each run ended (`run_log` per query, `summary.reasons`), `--strict-mcp-config`, near-misses
+once, should-trigger once plus up to 2 reruns only on a miss. Results from it are not
+directly comparable with the old-runner rows below.
+
+**Old runner** (all other rows): skill-creator's `run_eval.py`, 3 `claude -p` runs per query, threshold 0.5,
 your default model, `ANTHROPIC_API_KEY` unset (Pro login). Patched in two places:
 it runs in this repo, and a call to the installed `anthropic-skills:<name>` or a Read
 of `skills/<name>/SKILL.md` counts as a hit. Each query stops at its first tool call,
@@ -13,7 +18,8 @@ skill) scores as a miss.
 | Skill | Date | Passed | Should-trigger runs hit | Near-miss runs hit |
 |---|---|---|---|---|
 | jit-gen-codebox | 2026-11-15 | 10/12 | 16/21 | 0/15 |
-| gen-tilde-codebox | 2026-11-15 | 7/12 | 9/21 | 0/15 |
+| gen-tilde-codebox | 2026-11-15 (runner 2) | 12/12 | 7/7 first run | 0/5 |
+| gen-tilde-codebox | 2026-11-15 (old runner) | 7/12 | 9/21 | 0/15 |
 | bench-test-authoring | 2026-11-15 | 12/12 | 21/21 | 0/15 |
 | f-helpfile | 2026-11-15 | 12/12 | 21/21 | 0/15 |
 | max-advanced-object-methodology | 2026-11-15 | 10/12 | 14/21 | 0/15 |
@@ -48,3 +54,21 @@ run as a miss on timeout, on any first tool other than Skill/Read, or on a turn 
 ends without a tool, and it does not record which of these happened. Before editing
 any description: make the runner log the reason for each miss, and use more runs
 per query.
+
+**2026-11-15, gen~ on runner 2 (offline by Claude, Opus, 12 runs, no reruns needed):**
+12/12. All 7 should-trigger prompts called `anthropic-skills:gen-tilde-codebox` as the
+first tool, on the first run, in about 3 s. The 5 near-misses went where they should:
+pix prompts to jit-gen-codebox (2), the maxpat template prompt to maxpat-json-authoring,
+the pfft~ prompt to pfft-spectral-processing, and the wiring prompt answered in text
+with no tool (24.6 s). File `gen-tilde-codebox.2026-11-15-runner2.json`.
+
+**Why the old runner missed (inferred, not verified):** the description did not change,
+and both the direct probe (10/10) and runner 2 (7/7) hit, so the old misses look like
+artifacts of the old runner setup, not of the description. Old-runner-only conditions:
+10 parallel runs, each writing a temporary copy of the skill to `.claude/commands/` that
+every other run also sees (observed: this session's own skill list picked them up), and
+the old hit check scored a call to another run's copy as a miss; MCP servers loaded
+(no `--strict-mcp-config`); a 30 s timeout. Runner 2 counts another run's copy as a hit
+(`hit_sibling_command`; none occurred). Which of these caused the old misses is unknown,
+since the old runner did not record reasons; settling it would mean rerunning with the
+old settings.

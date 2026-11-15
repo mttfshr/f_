@@ -13,14 +13,18 @@ copies are unaffected (`check.sh` only counts folders with a `SKILL.md`).
 last result. A skill edit's commit message names the symptom it fixes and the
 behavior at risk; the at-risk side is checked against these sets.
 
-**Run** (skill-creator's `scripts/run_eval.py`, 3 `claude -p` runs per query by
-default, so 36 runs per skill; ask Matt first):
+**Run** with the repo's runner, `runner/scripts/run_eval.py` (derived from
+skill-creator's, Apache-2.0). It logs why each run ended (hit, other first tool with a
+short input, no tool, timeout), adds `--strict-mcp-config`, and runs near-misses once and
+should-trigger prompts once, rerunning only on a miss (`--max-reruns`, default 2): 12-26
+runs per skill. `--only 0,1,7` runs a subset (plumbing checks, on Haiku). State the run
+count, model and token estimate, and get Matt's go, before any run:
 
-    python3 <skill-creator>/scripts/run_eval.py \
-      --eval-set skills/evals/<skill>.json --skill-path skills/<skill> --verbose
+    env -u ANTHROPIC_API_KEY PYTHONPATH=skills/evals/runner python3 -m scripts.run_eval \
+      --eval-set skills/evals/<skill>.json --skill-path skills/<skill> --model opus --verbose \
+      > skills/evals/results/<skill>.<date>-runner2.json
 
-Results are in `results/` (table in `results/README.md`). Set `ANTHROPIC_API_KEY`
-unset, and the runner needs `PYTHONPATH` pointing at the folder that holds its `scripts/`.
+Results are in `results/` (table in `results/README.md`).
 
 ## Cost (measured 2026-11-15, offline by Claude)
 

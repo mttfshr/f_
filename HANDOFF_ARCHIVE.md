@@ -2,6 +2,14 @@
 
 Entries moved out of `HANDOFF.md` on 2026-10-31, 2026-11-04, 2026-11-08, 2026-11-10, 2026-11-11, 2026-11-12, 2026-11-13 and 2026-11-14 (three times) and 2026-11-15 (newest first, as they were). Not read at session start: grep it for history. The full pre-trim `HANDOFF.md` is also in git (commit 76c2ab8).
 
+## 2026-11-15 (later): trigger-eval baseline, all ten skills
+
+- **Fix:** with the key unset the CLI was not logged in at all; Matt ran `claude auth login` (Pro). The runner (patched `run_eval.py`, copied into this session's scratchpad) also needs `PYTHONPATH` set to the folder holding `scripts/`.
+- **Results (offline by Claude):** `skills/evals/results/` (`56aa1f2` for the two codebox skills, then the eight). Passed: bench-test-authoring, f-helpfile, maxpat-json-authoring, module-preflight 12/12; jit-gen-codebox 10/12; max-advanced-object-methodology 10/12; pfft-spectral-processing 11/12; max-patch-notation 9/12; vsynth-bpatcher 8/12; gen-tilde-codebox 7/12. 0/150 near-miss triggers.
+- **Not done:** why the misses happen (each run stops at its first tool call, so a Grep-first answer counts as a miss); no description edits yet. Proposals 2-4 from the earlier entry still not started.
+- **Later the same day:** Matt chose to fix gen~ first. A direct probe of its 5 missed prompts loaded the skill 10/10, and a rerun with `--timeout 120` gave 10/12, so no description was edited. The runner scores misses without saying why; the probe script is `probe.py` in this session's scratchpad (may be cleared).
+- **Cost:** the eval runs used about 20% of Matt's session usage. Measured per-run cost, and which levers do and don't work, are in `skills/evals/README.md`. Rule saved in memory: estimate and ask before any `claude -p` run.
+
 ## 2026-11-15: skill trigger evals; `.claude/settings.json`
 
 - **Why:** discussion of Lilian Weng's harness-engineering post (2026-07-04). Four proposals: (1) trigger evals per skill, (2) each skill edit's commit names the symptom fixed and the behavior at risk, (3) stable IDs on Quick rules, (4) a line budget for this START HERE block. Matt chose 1 first; 2-4 not started.
