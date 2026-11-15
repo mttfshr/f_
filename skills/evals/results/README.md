@@ -37,3 +37,14 @@ dual-mode f_chladni); max-patch-notation 9/12 (task-note patch 0/3, reading back
 patch description 0/3, the handoff boundmode probe 1/3); max-advanced-object-methodology
 10/12 (mc.* chain 0/3, jit.gl.mesh 0/3); pfft-spectral-processing 11/12 (bin
 frequency question 0/3). Causes not looked at.
+
+**Caution, same day (offline by Claude): the baseline is too noisy to steer edits.**
+With the description unchanged, a direct probe of gen~'s 5 missed prompts (2 runs
+each, plain `claude -p`, no timeout) loaded the skill 10/10, and a rerun of its set
+with `--timeout 120` passed 10/12 (14/21; file `-t120`) against 7/12. The
+'patchcord inlet' prompt went from 3/3 to 1/3 in the same rerun. The whole rerun took
+43 s, so the 30 s timeout is probably not the cause (inferred). The runner scores a
+run as a miss on timeout, on any first tool other than Skill/Read, or on a turn that
+ends without a tool, and it does not record which of these happened. Before editing
+any description: make the runner log the reason for each miss, and use more runs
+per query.
