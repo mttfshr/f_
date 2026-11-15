@@ -29,12 +29,13 @@ inlet 0 -> separate_pix -> outlets 1, 2, 3, 4                  r dim -> separate
 Inks, Mode, and the ink table (H, S, L, Gain per ink) -> separate_pix
 inkN_h / inkN_s / inkN_l -> hsl2rgb (in the codebox) -> ink color N
 H numbox -> [/ 360.] -> pak <- S, L numboxes; pak -> `prepend sethsl` -> swatch N          (paints it, sends nothing)
+S numbox -> [t f f] -> first `prepend saturation` -> swatch N, then pak                      (the plane's saturation)
 swatch N click -> RGBA -> [zl.slice 3] -> [t l l] -> expr H / L -> the H and L numboxes     (H via [split 0. 360.])
 ```
 
 One `jit.gl.pix` stage, float32, at the render size. Every control is an ordinary Param with its own number box, so the ink colors are saved and can be automated like any other. The hue is in degrees and wraps; the codebox divides it by 360 for `hsl2rgb`.
 
-Each row ends in a swatch you can click (Matt, 2026-11-14). The number boxes are the only state: they paint the swatch with `sethsl`, which per `swatch.maxref` redraws without output, so nothing loops; a click goes back through two `expr` boxes (hue and lightness of the standard RGB to HSL) into the H and L number boxes. The plane is hue across and lightness up, drawn at the ink's S, so a click picks hue and lightness only and S stays the number box's (Matt's look, 2026-11-14: when the click also wrote S, its white and black edges set S to 0 and grayed the plane for good). A gray has no hue, so a click on one keeps the old H. The swatches have no varname, so Vsynth presets neither save nor recall them. `sethsl` does redraw the plane at the ink's S (seen by Matt, 2026-11-14: at S = 0 it grays).
+Each row ends in a swatch you can click (Matt, 2026-11-14). The number boxes are the only state: they paint the swatch with `sethsl`, which per `swatch.maxref` redraws without output, so nothing loops; a click goes back through two `expr` boxes (hue and lightness of the standard RGB to HSL) into the H and L number boxes. The plane is hue across and lightness up, drawn at the ink's S, so a click picks hue and lightness only and S stays the number box's (Matt's look, 2026-11-14: when the click also wrote S, its white and black edges set S to 0 and grayed the plane for good). A gray has no hue, so a click on one keeps the old H. The swatches have no varname, so Vsynth presets neither save nor recall them. `sethsl` alone left the plane at saturation 1 (Matt's look, 2026-11-14), so S also goes to the swatch as `saturation`, which sets the plane.
 
 Before 2026-11-14 the inks were three `swatch` boxes with a saturation dial each, sending RGB to nine internal Params, with a load-timed bang to get the defaults out (in git history). The table replaced all of it.
 

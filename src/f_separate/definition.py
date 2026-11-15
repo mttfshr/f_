@@ -112,8 +112,11 @@ for _k, (_n, _y) in enumerate(_ROW_Y.items()):
 
 
 # ---- the swatches (Matt, 2026-11-14) ----------------------------------------------------------------------------------
-#   display: H numbox -> [/ 360.] -> pak 0; S -> pak 1; L -> pak 2; pak -> `prepend sethsl` -> swatch. `sethsl` sets the color
-#            and redraws WITHOUT output (swatch.maxref), so the loop ends there
+#   display: H numbox -> [/ 360.] -> pak 0; L -> pak 2; pak -> `prepend sethsl` -> swatch. `sethsl` sets the color
+#            and redraws WITHOUT output (swatch.maxref), so the loop ends there.
+#            S numbox -> [t f f]: first `prepend saturation` -> swatch (the plane's saturation: with `sethsl` alone the plane
+#            stayed at 1, Matt's look 2026-11-14; INFERRED that sethsl's s does not set the attribute), then pak 1.
+#            If `saturation` makes the swatch output (unverified), the click path recomputes the same H and L: no loop
 #   click:   swatch RGBA -> [zl.slice 3] -> [t l l] -> an `expr` for H and one for L (a list into expr's left inlet fills
 #            its inlets, expr.maxref) -> the numbox, which sends its Param to the pix and repaints the swatch by `sethsl`.
 #            H goes through [split 0. 360.]: for a gray (max = min) the hue expr gives -1 and the old hue is kept.
@@ -154,6 +157,7 @@ for _n, _y in _ROW_Y.items():
     px, py = 800.0, 20.0 + 200.0 * (_n - 1)
     nh, ns, nl = NUMBOX[_n]
     sw, dv, pk, ps = f"obj-raw-sw{_n}", f"obj-raw-div{_n}", f"obj-raw-pak{_n}", f"obj-raw-sethsl{_n}"
+    st, sa = f"obj-raw-ts{_n}", f"obj-raw-sat{_n}"
     zl, tr, eh, el, sp = (f"obj-raw-{k}{_n}" for k in ("zl", "tr", "eh", "el", "split"))
     _raw(sw, "swatch", None, (px, py + 90, 60, 30), ins=1, outs=2, otypes=["", "float"],
          pres=(_SW_X, _y - 2.0, _SW_W, _SW_H))
@@ -162,7 +166,12 @@ for _n, _y in _ROW_Y.items():
     _raw(ps, "newobj", "prepend sethsl", (px, py + 60, 90, 22))
     _line(nh, 0, dv, 0)
     _line(dv, 0, pk, 0)
-    _line(ns, 0, pk, 1)
+    _raw(st, "newobj", "t f f", (px + 100, py, 40, 22), outs=2, otypes=["float", "float"])
+    _raw(sa, "newobj", "prepend saturation", (px + 100, py + 60, 110, 22))
+    _line(ns, 0, st, 0)
+    _line(st, 1, sa, 0)       # right outlet first: the plane's saturation
+    _line(sa, 0, sw, 0)
+    _line(st, 0, pk, 1)       # then the selected color
     _line(nl, 0, pk, 2)
     _line(pk, 0, ps, 0)
     _line(ps, 0, sw, 0)
