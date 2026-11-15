@@ -39,3 +39,4 @@
 - **gen~ baseline (Opus, 12 runs, Matt's go):** 12/12, every should-trigger prompt hit on its first run via `anthropic-skills:gen-tilde-codebox`; near-misses went to jit-gen-codebox, maxpat-json-authoring, pfft-spectral-processing, or a plain text answer. `skills/evals/results/gen-tilde-codebox.2026-11-15-runner2.json`.
 - **Gap with the old 7/12 (inferred, not verified):** the description is unchanged, so the old misses are probably runner artifacts: 10 parallel runs whose temporary skill copies all show up in every session (observed), with a call to another run's copy scored as a miss; MCP servers loaded; a 30 s timeout. Details in `skills/evals/results/README.md`.
 - **No description edited.** gen~ needs no fix on this evidence.
+- Session end: `test_gates.py` 5/5 with Matt's go (`tests/logs/20261115-102325-offline.log`).
