@@ -1,6 +1,6 @@
 ---
 name: module-preflight
-description: Checklist to run before calling an f_ module "done done" -- ready for .specify/stable/ or packaging/release. Covers the mechanical checks (drift, test suite, launch/menu registration, helpfile sizing) and the human judgment gate (does the helpfile actually explain what the module is for). Use when asked "is this module ready," before moving a module into .specify/stable/, or before a packaging/release pass.
+description: Per-module readiness checklist for the f_ library: mechanical checks (drift, tests, menu and launcher registration, README row, bypass convention, f-reference doc, helpfile not cropped) and a judgment gate (does the helpfile say what the module is for). Use this skill whenever asked whether an f_ module is ready, done or finished, before moving a module from .specify/ to .specify/stable/, before calling a module packaging-ready, or when closing a module's last task, even if the user only says "close out f_name" or "can we ship this one". Not for library-wide release work (license, icon, Package Manager), which lives in .specify/packaging/.
 ---
 
 # f_ Module Preflight
@@ -24,6 +24,16 @@ lives in `.specify/packaging/tasks.md` -- separate and mostly Matt's own
 calls (asking Kevin, picking an icon). This skill is "is this one module
 actually finished," which that project assumes as a precondition.
 
+## Quick rules
+
+1. **Run Part 1 and expect green;** a red means not done. Fix it, don't override it.
+2. **Then do Part 2 with the module and helpfile open;** no script passes it.
+3. **The helpfile's module box must be at least the module's presentation footprint;**
+   no script checks this yet.
+4. **The digest says what the module is for,** from `docs/f-reference/f_name.md` and the
+   spec, not from the param list.
+5. **One module at a time.** A batch sweep is how the 17-helpfile content debt built up.
+
 ---
 
 ## Part 1: Mechanical checks (scriptable, no judgment)
@@ -33,7 +43,7 @@ don't override, fix it.
 
 - [ ] **Drift.** `build/py.sh build/drift.py -v f_name` -- the shipped
   patcher reproduces from `definition.py`, or the module is deliberately on
-  the never-regenerate list (`.specify/plan.md` Build system section) with a
+  the never-regenerate list (`.specify/gates.md`, row `G-masonry`) with a
   reason, or it has an `out_of_scope` entry in `tests/build/drift_baseline.json`
   with a reason mirroring an existing precedent (see `f_a_ripple`/
   `f_a_decorrelate`'s entries).

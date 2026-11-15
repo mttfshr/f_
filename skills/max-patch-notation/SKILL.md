@@ -1,11 +1,23 @@
 ---
 name: max-patch-notation
-description: Consistent notation system for describing Max/MSP patches to build by hand. Use whenever Claude is helping design, describe, or document a Max or Vsynth patch — including new patches, debugging sessions, and handoff notes. Prevents referential drift (switching between object names, concept labels, and class names) that makes patch descriptions ambiguous. Load at the start of any Max patching session.
+description: Notation for describing a Max/MSP or Vsynth patch in text so it can be built by hand: one canonical label per object, [class args @attr val] // label definitions, explicit 0-indexed `label outN → label inN` connections, codebox text inline, and a declared interface for each bpatcher. Use this skill whenever writing out a patch for someone to build or wire in Max, describing a patch in a design, debugging session, task note or handoff, or reading such a description back, even if the user only says "how do I wire this" or "sketch the patch". Not for editing .maxpat JSON directly (maxpat-json-authoring) or for the code inside a codebox (gen-tilde-codebox, jit-gen-codebox).
 ---
 
 # Max Patch Notation
 
 A minimal, unambiguous notation for describing Max/MSP patches built by hand.
+
+## Quick rules
+
+1. **One label per object, used for the whole description:** never the class name, a
+   concept name or a synonym.
+2. **Define each object as `[class args @attr val] // label`,** or `[class @name label]`
+   when it takes `@name`.
+3. **One connection per line as `label outN → label inN`,** 0-indexed, every one listed.
+4. **Order:** Objects, then Connections, then Notes.
+5. **A bpatcher at its call site gets its file path and `inN`/`outN` interface,** not its
+   internals.
+6. **Unsure of an inlet or outlet index? Say so;** don't guess.
 
 ## The Core Rule
 
@@ -157,7 +169,7 @@ When a patch spans multiple files (e.g. a bpatcher with its own source file), de
 
 ```
 [bpatcher @patcher f_hue_processor.maxpat @name hp] // hp
-; file: /Users/matt/Github/f_/patchers/f_hue_processor.maxpat
+; file: /Users/matt/Github/f_/package/patchers/f_hue_processor.maxpat
 ; in0: texture input
 ; in1: named control messages (sat_amt, bypass, hue_shift, ...)
 ; out0: texture output

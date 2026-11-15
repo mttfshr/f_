@@ -1,6 +1,6 @@
 ---
 name: bench-test-authoring
-description: How to author tier-2 test files for the Max test bench (tests/**/bench_*.py) and the module contract bench (tests/contracts/bench_modules.py) without rediscovering their harness conventions the hard way. Read before writing any new bench file. Exists because 2026-10-17's five-module batch shipped three bench files whose tests assumed mechanisms the harness does not have (per-step input swaps), and because two sibling sessions deleted each other's bench files over a layout assumption — the failures were test-authoring failures, not module failures.
+description: Harness conventions for writing tier-2 Max bench tests in the f_ repo: tests/**/bench_*.py (the codebox bench, via benchclient run/run_temporal/measure) and tests/contracts/bench_modules.py (the module contract bench). Use this skill before writing or editing any bench file, adding a BYPASS_EXPECT entry, registering a bench in benchdeps.py, or setting a bench tolerance, even if the user only says "add a bench test" or "bench this". Load it especially on these symptoms: a bench test that passes alone and fails after another file; a temporal test whose steps all look the same; a GPU-vs-NumPy mismatch that only appears at non-square sizes; cost numbers that change with the requested chain; a bypass row that fails on a param-bypass module; a module green on its own bench but broken when loaded. Also covers multi-agent bench file ownership.
 ---
 
 # Bench test authoring (tests/**/bench_*.py, tests/contracts/bench_modules.py)
@@ -8,6 +8,26 @@ description: How to author tier-2 test files for the Max test bench (tests/**/be
 **Cost asymmetry:** a bench run costs minutes and asks the owner for permission; a wrong
 assumption costs a misleading FAIL (or worse, a green that measured nothing). The harness
 conventions below are load-bearing — hold to them.
+
+## Quick rules
+
+Each rule points to the numbered convention with the evidence.
+
+1. **No per-step input swap:** `run_temporal` uploads inputs once. To test a changing
+   input, chain single-step jobs, feeding each the previous output. (1)
+2. **Pin every Param in every job,** from one `PINNED` base dict plus the case's
+   deltas; the bench keeps a Param's last value across jobs and files. (2, 3)
+3. **State the true bypass source in `BYPASS_EXPECT`** for param-bypass modules; the
+   implicit `{1: IN1}` is right only for native `@bypass`. (4)
+4. **Keep fixtures inside the outlet's encoded range,** or the test measures the
+   contract's clamp. (5)
+5. **Calibrate each tolerance to its mechanism and say which in a comment:** 1e-6 pure
+   arithmetic, ~2e-4 stacked samples, ~1e-2 huge-argument hashes. (7)
+6. **A codebox reading `dim` sees input 1's size,** so give input 1 the render size. (8)
+7. **The bench has 8 chain slots;** request `chain=8`, not more. (9)
+8. **Never delete another module's bench file;** report the conflict to the parent. (6, Layout)
+9. **Run the module contract bench before calling a builder change done:** the codebox
+   bench cannot see the shipped patcher. (last section)
 
 ## Conventions the harness has (verified 2026-10-17)
 
@@ -28,8 +48,8 @@ conventions below are load-bearing — hold to them.
    (this exact failure hit `tests/modules/tf_aniso_blur/bench_tf_aniso_blur.py` 2026-10-17).
 
 3. **The codebox compile caches nothing across jobs, but Params persist** — a fresh
-   compile resets declared defaults only for params the job names. The skill's
-   `jit-gen-codebox` "pin every Param" note covers the codebox side; this is the same rule
+   compile resets declared defaults only for params the job names. The "pin every
+   Param" note in `jit-gen-codebox/local.md` covers the codebox side; this is the same rule
    at the test-file layer: build param dicts from a single `PINNED` base dict + the case's
    deltas, not from ad-hoc dicts.
 

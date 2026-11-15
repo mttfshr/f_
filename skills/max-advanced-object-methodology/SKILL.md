@@ -1,6 +1,6 @@
 ---
 name: max-advanced-object-methodology
-description: Mandatory workflow for any Max/MSP/Gen object outside Claude's well-worn set (gen~ codeboxes, jit.gl.pix, basic UI objects). Use BEFORE writing any patch, wiring, or codebox involving an object not already covered by an existing project skill. Exists because the alternative — architecting from the reference docs' prose and debugging failures after the fact — burned an entire session on f_a_ripple's T7a (pfft~) without ever finding the root cause. Read this before touching pfft~, poly~, fft~/ifft~, mc.*, or any other object family not yet in this project's skill set.
+description: Research-first workflow for any Max/MSP/Jitter/Gen object this project has no verified skill for: read the object's help patch and Cycling '74's example patches before designing, build one verified increment at a time, and label doc-based guesses as guesses. Use this skill BEFORE writing any patch, wiring or codebox that involves such an object, even if the reference docs seem clear enough: poly~, fft~/ifft~, mc.* objects, jit.gl.* objects beyond pix, js/jsui APIs not yet used here, or any container that nests a patcher. Load it especially when several structurally different attempts at the same integration all fail the same way, when a value never reaches the inside of a nested patcher, or when a fix is about to be proposed from .maxref.xml prose alone. Objects with their own skill (gen~, jit.gl.pix, pfft~, Vsynth bpatcher UI) are covered there.
 ---
 
 # Advanced Object Methodology
@@ -26,6 +26,20 @@ patches weren't checked until explicitly requested.
 **The rule going forward, unconditionally:** for any object outside the
 small set this project already has empirical, working experience with —
 before writing a single line of integration code —
+
+## Quick rules
+
+1. **Read the help patch, its `_loadme` subpatches, and `Examples/` before designing.**
+   `find /Applications/Max.app -iname "*<object>*"` finds them all. Reference prose
+   tells you messages and arguments, not working structure. (Section 1)
+2. **Read one working example's JSON** before inventing an architecture; a convention
+   that works for `gen~` may not carry over. (Section 1)
+3. **Build one new mechanism at a time,** each with a printed, unambiguous pass/fail
+   readout: trivial pass-through first, then one hardcoded value reaching the innermost
+   point, then real processing. (Section 2)
+4. **Say when a fix comes from the docs and not from a working example.** (Section 3)
+5. **When different attempts fail identically, question the premise they share,**
+   not the details that differ. (Section 3)
 
 ## 1. Read the actual help patch and example patches, not just reference prose
 
@@ -116,10 +130,10 @@ Any object or object family without an existing empirically-tested skill
 in this project. Currently covered (do NOT need this extra research step,
 though it never hurts): `gen~` codeboxes (`gen-tilde-codebox`), `jit.gl.pix`
 codeboxes (`jit-gen-codebox`), standard Vsynth bpatcher UI objects
-(`vsynth-bpatcher`). Currently NOT covered, and genuinely uncertain even
-after a full session's attention: `pfft~` control-value routing into a
-nested `gen~` (`pfft-spectral-processing` — see that skill's "STILL
-UNRESOLVED" section). Anything else not yet touched in this project:
+(`vsynth-bpatcher`), `pfft~` spectral processing
+(`pfft-spectral-processing`: a control value reaches per-bin processing
+through `buffer~`/`index~`/`peek~`, not a nested `gen~`; why the nested
+`gen~` failed is still unknown). Anything else not yet touched in this project:
 assume it needs this research step, including objects that sound similar
 to something already covered (`poly~` is not `gen~`; `mc.*` objects are
 not their non-mc counterparts).
