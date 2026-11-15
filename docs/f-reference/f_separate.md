@@ -29,12 +29,12 @@ inlet 0 -> separate_pix -> outlets 1, 2, 3, 4                  r dim -> separate
 Inks, Mode, and the ink table (H, S, L, Gain per ink) -> separate_pix
 inkN_h / inkN_s / inkN_l -> hsl2rgb (in the codebox) -> ink color N
 H numbox -> [/ 360.] -> pak <- S, L numboxes; pak -> `prepend sethsl` -> swatch N          (paints it, sends nothing)
-swatch N click -> RGBA -> [zl.slice 3] -> [t l l l] -> expr H / S / L -> the numboxes       (H via [split 0. 360.])
+swatch N click -> RGBA -> [zl.slice 3] -> [t l l] -> expr H / L -> the H and L numboxes     (H via [split 0. 360.])
 ```
 
 One `jit.gl.pix` stage, float32, at the render size. Every control is an ordinary Param with its own number box, so the ink colors are saved and can be automated like any other. The hue is in degrees and wraps; the codebox divides it by 360 for `hsl2rgb`.
 
-Each row ends in a swatch you can click (Matt, 2026-11-14). The number boxes are the only state: they paint the swatch with `sethsl`, which per `swatch.maxref` redraws without output, so nothing loops; a click goes back through three `expr` boxes (the standard RGB to HSL) into the number boxes. A gray has no hue, so a click on one keeps the old H. The swatches have no varname, so Vsynth presets neither save nor recall them. The swatch's plane is hue across and lightness up at one saturation; whether `sethsl` also redraws the plane at the ink's S is not documented and not yet seen.
+Each row ends in a swatch you can click (Matt, 2026-11-14). The number boxes are the only state: they paint the swatch with `sethsl`, which per `swatch.maxref` redraws without output, so nothing loops; a click goes back through two `expr` boxes (hue and lightness of the standard RGB to HSL) into the H and L number boxes. The plane is hue across and lightness up, drawn at the ink's S, so a click picks hue and lightness only and S stays the number box's (Matt's look, 2026-11-14: when the click also wrote S, its white and black edges set S to 0 and grayed the plane for good). A gray has no hue, so a click on one keeps the old H. The swatches have no varname, so Vsynth presets neither save nor recall them. `sethsl` does redraw the plane at the ink's S (seen by Matt, 2026-11-14: at S = 0 it grays).
 
 Before 2026-11-14 the inks were three `swatch` boxes with a saturation dial each, sending RGB to nine internal Params, with a load-timed bang to get the defaults out (in git history). The table replaced all of it.
 
@@ -47,7 +47,7 @@ Before 2026-11-14 the inks were three `swatch` boxes with a saturation dial each
 | `n_inks` | int | 1-3 | 3 | How many inks are active. Unused plates are exactly black |
 | `sep_mode` | menu | Unmix / Nearest / Project | Unmix | How each pixel's coverage is decided (below) |
 | `gain1` - `gain3` | float | 0-2 | 1 | Coverage gain per ink, before the clamp. Above 1 saturates a plate faster but never exceeds its ink color |
-| `ink1_h` - `ink3_h` | float | 0-360 | 15; 180; 267 | Ink hue in degrees (0 red, 120 green, 240 blue). Also set by clicking the row's swatch, as are S and L |
+| `ink1_h` - `ink3_h` | float | 0-360 | 15; 180; 267 | Ink hue in degrees (0 red, 120 green, 240 blue). Also set by clicking the row's swatch, as is L |
 | `ink1_s` - `ink3_s` | float | 0-1 | 1 | Ink saturation (0 is a gray) |
 | `ink1_l` - `ink3_l` | float | 0-1 | 0.5; 0.3; 0.5 | Ink lightness (0 black, 0.5 the full color, 1 white). The defaults are the RGB inks (1, 0.25, 0); (0, 0.6, 0.6); (0.45, 0, 1) |
 | `bypass` | toggle | 0/1 | 0 | The source on all four outlets. Toggle only: the message route has no `bypass` selector |

@@ -2357,19 +2357,18 @@
 					"id": "obj-raw-tr1",
 					"maxclass": "newobj",
 					"numinlets": 1,
-					"numoutlets": 3,
+					"numoutlets": 2,
 					"outlettype": [
-						"",
 						"",
 						""
 					],
 					"patching_rect": [
 						350.0,
 						702.0,
-						60.0,
+						50.0,
 						22.0
 					],
-					"text": "t l l l"
+					"text": "t l l"
 				}
 			},
 			{
@@ -2407,24 +2406,6 @@
 						22.0
 					],
 					"text": "split 0. 360."
-				}
-			},
-			{
-				"box": {
-					"id": "obj-raw-es1",
-					"maxclass": "newobj",
-					"numinlets": 3,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						550.0,
-						702.0,
-						300.0,
-						22.0
-					],
-					"text": "expr (max(max($f1\\, $f2)\\, $f3) - min(min($f1\\, $f2)\\, $f3)) / (1. - abs(max(max($f1\\, $f2)\\, $f3) + min(min($f1\\, $f2)\\, $f3) - 1.) + ((max(max($f1\\, $f2)\\, $f3) - min(min($f1\\, $f2)\\, $f3)) == 0.))"
 				}
 			},
 			{
@@ -2548,19 +2529,18 @@
 					"id": "obj-raw-tr2",
 					"maxclass": "newobj",
 					"numinlets": 1,
-					"numoutlets": 3,
+					"numoutlets": 2,
 					"outlettype": [
-						"",
 						"",
 						""
 					],
 					"patching_rect": [
 						350.0,
 						902.0,
-						60.0,
+						50.0,
 						22.0
 					],
-					"text": "t l l l"
+					"text": "t l l"
 				}
 			},
 			{
@@ -2598,24 +2578,6 @@
 						22.0
 					],
 					"text": "split 0. 360."
-				}
-			},
-			{
-				"box": {
-					"id": "obj-raw-es2",
-					"maxclass": "newobj",
-					"numinlets": 3,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						550.0,
-						902.0,
-						300.0,
-						22.0
-					],
-					"text": "expr (max(max($f1\\, $f2)\\, $f3) - min(min($f1\\, $f2)\\, $f3)) / (1. - abs(max(max($f1\\, $f2)\\, $f3) + min(min($f1\\, $f2)\\, $f3) - 1.) + ((max(max($f1\\, $f2)\\, $f3) - min(min($f1\\, $f2)\\, $f3)) == 0.))"
 				}
 			},
 			{
@@ -2739,19 +2701,18 @@
 					"id": "obj-raw-tr3",
 					"maxclass": "newobj",
 					"numinlets": 1,
-					"numoutlets": 3,
+					"numoutlets": 2,
 					"outlettype": [
-						"",
 						"",
 						""
 					],
 					"patching_rect": [
 						350.0,
 						1102.0,
-						60.0,
+						50.0,
 						22.0
 					],
-					"text": "t l l l"
+					"text": "t l l"
 				}
 			},
 			{
@@ -2789,24 +2750,6 @@
 						22.0
 					],
 					"text": "split 0. 360."
-				}
-			},
-			{
-				"box": {
-					"id": "obj-raw-es3",
-					"maxclass": "newobj",
-					"numinlets": 3,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						550.0,
-						1102.0,
-						300.0,
-						22.0
-					],
-					"text": "expr (max(max($f1\\, $f2)\\, $f3) - min(min($f1\\, $f2)\\, $f3)) / (1. - abs(max(max($f1\\, $f2)\\, $f3) + min(min($f1\\, $f2)\\, $f3) - 1.) + ((max(max($f1\\, $f2)\\, $f3) - min(min($f1\\, $f2)\\, $f3)) == 0.))"
 				}
 			},
 			{
@@ -3625,7 +3568,7 @@
 				"patchline": {
 					"source": [
 						"obj-raw-tr1",
-						2
+						1
 					],
 					"destination": [
 						"obj-raw-eh1",
@@ -3653,30 +3596,6 @@
 					],
 					"destination": [
 						"obj-26",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-raw-tr1",
-						1
-					],
-					"destination": [
-						"obj-raw-es1",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-raw-es1",
-						0
-					],
-					"destination": [
-						"obj-29",
 						0
 					]
 				}
@@ -3805,7 +3724,7 @@
 				"patchline": {
 					"source": [
 						"obj-raw-tr2",
-						2
+						1
 					],
 					"destination": [
 						"obj-raw-eh2",
@@ -3833,30 +3752,6 @@
 					],
 					"destination": [
 						"obj-38",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-raw-tr2",
-						1
-					],
-					"destination": [
-						"obj-raw-es2",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-raw-es2",
-						0
-					],
-					"destination": [
-						"obj-41",
 						0
 					]
 				}
@@ -3985,7 +3880,7 @@
 				"patchline": {
 					"source": [
 						"obj-raw-tr3",
-						2
+						1
 					],
 					"destination": [
 						"obj-raw-eh3",
@@ -4013,30 +3908,6 @@
 					],
 					"destination": [
 						"obj-50",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-raw-tr3",
-						1
-					],
-					"destination": [
-						"obj-raw-es3",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-raw-es3",
-						0
-					],
-					"destination": [
-						"obj-53",
 						0
 					]
 				}

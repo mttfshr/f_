@@ -9,7 +9,9 @@ tasks: .specify/stable/f_separate/{spec,plan,tasks}.md. Mirror: tests/modules/se
 Colors (Matt, 2026-11-14): each ink is three Params, H (degrees), S and L, number boxes in the ink table; the codebox turns
 them into RGB with hsl2rgb. This replaced the T009 swatches, their saturation dials and the load-timed bang (in git history).
 Each row ends in a swatch (Matt, 2026-11-14: "make it clickable too"): the number boxes paint it with `sethsl`, which sends
-nothing, and a click converts the swatch's RGBA back to H, S, L in `expr` boxes and sets the number boxes. The number boxes
+nothing, and a click converts the swatch's RGBA back to H and L in `expr` boxes and sets those number boxes. S is the number
+box's alone: the plane shows one saturation, so a click cannot choose it, and its white and black edges (S = 0) used to
+write S = 0 and gray the plane for good (Matt's look, 2026-11-14). The number boxes
 stay the only state: the swatches have no varname, so Vsynth's pattrstorage neither saves nor recalls them.
 
 The panel (Matt, 2026-11-14: "the same tabular layout as we did for halftone"): the Mode menu and the Inks count in the
@@ -112,9 +114,10 @@ for _k, (_n, _y) in enumerate(_ROW_Y.items()):
 # ---- the swatches (Matt, 2026-11-14) ----------------------------------------------------------------------------------
 #   display: H numbox -> [/ 360.] -> pak 0; S -> pak 1; L -> pak 2; pak -> `prepend sethsl` -> swatch. `sethsl` sets the color
 #            and redraws WITHOUT output (swatch.maxref), so the loop ends there
-#   click:   swatch RGBA -> [zl.slice 3] -> [t l l l] -> one `expr` per component (a list into expr's left inlet fills its
-#            inlets, expr.maxref) -> the numbox, which sends its Param to the pix and repaints the swatch by `sethsl`.
-#            H goes through [split 0. 360.]: for a gray (max = min) the hue expr gives -1 and the old hue is kept
+#   click:   swatch RGBA -> [zl.slice 3] -> [t l l] -> an `expr` for H and one for L (a list into expr's left inlet fills
+#            its inlets, expr.maxref) -> the numbox, which sends its Param to the pix and repaints the swatch by `sethsl`.
+#            H goes through [split 0. 360.]: for a gray (max = min) the hue expr gives -1 and the old hue is kept.
+#            No S path (Matt, 2026-11-14): the plane is drawn at the ink's S, so a click only picks hue and lightness
 #   The expressions are the standard RGB to HSL (colorsys); max and min are written out in each (expr has no variables)
 # Numbox ids are the builder's, checked against the built patcher (by varname) after each build.
 NUMBOX = {1: ("obj-26", "obj-29", "obj-32"), 2: ("obj-38", "obj-41", "obj-44"), 3: ("obj-50", "obj-53", "obj-56")}
@@ -128,7 +131,6 @@ _ISG = f"(1. - {_ISR}) * ({_M} == $f2)"
 _ISB = f"(1. - {_ISR}) * (1. - ({_M} == $f2))"
 EXPR_H = (f"expr ({_D} > 0.) * 60. * ({_ISR} * ({_XR} + 6. * ({_XR} < 0.)) + {_ISG} * (($f3 - $f1) / {_DZ} + 2.) "
           f"+ {_ISB} * (($f1 - $f2) / {_DZ} + 4.)) - ({_D} == 0.)")
-EXPR_S = f"expr {_D} / (1. - abs({_M} + {_m} - 1.) + ({_D} == 0.))"
 EXPR_L = f"expr ({_M} + {_m}) / 2."
 RAW_LINES = []
 
@@ -152,7 +154,7 @@ for _n, _y in _ROW_Y.items():
     px, py = 800.0, 20.0 + 200.0 * (_n - 1)
     nh, ns, nl = NUMBOX[_n]
     sw, dv, pk, ps = f"obj-raw-sw{_n}", f"obj-raw-div{_n}", f"obj-raw-pak{_n}", f"obj-raw-sethsl{_n}"
-    zl, tr, eh, es, el, sp = (f"obj-raw-{k}{_n}" for k in ("zl", "tr", "eh", "es", "el", "split"))
+    zl, tr, eh, el, sp = (f"obj-raw-{k}{_n}" for k in ("zl", "tr", "eh", "el", "split"))
     _raw(sw, "swatch", None, (px, py + 90, 60, 30), ins=1, outs=2, otypes=["", "float"],
          pres=(_SW_X, _y - 2.0, _SW_W, _SW_H))
     _raw(dv, "newobj", "/ 360.", (px, py, 50, 22), ins=2, otypes=["float"])
@@ -165,18 +167,15 @@ for _n, _y in _ROW_Y.items():
     _line(pk, 0, ps, 0)
     _line(ps, 0, sw, 0)
     _raw(zl, "newobj", "zl.slice 3", (px, py + 130, 70, 22), ins=2, outs=2, otypes=["", ""])
-    _raw(tr, "newobj", "t l l l", (px, py + 160, 60, 22), outs=3, otypes=["", "", ""])
+    _raw(tr, "newobj", "t l l", (px, py + 160, 50, 22), outs=2, otypes=["", ""])
     _raw(eh, "newobj", EXPR_H, (px + 200, py + 100, 300, 22), ins=3)
     _raw(sp, "newobj", "split 0. 360.", (px + 200, py + 130, 90, 22), ins=3, outs=2, otypes=["float", "float"])
-    _raw(es, "newobj", EXPR_S, (px + 200, py + 160, 300, 22), ins=3)
     _raw(el, "newobj", EXPR_L, (px + 200, py + 190, 300, 22), ins=3)
     _line(sw, 0, zl, 0)
     _line(zl, 0, tr, 0)
-    _line(tr, 2, eh, 0)
+    _line(tr, 1, eh, 0)
     _line(eh, 0, sp, 0)
     _line(sp, 0, nh, 0)
-    _line(tr, 1, es, 0)
-    _line(es, 0, ns, 0)
     _line(tr, 0, el, 0)
     _line(el, 0, nl, 0)
 
