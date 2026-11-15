@@ -19,4 +19,5 @@ default, so 36 runs per skill; ask Matt first):
     python3 <skill-creator>/scripts/run_eval.py \
       --eval-set skills/evals/<skill>.json --skill-path skills/<skill> --verbose
 
-Results are not recorded here yet; the first baseline run is owed.
+Results are in `results/` (table in `results/README.md`). Set `ANTHROPIC_API_KEY`
+unset, and the runner needs `PYTHONPATH` pointing at the folder that holds its `scripts/`.
