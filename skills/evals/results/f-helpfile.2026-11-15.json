@@ -1,0 +1,107 @@
+{
+  "skill_name": "f-helpfile",
+  "description": "Layout, font, object and text conventions for the f_ library's .maxhelp files in package/help/: the two-column flat pane, canonical rects and varnames, the External Control Messages and References blocks, processor vs generator signal flow, the vs_wfg_s LFO wiring, and sizing the module bpatcher to its real footprint. Use this skill whenever creating, editing, fixing or reviewing an f_ helpfile, or writing the docs/f-reference/f_name.md it draws from, even if the user only says \"write the help for f_name\" or \"the helpfile looks wrong\". Load it especially when a module's UI is cropped in its helpfile, a time_s LFO does nothing, or a helpfile's text says what a module is but not what it is for. For the .maxpat JSON mechanics underneath, also use maxpat-json-authoring.",
+  "results": [
+    {
+      "query": "the f_halftone helpfile looks wrong, the module UI is cut off at the bottom",
+      "should_trigger": true,
+      "trigger_rate": 1.0,
+      "triggers": 3,
+      "runs": 3,
+      "pass": true
+    },
+    {
+      "query": "the time_s LFO in the f_wave_field help patch does nothing",
+      "should_trigger": true,
+      "trigger_rate": 1.0,
+      "triggers": 3,
+      "runs": 3,
+      "pass": true
+    },
+    {
+      "query": "write the help for f_vf_erode",
+      "should_trigger": true,
+      "trigger_rate": 1.0,
+      "triggers": 3,
+      "runs": 3,
+      "pass": true
+    },
+    {
+      "query": "write docs/f-reference/f_engrave.md so the helpfile can be built from it",
+      "should_trigger": true,
+      "trigger_rate": 1.0,
+      "triggers": 3,
+      "runs": 3,
+      "pass": true
+    },
+    {
+      "query": "review package/help/f_poincare.maxhelp before I call it done",
+      "should_trigger": true,
+      "trigger_rate": 1.0,
+      "triggers": 3,
+      "runs": 3,
+      "pass": true
+    },
+    {
+      "query": "the helpfile text says what f_separate is but not what you'd use it for \u2014 fix it",
+      "should_trigger": true,
+      "trigger_rate": 1.0,
+      "triggers": 3,
+      "runs": 3,
+      "pass": true
+    },
+    {
+      "query": "add the External Control Messages block to f_wc's help",
+      "should_trigger": true,
+      "trigger_rate": 1.0,
+      "triggers": 3,
+      "runs": 3,
+      "pass": true
+    },
+    {
+      "query": "write the README Patches row for f_halftone",
+      "should_trigger": false,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 3,
+      "pass": true
+    },
+    {
+      "query": "generate the f_Launch launcher patcher",
+      "should_trigger": false,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 3,
+      "pass": true
+    },
+    {
+      "query": "is f_vf_erode ready to move to stable",
+      "should_trigger": false,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 3,
+      "pass": true
+    },
+    {
+      "query": "edit the demo patch f_demo_halftone.maxpat to add a second instance",
+      "should_trigger": false,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 3,
+      "pass": true
+    },
+    {
+      "query": "document the vs_black pattern in docs/vsynth-reference/patterns.md",
+      "should_trigger": false,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 3,
+      "pass": true
+    }
+  ],
+  "summary": {
+    "total": 12,
+    "passed": 12,
+    "failed": 0
+  }
+}

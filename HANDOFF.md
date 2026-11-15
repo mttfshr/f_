@@ -22,7 +22,7 @@
 - `f_weave` name (keeping `weave` for now); `f_ks` docs (T040).
 - `f_vf_erode` open, not blocking: the cost at a 1920 x 3840 atlas is unmeasured; the menu category is provisional (`G-menu`).
 - `f_vf_fluid` fails the contract bench as a whole on its frame size (bypassed frame 640 x 640 against an expected 512 x 512): update the expectation or fix the module (Matt's call).
-- **Skill trigger evals (latest entry below):** sets written for all ten skills; the first baseline run (jit-gen-codebox, gen-tilde-codebox) is owed, with `ANTHROPIC_API_KEY` unset so it runs on Matt's Pro account.
+- **Skill trigger evals (latest entry below):** baseline for all ten recorded (`skills/evals/results/README.md`). No near-miss ever triggers; under-triggering in gen-tilde-codebox (9/21) and vsynth-bpatcher (9/21) first, then max-patch-notation, max-advanced-object-methodology. Next: Matt picks which description to fix first.
 - **Skills, skill-creator pass (2026-11-15):** group 1 done (bench-test-authoring, max-advanced-object-methodology, module-preflight, max-patch-notation: symptom-led description, Quick rules, stale pointers fixed); group 2 done (pfft-spectral-processing, f-helpfile); vsynth-bpatcher split (284-line SKILL.md + 7 references/, stale menu table, `boundmode` note, `.specify` layout and test paths fixed). All ten uploaded and stamped by Matt 2026-11-15 (`check.sh`: all current); `check.sh` now also flags descriptions over 1024 chars or with < >.
 - Skills: written 2026-11-14 (night), uploaded and stamped by Matt the same night: `skills/jit-gen-codebox/SKILL.md` (call sites of big functions count toward the GL3 "too many captures" budget; `Param shape`; the sin hash vs the mirror; `exp(-(a + b))`) and `skills/vsynth-bpatcher/SKILL.md` (the `vs_black` wording: 1x1, does not trigger a render; relaunch Max for new package files; `package/media/` and the `static` key). `docs/vsynth-reference/patterns.md` `vs_black` wording fixed too.
 - `f_vf_seeds` cost at 1080p is unmeasured; optional cap on the `f_vf_advect` Trail dial.
@@ -30,6 +30,13 @@
 **Process:** discuss design before code; one phase per turn. **Benches (Matt, 2026-11-10):** run one after a NEW codebox step, then plan benches once per major feature evolution (ask once, fold the commit into that ask); no bench for dial, panel, docs or helpfile changes; offline tier-1, contract and drift tests are free to run as you go. The plain Bash tool runs on the Mac. numpy scripts: `uv run --no-project --with numpy python3 script.py` (system `python3` and `build/py.sh` have no numpy); the benches go through `tests/bench.sh -q <file>`; if it says the bench is not reachable, `uv run --no-project --with numpy python3 tests/lib/benchclient.py health` reopens a wedged one. `BENCH_MODULES=<module>` does not narrow the contract bench's printout (it lists all modules). `sed -i` needs an extension on this Mac, so edit with Python. `test_gates.py` is run with Matt's go before the last commit of a session. Do not mention or follow up on demo `.maxpat` files Matt edits (Matt, 2026-11-01); keep them out of commits. `scratch/` is gitignored (local). Helpfiles: the `f-helpfile` skill, model on `package/help/f_vf_stamp.maxhelp`. Hand-authored `.maxpat` JSON is fine only for bpatcher-composition scratch patches (`skills/vsynth-bpatcher`).
 
 **End of session:** update this block and the `.specify/gates.md` rows you touched. Keep the new entry under about 15 lines; narrative goes in the commit message.
+
+
+## 2026-11-15 (later): trigger-eval baseline, all ten skills
+
+- **Fix:** with the key unset the CLI was not logged in at all; Matt ran `claude auth login` (Pro). The runner (patched `run_eval.py`, copied into this session's scratchpad) also needs `PYTHONPATH` set to the folder holding `scripts/`.
+- **Results (offline by Claude):** `skills/evals/results/` (`56aa1f2` for the two codebox skills, then the eight). Passed: bench-test-authoring, f-helpfile, maxpat-json-authoring, module-preflight 12/12; jit-gen-codebox 10/12; max-advanced-object-methodology 10/12; pfft-spectral-processing 11/12; max-patch-notation 9/12; vsynth-bpatcher 8/12; gen-tilde-codebox 7/12. 0/150 near-miss triggers.
+- **Not done:** why the misses happen (each run stops at its first tool call, so a Grep-first answer counts as a miss); no description edits yet. Proposals 2-4 from the earlier entry still not started.
 
 
 ## 2026-11-15: skill trigger evals; `.claude/settings.json`

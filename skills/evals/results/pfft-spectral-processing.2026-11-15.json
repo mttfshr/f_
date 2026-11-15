@@ -1,0 +1,107 @@
+{
+  "skill_name": "pfft-spectral-processing",
+  "description": "Verified patterns for spectral (FFT-domain) audio processing with pfft~ in Max/MSP, from the f_a_ modules (f_a_ripple, f_a_decorrelate): getting a live control value into per-bin processing with buffer~/index~ filled by a message-rate uzi/expr/peek~ sweep, the external-file requirement for pfft~ subpatches, fftin~/fftout~ arguments, bin frequency, and AM without cartopol~. Use this skill whenever writing, reviewing or debugging a pfft~ subpatch or any spectral audio effect in Max, even if the user only says \"FFT\", \"spectral\", \"per-bin\" or \"phase vocoder\". Load it especially on these symptoms: a control value or Param that has no effect inside pfft~; a gen~ nested in pfft~ that compiles but ignores its messages; \"pfft~ no patcher\" or \"bad number\" on load; a pfft~ box that loses its inlets after a save; a gen~ plus snapshot~ fed by uzi that skips or averages values. For gen~ code itself see gen-tilde-codebox.",
+  "results": [
+    {
+      "query": "build a spectral freeze in Max with pfft~",
+      "should_trigger": true,
+      "trigger_rate": 1.0,
+      "triggers": 3,
+      "runs": 3,
+      "pass": true
+    },
+    {
+      "query": "'pfft~ no patcher' on load, my subpatch is embedded",
+      "should_trigger": true,
+      "trigger_rate": 1.0,
+      "triggers": 3,
+      "runs": 3,
+      "pass": true
+    },
+    {
+      "query": "a Param I send has no effect inside my pfft~ subpatch",
+      "should_trigger": true,
+      "trigger_rate": 1.0,
+      "triggers": 3,
+      "runs": 3,
+      "pass": true
+    },
+    {
+      "query": "how do I get a per-bin gain curve into a phase vocoder, it should follow a live dial",
+      "should_trigger": true,
+      "trigger_rate": 0.6666666666666666,
+      "triggers": 2,
+      "runs": 3,
+      "pass": true
+    },
+    {
+      "query": "f_a_ripple: add a depth control to the per-bin AM",
+      "should_trigger": true,
+      "trigger_rate": 0.6666666666666666,
+      "triggers": 2,
+      "runs": 3,
+      "pass": true
+    },
+    {
+      "query": "my pfft~ box lost its inlets after I saved",
+      "should_trigger": true,
+      "trigger_rate": 1.0,
+      "triggers": 3,
+      "runs": 3,
+      "pass": true
+    },
+    {
+      "query": "write a gen~ codebox for an FIR filter",
+      "should_trigger": false,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 3,
+      "pass": true
+    },
+    {
+      "query": "FFT of an image in jit.gl.pix for a blur",
+      "should_trigger": false,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 3,
+      "pass": true
+    },
+    {
+      "query": "compute the spectrum in numpy for the f_wave_field mirror test",
+      "should_trigger": false,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 3,
+      "pass": true
+    },
+    {
+      "query": "fft~ and ifft~ without pfft~, we have no notes on them, how do I start",
+      "should_trigger": false,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 3,
+      "pass": true
+    },
+    {
+      "query": "what's the frequency of bin k with fftin~ at 2048 overlap 4",
+      "should_trigger": true,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 3,
+      "pass": false
+    },
+    {
+      "query": "decorrelate stereo with allpass filters in gen~",
+      "should_trigger": false,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 3,
+      "pass": true
+    }
+  ],
+  "summary": {
+    "total": 12,
+    "passed": 11,
+    "failed": 1
+  }
+}
