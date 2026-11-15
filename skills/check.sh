@@ -49,7 +49,16 @@ if [ ! -f "$MANIFEST" ]; then
   exit 1
 fi
 
-drift=0
+# claude.ai upload rules: description at most 1024 characters, no < or >.
+bad=0
+for s in $(skills); do
+  d=$(awk '/^description: /{sub(/^description: /,""); print; exit}' "$s/SKILL.md")
+  n=$(printf '%s' "$d" | wc -m | tr -d ' ')
+  if [ "$n" -gt 1024 ]; then printf "INVALID %-33s description is %s chars (max 1024)\n" "$s" "$n"; bad=1; fi
+  case "$d" in *"<"*|*">"*) printf "INVALID %-33s description contains < or > (read as an XML tag)\n" "$s"; bad=1;; esac
+done
+
+drift=$bad
 for s in $(skills); do
   want=$(awk -v s="\`$s\`" -F'|' '$2 ~ s {gsub(/ /,"",$3); print $3}' "$MANIFEST")
   got=$(hash_of "$s")
