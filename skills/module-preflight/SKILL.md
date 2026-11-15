@@ -62,7 +62,8 @@ don't override, fix it.
   a codebox `Param bypass_gate` mixing to the kind-appropriate neutral
   (source for textures, 0.5/0.5 for vecfields) -- never the native
   `@bypass`, which skips the shader and silently flips secondary outlets.
-  See `skills/vsynth-bpatcher/SKILL.md` "Native bypass caveat."
+  See `skills/vsynth-bpatcher/references/bypass-and-control.md`
+  "Native bypass caveat."
 - [ ] **`docs/f-reference/f_name.md` exists** and matches the module's
   current, actual, shipped state -- not a stale draft from an earlier
   design. This is the upstream synthesis the helpfile draws from

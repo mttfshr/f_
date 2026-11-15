@@ -1,142 +1,45 @@
 ---
 name: vsynth-bpatcher
-description: Conventions and checklist for building f_ Vsynth bpatchers in Max. Use when creating or editing a patcher in /Users/matt/Github/f_/package/patchers/. Covers file structure, signal flow pattern, parameter wiring, UI styling, codebox writing workflow, and the required objects every patcher must have.
+description: Conventions for building and changing f_ modules, the Vsynth bpatchers in /Users/matt/Github/f_/package/patchers/ built from src/<module>/definition.py by build/build_patcher.py. Use this skill whenever creating a module, changing a shipped patcher or its definition.py, choosing an archetype (processor or dual-mode generator), adding a texture inlet, wiring params, dials or bypass, naming a control, adding a module to the f_modules menu, fixing drift, or making a scratch patch in Vsynth, even if the user only says "new module", "add a dial", "wire this up" or "rebuild f_name". Load it especially on these symptoms: a module that renders nothing or flips white/black when unconnected; bypass that leaves outlet 2 flipped or wrong; "name X_pix already in use" with two instances; "patchcord source not found" or "type is not a sampler" on load; a hand edit in Max lost on rebuild; a generator with a full -1 field from an empty vecfield inlet. For the code inside the pix see jit-gen-codebox; for .maxpat JSON text see maxpat-json-authoring.
 ---
 
 # Vsynth Bpatcher Skill
 
-Conventions for building `f_` utility bpatchers — visual processing modules for [Vsynth](https://www.kevinkripper.com/vsynth) in Max 9.
+Conventions for building `f_` modules — visual processing bpatchers for [Vsynth](https://www.kevinkripper.com/vsynth) in Max 9.
 
 **Repo:** `/Users/matt/Github/f_`
 **Vsynth package:** `/Users/matt/Documents/Max 9/Packages/Vsynth`
 
-Patches are generated from definition files via `build/build_patcher.py` — not hand-built from a template. The schema for definition files is in `build/spec.md`. This SKILL.md is the authoritative source of structural conventions; individual patcher files are outputs, not references. **`definition.py` is the source of truth: if a patcher is changed by hand in Max, the change must be written back into its `definition.py` (extending the schema if it can't express it yet) so a rebuild reproduces it.** `build/py.sh build/drift.py -v <module>` shows how a patcher differs from its definition without writing anything, and `tests/build/test_drift.py` fails on drift not listed in `tests/build/drift_baseline.json` (a list that only shrinks). **Hand-tuned presentation state** (a compact dial, a moved jsui, a recoloured label) goes into the definition's `patcher["overrides"]` block, written by `build/py.sh build/capture.py src/<m>/definition.py` (`--dry-run` to look, `--keys` to list the element keys such as `gain.ctl`, `panel`, `signal_type`). Capture takes presentation properties only and refuses, with the reason printed, label text, hints, ranges, `varname` and `param_connect`: the definition owns the first three, and for the last two the builder is ahead of the patch, so regenerate instead of freezing it. See `build/spec.md`, "Overrides".
+Patchers are generated from `src/<module>/definition.py` by `build/build_patcher.py` (schema: `build/spec.md`); patcher files are outputs, not references. **`definition.py` is the source of truth:** a change made by hand in Max is written back into it, and hand-tuned presentation state goes in its `overrides` block via `build/capture.py`. Details in `references/builder.md`.
 
-The repo splits build scripts into two directories: `build/` is the general, reusable build system (`build_patcher.py`, `extract_params.py`, `generate_helpfiles.py`, `spec.md`) meant to be presentable to other Vsynth module authors. Interface wiring (every control reaches the pix Param it claims to, every Param is driven and read) is checked offline by `tests/contracts/test_module_contracts.py`, which replaced the old `audit_interface.py`; `tools/` holds only the `f_modules` menu-maintenance scripts, which are slated to be replaced by a generator. When writing a new general-purpose build utility, it belongs in `build/`. A surgical one-time fix for a single patcher is run from `scratch/` and not kept: once it has run, git history is the record.
+## Quick rules
 
----
+1. **Change `definition.py`, then rebuild;** never leave a hand edit only in the patcher. `build/py.sh build/drift.py -v f_x` shows drift. (builder.md)
+2. **Codebox first, numbers before eyes:** write `src/f_name/codebox_<stage>.gen`, pass tiers 1-2 (mirror, bench), then build the module directly. No scratch-patch stage. (Codebox Writing Workflow)
+3. **Pick the archetype:** dual-mode generator if the module can make anything on its own, processor only if it is meaningless without input. (Two Patcher Archetypes)
+4. **A generator needs `r draw` → pix and a fixed output size** (`@adapt 0` plus `render_dim`); `vs_black` is 1x1 and triggers nothing. (Dual-Mode Generator)
+5. **Every optional texture inlet gets its own `vs_inState`.** An empty vecfield inlet reads as a full -1 field: gate it. (Optional Texture Modulation Inlets)
+6. **Name the pix `#0_<prefix>_pix`,** or two instances collide. (Checklist)
+7. **Bypass is a passthrough on every outlet,** through `bypass_mode: "param"` and `Param bypass_gate`; native `@bypass` flips outlets 2+. A new param-bypass module extends `BYPASS_EXPECT`. (bypass-and-control.md)
+8. **Two names only for blend roles:** `gain` (effect intensity, unbounded) and `mix` (0-100% numbox, codebox Param `mix_pct`). (parameters-and-ui.md)
+9. **A correctness setting gets no panel slot:** `"ui": False`. (parameters-and-ui.md)
+10. **Add to the menu in `src/f_modules/menu.py` and regenerate;** never hand-edit `f_modules.maxpat` or `f_addmod.js`. (f-modules-menu.md)
+11. **Relaunch Max before looking at a new patcher, JS or media file.** (project-layout.md)
+12. **After changing a shipped bpatcher,** run the offline contract test and the module contract bench (ask first). (Codebox Writing Workflow)
 
-## Vsynth Reference Documentation
+## Reference files
 
-Systematic analysis of Vsynth internals is documented in the f_ repo:
+Read the one the task needs; SKILL.md has the workflow and the core structure.
 
-```
-/Users/matt/Github/f_/docs/vsynth-reference/
-  module-inventory.md   — every Vsynth module: tier, inlets/outlets, notes
-  patterns.md           — Kevin's recurring architectural patterns
-  vocabulary.md         — named abstractions, sends/receives, conventions
-```
-
-Consult these before designing a new f_ patch: capability map (what Vsynth already provides), pattern library (how Kevin solves common problems), vocabulary (what specific terms and objects mean).
-
----
-
-## File Locations
-
-```
-/Users/matt/Github/f_/package/patchers/   — production f_ bpatchers (version controlled)
-/Users/matt/Vsynth/patterns/              — experiments and signal flow scratch (not version controlled)
-```
-
-`patterns/` is where you develop and understand a signal flow. Once stable and reusable, it becomes an `f_` bpatcher in `package/patchers/`. Never put one-off performance files or experiments in the repo.
-
-### Scratch patch GL context requirement
-
-**Scratch patches are now the exception (amended 2026-10-26, Matt).** A module is built
-directly from its definition once tiers 1–2 pass and is judged on the shipped bpatcher.
-Use a scratch patch only to investigate something that is not a module yet (an unfamiliar
-Max object, a Vsynth integration question, a comparison of existing modules). The rest of
-this section and the next two apply when you do.
-
-Scratch patches that use any `vsynth`-context GL object (`jit.gl.pix`, `jit.gl.asyncread`, `jit.gl.texture`, `jit.gl.slab`, etc.) require the **`vs_render` bpatcher** to be present and running — not the bare `vs_render` object. The bpatcher initializes the full Vsynth GL context including `jit.gl.render`, context naming, and qmetro. Without it, GL objects silently fail or output black.
-
-Always include in scratch patches:
-- `vs_render` bpatcher (from Vsynth package, `patchers/vs_render.maxpat`)
-- A toggle wired to its inlet to start the render clock
-
-### Scratch patch starting point: `scratch_template.maxpat`
-
-`/Users/matt/Vsynth/patterns/scratch_template.maxpat` is the canonical starting
-shell for new scratch work. Clone it (copy + rename) rather than building a
-scratch patch from scratch each time, and rather than Claude generating raw
-`.maxpat` JSON for a new scratch shell — Claude has no verified template for
-hand-building a gen-subpatcher-with-codebox from inference, and getting that
-JSON subtly wrong (inlet/outlet ordering, numinlets mismatches) costs more
-debugging time than it saves. Matt builds/clones scratch shells in Max
-directly; Claude provides codebox text to paste in (see "Codebox Writing
-Workflow" above). When Matt asks, Claude may instead write the codebox straight into a
-cloned template's embedded gen patcher, copying the schema from a shipped module with the
-same outlet count (`f_chladni` for three) and verifying the structure offline (done for
-`f_quasi` 2026-10-26); that is Matt's call, not the default.
-
-Contents of the template:
-- `vs_modules` (module menu, for spawning test/source bpatchers) and
-  `vs_render` (GL context — required, see above)
-- `vs_wfg_3` pre-wired into `jit.gl.pix` `in1`, as a default test source
-- A two-inlet `jit.gl.pix` containing a gen subpatcher with `in 1`, `in 2`,
-  a `codebox` object (default content `out1 = in1 + in2;`, replace this),
-  and `out 1` — `in 1`→codebox inlet 0, `in 2`→codebox inlet 1, codebox
-  out→`out 1`
-- `vs_output` wired to the pix's outlet, for final display
-
-**To adapt for a new module's scratch session:**
-- Add/remove `in N` objects in the gen subpatcher and `inN` references in
-  the codebox to match the inlet count needed (see "Inlet count on
-  jit.gl.pix" in the jit-gen-codebox skill for the three-things-must-be-true
-  rule)
-- Add a second `out N` + `outN` codebox assignment if a debug/isolated
-  outlet is needed (e.g. f_magic_eye's period-field visualization)
-- Swap or add source bpatchers (`vs_wfg_3`, `vs_noise_3`, `f_stipple`,
-  `f_grain`, etc.) feeding the additional inlets as appropriate to what's
-  being tested
-- Add a `vs_preview` bpatcher per extra outlet that needs its own viewable
-  window (the template's single `vs_output` only displays one texture
-  stream at a time)
-
-### Exception: bpatcher-composition scratch patches (comparing existing modules)
-
-The "don't hand-generate raw JSON" guidance above is about a **new**
-`jit.gl.pix`/gen/codebox object — Claude has no verified template for that
-internal wiring, and a subtle `numinlets`/inlet-order mistake there is
-expensive to debug. It does not apply to a scratch patch that only **wires
-together already-shipped `f_`/`vs_` bpatchers** — e.g. comparing two or
-three module chains side by side (a vortex field into `f_caustic` vs. into
-`f_vf_warp`, feeding separate `vs_preview` windows). For that case, Claude
-hand-authoring the `.maxpat` JSON directly is fine and is the preferred
-approach — validated 2026-09-20 on `scratch/fresnel_comparison.maxpat`.
-Each bpatcher's public interface (numinlets/numoutlets/outlettype) is
-already documented in `docs/f-reference/*.md` and `docs/vsynth-reference/`,
-so there's no inference risk the way there is for a new codebox — Claude
-is just placing `bpatcher` boxes (`name`, `varname`, `patching_rect`) and
-`patchline` connections between documented inlets/outlets. Base the JSON
-structure on an existing file already in the repo (e.g.
-`package/examples/f_demo_general.maxpat`) for the exact box/patchline schema Max
-expects, and validate the result parses (`python3 -c "import json;
-json.load(open(path))"`) before handing it off.
-
-Do **not** reach for the `maxmsp` MCP server for this. It requires its own
-`max/mcp_host.maxpat` host patch open in Max — a generic audio-DSP sandbox
-unrelated to this project's actual Vsynth session — has no mechanism to
-point a `bpatcher` box at a specific module file, and its object
-cheat-sheet is oriented around plain audio objects (`cycle~`, `dac~`),
-not Vsynth's bpatcher/global-send architecture. Confirmed a poor fit in
-practice, not just in theory.
-
-### Debugging "no output at all" — check the wire before the math
-
-If `vs_render` is confirmed running (fps reads a real number, not 0) and
-the console is clean, but nothing appears in the Vsynth output window,
-**visually verify the pix's outlet is actually wired to the output chain
-(`vs_output`/`CORNERPINS`) before suspecting the codebox math.** A codebox
-object placed in Max can visually overlap the connection point below it,
-hiding a missing or disconnected wire from the outlet — the patch looks
-wired at a glance but isn't. Drag the codebox object aside (or check the
-patcher JSON directly) to confirm the actual connection exists, rather
-than assuming a rendering-pipeline issue (missing `VISIBLE`/`PREW` toggle,
-wrong `@drawto` context, etc.) or a math bug in the codebox itself.
-Empirically hit 2026-07-08 on `f_apollonian`'s first scratch test — the
-codebox visually covered a missing outlet wire, and appeared correctly
-wired at a glance.
+| File | Read when |
+|---|---|
+| `references/builder.md` | editing `definition.py`, fixing drift, capture, the edit-view layout, builder keys for hand-built and multi-stage modules |
+| `references/patcher-anatomy.md` | reading or checking a patcher: full signal flow, pix declaration and `@type`, gen subpatcher, codebox skeleton, moduleSize chain, UI styling, `parameters` block |
+| `references/parameters-and-ui.md` | adding or naming a control: attrui, live.dial, live.numbox, `gain`/`mix` and the dry/wet formula, `signal_type` labels and type dots, header toggles, ranges, panel slots |
+| `references/bypass-and-control.md` | anything about bypass, the bypass jsui, or named control messages and `route_name` |
+| `references/f-modules-menu.md` | adding a module to the menu, `f_addmod.js`, menu sizes |
+| `references/project-layout.md` | where files live, the `f_vf_` prefix, idea-to-stable lifecycle, Vsynth reference docs |
+| `references/scratch-patches.md` | a scratch patch (only for something that is not a module yet), or "nothing renders at all" |
 
 ---
 
@@ -184,15 +87,16 @@ Tiers (adopted 2026-09-22).** In short: numbers before eyes.
 1. **Write the codebox as a file** — `src/f_name/codebox_<stage>.gen` —
    from the start, not only after it's confirmed. The test bench loads that
    exact file, so what gets verified is what ships.
-2. **Tier 1 (nontrivial math):** a NumPy mirror in `tests/test_f_name.py`,
+2. **Tier 1 (nontrivial math):** a NumPy mirror in `tests/modules/<m>/test_<m>.py`,
    float32, pass-for-pass, checked against independent ground truth;
    mutation-check it once. `tests/lib/gpu_sim.py` provides the jit.gl.pix model
    (texel-center `norm`, sampling, float32 storage).
-3. **Tier 2 (numeric criteria exist):** `tests/bench_f_name.py`, copied from
+3. **Tier 2 (numeric criteria exist):** `tests/modules/<m>/bench_<m>.py`, copied from
    `tests/templates/bench_module_template.py` — compiles clean, matches the
    mirror, holds invariants (e.g. `bypass=1` is exact identity), and cost at
-   target resolutions if cost matters. Claude runs it via Desktop Commander;
-   Matt only needs Max with `tests/bench/bench.maxpat` open.
+   target resolutions if cost matters. Claude runs it with `tests/bench.sh -q <file>`
+   (ask first; see the bench-test-authoring skill); Matt only needs Max with
+   `tests/bench/bench.maxpat` open.
 4. Once the codebox has passed tiers 1–2, write the full `definition.py` and run
    `build_patcher.py`: the module is built DIRECTLY, with no scratch-patch stage
    (Matt, 2026-10-26; constitution Verification Tiers).
@@ -214,9 +118,9 @@ and `tests/bench.sh tests/contracts/bench_modules.py` (live contracts in `vs_ren
       bench correctness / bench cost / scratch only) and why; record
       "n/a because ..." for each skipped tier.
 - [ ] T002 Write src/f_name/codebox_<stage>.gen.
-- [ ] T003 (Tier 1) NumPy mirror in tests/test_f_name.py against independent
+- [ ] T003 (Tier 1) NumPy mirror in tests/modules/<m>/test_<m>.py against independent
       ground truth; mutation-check once.
-- [ ] T004 (Tier 2) tests/bench_f_name.py from the template: compiles clean,
+- [ ] T004 (Tier 2) tests/modules/<m>/bench_<m>.py from the template: compiles clean,
       GPU vs mirror, invariants. Record measured errors here.
 - [ ] T005 (Tier 2, if cost matters) bench cost at target resolutions.
 - [ ] T006 (Tier 3) is not a Phase 0 task: Phase 1 builds the module from definition.py,
@@ -228,96 +132,12 @@ bench its codebox file in isolation first (a throwaway `bench_*.py` or a
 `benchclient.run_pass()` one-off) before opening the patch.
 
 ---
-## Package Structure
-
-```
-f_/
-  package/     — the installable Max package (this alone is what Max needs)
-    patchers/    — all bpatcher .maxpat files (source of truth)
-    javascript/  — JS files (on Max search path)
-    help/        — .maxhelp files, generated via build/generate_helpfiles.py
-    package-info.json
-  docs/        — as-built reference docs for working bpatchers + vsynth-reference/ analysis docs
-  ideas/       — planned and half-formed bpatchers
-    scratchpad.md       — low-friction idea dump, no structure required
-    f_<name>.md         — specced but not yet built
-  build/       — official build system (version controlled, presentable to other authors)
-    build_patcher.py    — generates .maxpat from a definition file (see build/spec.md)
-    spec.md             — build script spec
-    extract_params.py, generate_helpfiles.py
-    generate_menu.py    — generates f_modules.maxpat and f_addmod.js's SIZES from src/f_modules/menu.py
-    generate_launch.py  — generates f_Launch.maxpat from the README Patches table
-  skills/      — Claude skills for collaborating on this repo (copies of the source
-                 skills in claude-scaffold; this file's copy lives here)
-  .specify/    — planning workspace: spec.md/plan.md/tasks.md only (version controlled — no longer gitignored)
-    constitution.md
-    f_<name>/           — one dir per bpatcher, planning docs only
-      spec.md           — what it does and how you know it's working
-      plan.md           — ADRs, blocks, phases (added when build begins)
-      tasks.md          — flat task list, session anchor (added when build begins); absent once a module has no outstanding work
-    f_<name>.stable/    — same as above, suffix marks the module shipped/verified with nothing outstanding
-    f_<name>.paused/    — same as above, suffix marks the module shelved on a real open question — don't resume by default
-  src/         — build-input files (version controlled)
-    f_<name>/           — one dir per bpatcher with code
-      definition.py     — patcher definition: codebox + params + archetype (added at end of Phase 2)
-      codebox_*.gen     — confirmed codebox content, referenced by definition.py
-      build_*.py        — per-module build script, for modules whose build needs diverge from build_patcher.py's general path
-  HANDOFF.md   — session notes (ephemeral; written fresh each session)
-  README.md    — permanent project state: bpatcher status table, build queue
-```
-
-- File naming: `f_<name>.maxpat`
-- JS files referenced by filename only — Max finds via search path
-- **A file added to the package is not found by a Max launched before it existed** (2026-11-14, `f_halftone`): `jit.matrix: can't find file f_bluenoise64.jxf` for a new file in `package/media/`, and newly written patchers failed to load by name; after a Max relaunch, found (module bench 9/9, `tests/logs/20261114-112730-bench.log`). Relaunch Max before benching or looking at a new media file, JS file or patcher. Users are unaffected (Max scans packages at launch).
-- Files shipped for a module to load (a texture, a lookup table) go in `package/media/`, loaded by name through the builder's `mod_inlets` `static` key (`build/build_patcher.py`).
-- Every patcher: `"openinpresentation": 1`
-
-### Naming Convention: f_vf_ prefix for vecfield producers
-
-Bpatchers whose **primary output is an f_vecfield texture** (float32, RG=XY, 0.5=zero vector) use the `f_vf_` prefix rather than `f_`. This signals to users that the output is a specialized texture consumed by specific downstream modules (f_caustic, f_lens field inlet) rather than a standard Vsynth char texture.
-
-Current f_vf_ family (float32 `f_vecfield` producers/consumers — see README's patch table for full descriptions):
-- Producers: `f_vf_vortex`, `f_vf_vortex_multi`, `f_vf_flow`, `f_vf_fieldmap`, `f_vf_repulse`
-- Processors (consume + re-emit a vecfield): `f_vf_potential`, `f_vf_warp`, `f_vf_streak`, `f_vf_advect`, `f_vf_glow`, `f_vf_chroma`, `f_vf_prism`
-- Utility: `f_vf_split` (splits X/Y channels to grayscale, does not re-emit a vecfield)
-- Also consumes a vecfield without the prefix: `f_caustic`, `f_lens` (field inlet), `f_vf_seeds` (shape/mod tex inlets)
-- `f_vf_vorticity` exists as a built module but is explicitly **not confirmed working** — do not treat it as shipped (see HANDOFF.md)
-
-The type contract is in `docs/f_vecfield_type.md`. User-facing disambiguation (UI badge on each producer, helpfile explanation) reinforces the distinction without requiring users to memorize the prefix meaning.
-
-## Bpatcher Lifecycle
-
-Each bpatcher moves through three stages:
-
-**1. `ideas/scratchpad.md`** — half-formed idea, no structure required. Drop it here to avoid losing it.
-
-**2. `ideas/f_name.md`** — graduated from scratchpad when the idea has a concept, rough parameter contract, and known open questions. Not yet built. Create this file before opening Max.
-
-**3. `docs/f_name.md`** — as-built reference. Bpatcher is working and confirmed. Documents params, signal chain, usage, and known issues as they actually exist. Nothing lives in `docs/` that isn't working.
-
-### Planning Workflow
-
-- **`ideas/f_name.md`** — spec for a planned bpatcher: concept, parameter contract, open questions. Lives here until the build begins.
-- **`.specify/f_name/spec.md`** — what the bpatcher does and how you know it's working. Written before touching Max.
-- **`.specify/f_name/plan.md`** — ADRs, dependency blocks, implementation phases. Added when build begins.
-- **`.specify/f_name/tasks.md`** — flat ordered task list; the session anchor for this build. Added when build begins. Delete once nothing is outstanding — absence is the "no open work" signal.
-- **`src/f_name/definition.py`** — patcher definition file: confirmed codebox + full param contract + archetype. Written at end of Phase 2 (codebox confirmed). Input to `build/build_patcher.py`. See `build/spec.md` for schema.
-- **`docs/f_name.md`** — as-built reference. Updated when the bpatcher changes, not during planning.
-
-**At session end, update all three:**
-1. **`.specify/f_name/tasks.md`** — mark done, add new items, reorder. If everything is done and confirmed, delete `tasks.md` and `git mv` the module's `.specify/f_name/` to `.specify/f_name.stable/`. If the module is being shelved on a real open question rather than finished, `git mv` to `.specify/f_name.paused/` instead (spec/plan/tasks stay, they're not deleted — the suffix just signals don't-resume-by-default). Unmarked directories are active work.
-2. **`README.md`** — permanent project state: bpatcher status table, build queue
-3. **`HANDOFF.md`** — session notes only: what was done, what's next, loose threads
-
-`HANDOFF.md` is written fresh each session — do not put permanent project state there. `README.md` is maintained continuously.
-
----
 ## Required Objects (Every Patcher)
 
-1. **`jit.gl.pix vsynth @name <prefix>_pix`** — shader core, draws to vsynth context
+1. **`jit.gl.pix vsynth @name #0_<prefix>_pix`** — shader core, draws to vsynth context
 2. **`routepass jit_gl_texture jit_matrix`** — peels texture from inlet; unmatched outlet goes to `route`
 3. **`route <param1> <param2> ...`** — named control message dispatch for all params except bypass
-4. **`bypass_toggle.js` (jsui)** — custom bypass UI; wired directly through attrui to pix, not through route
+4. **`bypass_toggle.js` (jsui)** — custom bypass UI; wired directly to the pix (attrui for native bypass, `prepend param bypass_gate` for param bypass), not through route
 5. **`live.dial`** per float param — with `parameter_enable`, `varname`
 6. **`attrui`** per param — sits between dial and pix in0; `attr` key names the target param
 7. **Title comment** — in presentation layer, Ableton Sans Light
@@ -343,7 +163,7 @@ bpatcher in0 → routepass jit_gl_texture jit_matrix → pix in0   [texture]
 
 Inside gen: `in 1` → codebox inlet 0, `out 1` ← codebox outlet 0.
 
-Codebox bypass: `out1 = mix(effect_out, sample(in1, norm), bypass);`
+Codebox bypass (param bypass): `out1 = mix(effect_out, sample(in1, norm), bypass_gate);`
 
 Examples: `f_lens`, `f_droste`, `f_luma_processor`, `f_channel_grader`.
 
@@ -422,561 +242,15 @@ param_effective = base_param + mod_val * mod_amount;
 
 **Note on `vs_inState` outlet 1:** the 0/1 state-change signal is useful if the patch needs to branch behavior when the inlet is connected vs. not. For pure modulation inlets where `vs_black` → zero modulation is sufficient, outlet 1 can be left unwired.
 
----
-
-## Signal Flow (Full Detail)
-
-```
-bpatcher in0 (texture + ctrl)
-  → routepass jit_gl_texture jit_matrix
-      outlet 0 (jit_gl_texture match) → [texture path: vs_inState or pix in0]
-      outlet 1 (jit_matrix match)     → (unused or matrix path)
-      outlet 2 (unmatched)            → route param1 param2 ...
-                                            outlet 0 → live.dial → attrui (param1) → pix in0
-                                            outlet 1 → live.dial → attrui (param2) → pix in0
-                                            ...
-
-bypass_toggle.js → attrui (bypass) → pix in0   [wired directly, not through route]
-
-pix out0 → bpatcher out0 (texture out)
-```
-
-Key points:
-- **`routepass` only declares `jit_gl_texture jit_matrix`** — no param names on routepass
-- **`route` dispatches named messages to the correct `live.dial`** — outlet indices start at 0 for first param
-- **`attrui` replaces `prepend param <name>`** — it sits between the dial and pix in0, with the attribute name declared on the `attrui` object itself
-- **bypass_toggle wires directly** — `jsui → attrui (bypass) → pix in0`, not through route
-- **All `attrui` outputs go to pix in0** (the message inlet)
-
----
-
-## jit.gl.pix Declaration
-
-```
-jit.gl.pix vsynth @name #0_<prefix>_pix
-```
-
-- First positional arg `vsynth` = drawto context
-- `@name #0_<prefix>_pix` = scripting name, used by `param_connect`; the `#0_` prefix makes
-  the Ob3D binding per-instance (bare `<prefix>_pix` collides when two instances are live in
-  one context — see the checklist note, 2026-10-17)
-- `numinlets: 1` — single message inlet; all params arrive as messages
-- No `@dim` attribute — let Vsynth context set dimensions
-
-**Output precision (`@type`):** Omitting `@type` defaults to float32, which is correct for most f_ patches. Two cases where it matters:
-
-- **`@type float32`** — explicit full precision. Use when the patch output will be used as a modulation source by another patch (WFGs use this). Preserves sub-pixel values that would be lost at 8-bit.
-- **`@type char`** — 8-bit integer output. Kevin uses this intentionally on feedback paths in `vs_feedback` and `vs_filter_temp` — the quantization artifacts are part of the aesthetic. Only use in f_ if that character is specifically wanted.
-
----
-
-## Gen Subpatcher Structure
-
-**Processor:**
-```
-in 1  →  codebox (inlet 0)   [upstream texture]
-out 1  ←  codebox (outlet 0)
-```
-
-**Dual-mode generator:**
-```
-in 1   →  codebox (inlet 0)   [texture or vs_black fallback]
-r dim  →  codebox (inlet 1)   [render dimensions — for aspect correction in generator mode]
-out 1  ←  codebox (outlet 0)
-```
-
-`r dim` is only needed if the generator requires aspect correction (most do). Omit it if all computation is in normalized [0,1] UV space with no aspect dependency.
-
-Codebox `numinlets` must match the number of wired inlets (1 for processor, 2 for dual-mode generator with `r dim`).
-
----
-
-## Codebox Structure
-
-```glsl
-// Params declared at top
-Param zoom(2.0);
-Param bypass(0.0);
-
-// ... computation ...
-
-// Processor bypass — pass input through
-out1 = mix(effect_out, sample(in1, norm), bypass);
-
-// Dual-mode generator bypass — black in generator mode, pass-through in processor mode
-Param src_mode(0.0);
-out1 = mix(result, mix(vec(0,0,0,1), sample(in1, norm), step(0.5, src_mode)), bypass);
-```
-
-- `in1` = upstream texture (processor) or texture/vs_black (dual-mode generator)
-- `norm` = normalized UV [0,1] as vec2
-- `dim` = texture dimensions as vec2 — use `dim.x / dim.y` for aspect ratio
-- `out1` = output — vec4 RGBA
-- `bypass` always present, `mix()` always the last line
-
-### jit.gl.pix Codebox Operators
-
-**Load the `jit-gen-codebox` skill** for the full empirically-verified operator reference, silent failure patterns, and code health checklist. Key points:
-
-- `fract()`, `sqrt()`, `sin()`, `cos()`, `floor()`, `ceil()`, `abs()`, `pow()`, `mix()`, `step()`, `smoothstep()`, `clamp()`, `wrap()`, `mod()` — all valid
-- `noise()` — **silently outputs black on GPU**; always use sin hash instead
-- `vec4()`, `vec2()`, `select()`, `snoise()`, `cycle()` — hard errors ("operator not defined")
-- Component access (`.x/.y/.z/.w`) on **stored variables** silently fails — always access inline: `sample(in1, uv).x` not `col = sample(...); col.x`
-- `boundmode` attribute in GenExpr syntax silently ignored — use `fract()` on coord instead
-- `dim` returns pixel dimensions (e.g. 640×480), not normalized values
-
-### Sampling Syntax
-
-```glsl
-// Correct — inline component access only
-luma = sample(in1, norm).x;
-
-// Aspect-correct UV for generators
-aspect = dim.x / dim.y;
-px = norm.x * aspect;
-py = norm.y;
-```
-
----
-
-## Parameter Wiring
-
-Parameters are wired via `attrui` — the preferred convention over `prepend param <name>`. `attrui` sits between the `live.dial` (or `live.numbox`) and `jit.gl.pix in0`, with the attribute name declared on the `attrui` object. This is tidier and more readable than the older `prepend` pattern.
-
-### attrui
-
-```json
-{
-  "maxclass": "attrui",
-  "attr": "<param_name>",
-  "numinlets": 1,
-  "numoutlets": 1,
-  "outlettype": [""],
-  "parameter_enable": 0,
-  "patching_rect": [x, y, 150.0, 22.0]
-}
-```
-
-- `attr` — the param name, matching the `Param <name>` declaration in the codebox
-- `parameter_enable: 0` — attrui is not itself a Live parameter; the dial above it is
-- Output wires to `jit.gl.pix in0`
-
-### live.dial (float params)
-
-```json
-{
-  "maxclass": "live.dial",
-  "parameter_enable": 1,
-  "varname": "<param_shortname>",
-  "saved_attribute_attributes": {
-    "valueof": {
-      "parameter_longname": "<param_longname>",
-      "parameter_shortname": "<param_shortname>",
-      "parameter_mmin": 0.0,
-      "parameter_mmax": 1.0,
-      "parameter_initial": [0.0],
-      "parameter_initial_enable": 1,
-      "parameter_linknames": 1,
-      "parameter_modmode": 3,
-      "parameter_type": 0,
-      "parameter_unitstyle": 1
-    }
-  }
-}
-```
-
-- `parameter_type`: 0 = float, 1 = int/toggle, 2 = enum
-- `parameter_modmode: 3` = relative modulation (standard for dials)
-- `varname` = `parameter_shortname`
-- Note: `param_connect` is **not** used on live.dial — attrui handles the connection to pix
-
-### live.numbox (integer/seed params)
-
-Use for integer values like seeds, counts, mode selectors. Wires identically to live.dial — through `attrui` → pix in0. In the codebox, use `floor()` to extract the integer value.
-
-```json
-{
-  "maxclass": "live.numbox",
-  "parameter_enable": 1,
-  "varname": "<param_shortname>",
-  "patching_rect": [x, y, 44.0, 15.0],
-  "presentation_rect": [x, y, 34.0, 15.0],
-  "saved_attribute_attributes": {
-    "valueof": {
-      "parameter_longname": "<param_longname>",
-      "parameter_shortname": "<param_shortname>",
-      "parameter_mmin": 0.0,
-      "parameter_mmax": 999.0,
-      "parameter_initial": [0.0],
-      "parameter_initial_enable": 1,
-      "parameter_linknames": 1,
-      "parameter_modmode": 3,
-      "parameter_type": 0,
-      "parameter_unitstyle": 0
-    }
-  }
-}
-```
-
-In codebox: `seed_int = floor(seed_param);`
-
-### Canonical naming: `gain` vs `mix` (locked 2026-07-12)
-
-Any module with a composite/blended outlet (source combined with an
-effect via add/multiply/etc.) has **two separate, always-separately-
-named controls** — never more than these two names, never a synonym:
-
-- **`gain`** — unbounded, can overdrive past 1:1. Controls how intense
-  the effect itself is, independent of blend. This is the *only* name
-  used for this role anywhere in the library — never `strength`,
-  `intensity`, or any other synonym, regardless of what an individual
-  module's codebox variable happens to be called internally.
-- **`mix`** — bounded 0–100%, `live.numbox` (see below). Controls the
-  ratio of source to effect on the composite outlet. Also the *only*
-  name used for this role — never `wet`, `strength`, or `blend`.
-
-This was reaffirmed 2026-07-12 after real drift across the rollout:
-`f_vf_advect` and `f_chladni` used `gain`; `f_vf_prism` used `strength`
-(its own plan called for renaming to `gain` and then abandoned the
-rename mid-fix); `f_caustic` used `intensity` for the same role. All of
-these are being retrofitted to `gain`. There is no acceptable reason for
-two modules to name the same *role* differently — a performer needs to
-build one muscle memory for "the intensity knob," not five.
-
-### live.numbox (mix — dry/wet crossfade params)
-
-For `mix` dry/wet blend controls: `live.numbox`, deliberately, not
-`live.dial` — a dedicated convention distinct from the float-param
-default. Unipolar **0–100%** (not bipolar) — nothing in the additive-
-layer dry/wet design (`ideas/dry_wet_gain_and_novel_field_outlet.md`
-finding 1) gives a negative range meaning. Wires identically to other
-`live.numbox` params — through `attrui` → pix in0.
-
-**Naming collision warning:** `mix` is also the codebox's built-in
-blend operator (`mix(a, b, t)`). Declaring `Param mix(100.0)` and then
-calling `mix(src, layer, mix / 100.0)` on the same line silently
-produces black output — no compile error — confirmed on `f_vf_advect`
-2026-07-12 (see `jit-gen-codebox` skill's matching entry). **Always name
-the internal codebox `Param` something that doesn't collide** — e.g.
-`mix_pct` — while keeping the user-facing label, `attrui` `attr`,
-`live.numbox` `varname`, and any external control-message keyword as
-plain `mix`. Those live outside the codebox and aren't part of the
-collision, so the control still reads "Mix" to the user.
-
-In codebox (additive-layer modules — glow, prism, streak, caustic, etc.),
-**final formula, confirmed correct on `f_vf_prism` after five attempts
-(2026-07-12)** — see `ideas/dry_wet_gain_and_novel_field_outlet.md`
-finding 1 for the full round-by-round history of what was tried first:
-
-```
-driven = clamp(src + layer * gain, 0.0, 1.0);   // the COMPLETE composited state, source included
-comp   = mix(src, driven, mix_pct / 100.0);      // plain crossfade toward that complete state
-```
-
-**Why `driven` must include `src`, not be a bare effect layer**: three
-earlier attempts all failed by crossfading toward a *bare, sparse*
-effect layer instead:
-- `driven = clamp(layer*gain, 0, 1)` with a plain crossfade → produced a
-  frame-uniform double exposure at intermediate `mix` values, because
-  the bare layer is mostly black/empty and blending toward it visibly
-  superimposes two unrelated images.
-- Coverage-based "over" compositing (using the layer's own magnitude as
-  per-pixel opacity) → still double-imaged, because the soft, feather-
-  blurred gate value used as "coverage" rarely reaches a clean 1.0
-  across its intentionally-wide transition band, so source kept
-  bleeding through even at `mix=100%`.
-- Pure additive `src + layer*gain*mix` (mix as an attenuator, no
-  crossfade at all) → same superimposition problem, just via a
-  different mechanism.
-
-`driven = clamp(src + layer*gain, 0, 1)` sidesteps all three failure
-modes because it's a **complete, non-sparse image everywhere** (source
-is baked in) — crossfading between two complete images produces a
-genuine "N% of the way there" blend with no region where one side is
-empty/black, so no double-exposure artifact. Matt's own framing: "an
-effect applied 30% isn't the same as an effect applied to 30% of a
-masked shape... it bends 30% of the way toward what it would be at
-100%." Note this is the *reverse* of what earlier guidance in this
-section said — that guidance was wrong, corrected 2026-07-12.
-
-**Open, unresolved question** (flagged on `f_vf_prism`, not fixed): this
-`driven` formula is "additive/screen" — light added on top of source.
-Whether some effects should instead use "occlusion" (effect locally
-replaces source rather than stacking with it) is a real per-module
-design question — see `ideas/dry_wet_gain_and_novel_field_outlet.md`
-finding 1's vocabulary section, and `f_vf_prism`'s own plan.md "Open
-follow-up." `f_vf_advect` was independently unaffected by any of this —
-it's replacement-shape (`driven` was already the full
-standalone processed result, no separate source term to accidentally
-include).
-
-### Vecfield labeling for non-`f_vf_`-prefixed modules
-
-Only the `f_vf_` prefix is reserved for modules whose **primary** output
-is a vecfield. A module with a *mixed* outlet set — e.g. `f_chladni`
-(luma + vecfield + magnitude) — keeps its plain name but still needs the
-vecfield outlet surfaced to users in two places:
-
-1. **Header label** (`definition.py`): set `"signal_type"` to the types that go
-   in and out, written as marks: `"∇ in"`, `"∇ out"` or `"∇ in/out"` for a
-   vecfield, `"T_ in"`, `"T_ out"` or `"T_ in/out"` for a tensor, and both
-   marks for a bridge (`f_tf_axisflow` reads `"T_ in ∇ out"`). The words
-   "vecfield" and "tensor" are not used in the title bar (since 2026-10-17).
-   `build_patcher.py` draws it 11 pt, right-justified in a 70 px box whose
-   right edge sits 4 px left of the bypass button (`button_x`: `pw - 22`, or the
-   `bypass_jsui` override's x), at y 0.9 so the baseline matches the 12 pt
-   title, and colors it by its first mark (∇ = advect's cyan
-   `[0.35, 0.75, 0.95, 1.0]`, `T_` = the tensor amber). There is nothing to
-   hand-fix, and no per-module `signal_type` override is needed (the old ones
-   were removed 2026-10-17). **Every module also gets two type dots** left of the name (`dot_box`, ids `obj-19f` / `obj-19g`, element
-   keys `dot_in` / `dot_out`): round 5 px panels in one column at x 4, 7 px apart. The top one is the type the
-   module takes and the bottom one the type it outputs: cyan vecfield, amber tensor, dim gray `DOT_NONE` for
-   neither, read from the label by `parse_signal_type`, so a module with no `signal_type` gets two gray dots.
-   They must be FOREGROUND panels (`background` 0): a background-layer panel is drawn under the frame panel
-   and disappears. Shapes (tensor round, vecfield triangle, none square) were tried, first as panels and then
-   as one `jsui`, and read as noisy: the dots are all round. The jsui style is still in the builder
-   (`TYPE_DOTS = "jsui"`) with its script parked at `ideas/type_dots.js`. "Outputs a vecfield" means ANY outlet
-   that carries one, including a pass-through (f_vf_advect and f_vf_prism have a third outlet that is one:
-   they are `∇ in/out`); decide a module's label from the code in the shipped patcher, not from
-   `src/*/codebox_v*.gen` (historical versions) or the docs. Every module name starts at
-   `TITLE_X` (10.5) to leave room for them; a definition that overrides the
-   title must keep that x (and widen the box). A module whose title is hand-placed
-   can pin its dots with `dot_in` / `dot_out` presentation_rect overrides
-   (f_masonry and f_texrouter do). The frame border stays dark blue
-   (`BORDER_BY_TYPE = False`; setting it True restores the tried-and-dropped
-   border coloring). A long module title on a narrow panel can still
-   run into the label; shorten the title, not the label. `tests/build/test_generate_menu.py` checks that the
-   marks in every menu module's label equal that module's menu kinds, so the
-   title bar and the menu cannot drift apart.
-2. **`f_modules` menu**: in `src/f_modules/menu.py` give the module's entry the
-   vecfield kind (`("Chladni", "chladni", V)`, with `V = ("vec",)` defined in `menu.py`), then run
-   `build/py.sh build/generate_menu.py` — the kind appends `" ∇"` to its display label. A tensor
-   module takes `T` (`" T_"`); a module that reads a tensor and writes a vecfield takes `VT`.
-
-Established 2026-07-12 via `f_chladni`'s `out3`/vecfield labeling pass —
-see HANDOFF.md and `.specify/f_chladni/plan.md` for the concrete example.
-
----
-
-## bypass_toggle.js
-
-```json
-{
-  "maxclass": "jsui",
-  "filename": "bypass_toggle.js",
-  "hint": "Bypass",
-  "numinlets": 1,
-  "numoutlets": 1,
-  "outlettype": [""],
-  "presentation": 1,
-  "presentation_rect": [<PW - 22>, 5.0, 18.0, 12.0],
-  "parameter_enable": 1,
-  "valuepopuplabel": 1,
-  "varname": "bypass",
-  "saved_attribute_attributes": {
-    "valueof": {
-      "parameter_invisible": 1,
-      "parameter_longname": "bypass",
-      "parameter_shortname": "bypass",
-      "parameter_type": 1,
-      "parameter_modmode": 4,
-      "parameter_unitstyle": 0
-    }
-  }
-}
-```
-
-- `filename: "bypass_toggle.js"` is **required** — omitting it crashes Max on load
-- `numoutlets: 1`, `outlettype: [""]` — single outlet
-- `parameter_type: 1` (int/toggle), `parameter_modmode: 4`
-- `parameter_invisible: 1` — hidden from automation
-- `varname: "bypass"` — no index suffix
-- Position: top-right of presentation panel (`PW - 22`, y=5)
-- Wired directly: `jsui → attrui (bypass) → pix in0` (not through route)
-- **`param_connect` must NOT be set on jsui in generated JSON** — setting it causes Max to crash on load. The `build_patcher.py` script omits it; do not add it manually.
-
-### header_toggle (boolean mode param in header area)
-
-For boolean mode switches that live next to the bypass toggle in the header rather than as a dial in the param grid. Introduced in `f_stipple` for the "Displace" mode toggle. Rendered as a `live.toggle` by `build_patcher.py`.
-
-Declared in `definition.py` with `type: "header_toggle"`. The build script positions it in the header area adjacent to bypass, wires it through `route` → `attrui` → pix in0, and registers it in the `parameters` block. In the codebox, read it as a float and threshold at 0.5:
-
-```glsl
-Param proc_mode(0.0);  // 0 = off, 1 = on
-mode_active = step(0.5, proc_mode);
-```
-
-Unlike `bypass`, `header_toggle` params **do** go through `route` and **do** appear in the `parameters` block — they're user-facing params, not system params.
-
----
-
-## Parameter Ranges: Vsynth Conventions
-
-Check existing Vsynth patchers before choosing ranges:
-
-| Type | Convention | Source |
-|---|---|---|
-| Angle/rotation | -360–360 degrees | vs_wfg_3, vs_offset+rot, vs_wfg_polarizer |
-| 0–1 normalized | 0.0–1.0 | most params |
-| Count/frequency (direct) | 0–1000, value = count at angle 0 | f_masonry courses/bond |
-| Integer seeds | 0–999, live.numbox | f_masonry course_seed/brick_seed |
-
-Angle codebox mapping: `theta = angle * (PI / 180.0)`
-
-### Not every parameter earns a panel slot
-
-A panel slot is for a **performable lever** — something with expressive range that
-Matt reaches for mid-performance. A parameter that is a *correctness* setting fails
-that bar even when it is real and measurable: internal filter quality, tap counts,
-iteration bounds. The tell is that it does nothing on typical input and, on the input
-where it matters, only makes the output more correct — there is no direction to push
-it for effect.
-
-Fix those in the shader at a measured default (`Param taps(8)`) and, if the trade-off
-should stay reachable by message, keep the route token and drop the widget:
-`"ui": False` on the param in `definition.py` (a builder key since 2026-10-05, T016: the
-route outlet goes straight to an attrui carrying the param's varname, and the param is
-left out of the `parameters` block).
-Costs no slot, no label, no preset entry. Note the live module bench can no longer
-range-scale such a param's test value (no widget to read `parameter_range` from), so
-it sends a raw fraction — the wiring is still checked, the range is not.
-
-Precedent: `f_vf_fluid`'s `taps` was briefly a panel numbox (2026-09-28) and came off
-the next day. Also see `jit-gen-codebox` → "a fixed-`@dim` stage is a resampler" for
-why that parameter exists at all.
-
----
-
-## Edit-View Layout (generated modules)
-
-`build_patcher.py` lays out the **edit view** (`patching_rect`) with `build/layout.py`, separately from the presentation view (added 2026-09-24; spec `.specify/build_layout/spec.md`). Roles are assigned by `assign_roles()` in `build_patcher.py`; the pass rewrites `patching_rect` only and self-verifies that nothing else changed. Zones: signal strip down the left rail (inlet, `routepass`, `vs_inState`), modulation inlets in a band to its right, one param column per `route` outlet (label header row / `route` box / control / attrui, pitch 72 px, attrui fixed 68 px wide), then the `jit.gl.pix` stack and outlets, range-tier blocks below, and the service objects (moduleSize chain, `autopattr`, bypass, panel toggle, title, background panel) at the far right. `raw_boxes` are moved as one block into an overflow area.
-
-- **Manual edit-view tweaks in Max are lost on regeneration** — layout is generated, not preserved.
-- Opt a module out with `"edit_layout": False` in `definition.py`.
-- Check with `tests/run.sh tests/build/test_layout.py` (0 overlaps / shared origins / upward wires over every definition; `presentation_rect` byte-identical to an un-laid build).
-- Applies only to modules actually regenerated from `definition.py`. As of 2026-10-05, 28 of 39 shipped patchers reproduce exactly from their definitions (`build/drift.py`; the rest are listed in `tests/build/drift_baseline.json`); hand-built ones are on the never-regenerate list in `.specify/plan.md`. See the next section.
-- Two layout rules added 2026-10-05: with `route_first` (the route's reject outlet feeds `routepass`) the `routepass` / `vs_inState` strip sits below the param lane and the pix stack moves down 100 px; and the service area always starts clear of the route box's right edge (the route box is never clipped below its text, so with long token names it is wider than its lane).
-
----
-
-## Reproducing a Shipped Module from Its Definition (drift workflow, 2026-10-05)
-
-`src/<module>/definition.py` is meant to be the single source of truth. `build/drift.py` rebuilds every module and compares it with the shipped patcher; `tests/build/drift_baseline.json` is a ratchet that only shrinks (project: `.specify/build_cleanup/`). For a module that drifts:
-
-1. `build/py.sh build/drift.py -v f_x` shows what differs.
-2. If the patch is the newer side, edit the **definition** to match (hints, ranges, labels, the codebox byte for byte: read a `.gen` file with `newline=""`, some shipped codeboxes have CRLF endings). If the builder is newer and the difference is additive and lossless, edit the **patch** surgically (parse, change, dump, and verify the result equals the old content plus exactly that change).
-3. `build/capture.py` writes presentation state (rects, colors, fonts, a live.text's colors) into the definition's `overrides` block. `build/capture_raw.py` writes everything the builder cannot make into `raw_ui.json` beside the definition (`raw_boxes` / `raw_lines` / `raw_parameters`; the definition reads it, see `src/f_grain/definition.py`). Capture refuses label text, hints, ranges, `varname`, `param_connect`: those are definition values or `legacy`.
-4. A module that reproduces exactly needs no regeneration. Never regenerate a hand-built module (list in `.specify/plan.md`).
-
-A hand-built module is typically a generic part the builder makes (dials, routing, bypass, moduleSize chain) plus a bespoke part carried verbatim in `raw_ui.json`. `f_grain` (era-clock chain, second route, umenu) and the band-editor color modules (`f_hue_processor`, `f_luma_processor`, `f_tone_curve`) are examples; `f_channel_grader` is the only true shared-label grid (`"label": None` plus three raw row labels).
-
-**Builder keys added 2026-10-05 for hand-built modules** (explicit and default-off; full text in `build/spec.md`):
-
-- Top level: `route_bypass` (`bypass` is the first route token, wired to the jsui), `route_first` (inlet to route, reject outlet to `routepass`), `route_reject_to_pix`, `inlet_comment`, `pix_context` (`"drawto"` writes the older `jit.gl.pix @name X @drawto vsynth` text), `legacy`.
-- Per param: `modmode` (0-4, default 3), `route_name` (the message a control answers to), `"hint": None` (no hint key; unset still writes `""`), `pix_wire: False` (no attrui, no pix cord), `color_expression` (a dial's theme-color string; `None` omits the entry), `"label": None`. Per outlet: `hint`.
-- `param_connect` names the pix a control actually drives (`pix_target`), not always the primary. `_parameter_range` message bounds are written the way Max does (`1.` not `1.0`).
-- **Multi-stage keys (T016/T017, 2026-10-05; `tests/build/test_build_multistage.py`).** A "node" is a `pix_chain` id or a `raw_boxes` id; an unknown one raises. Per `pix_chain` node `pix_attrs` (the attributes as one verbatim string after `@name`, replacing the generated `@type`/`@adapt`; loud with `pix_type`/`adapt`, empty, or `@name`). Per param `pix_target` as a node id OR a list (the widget's `param_connect` and own attrui name the FIRST stage, each further stage gets one extra attrui fed from the widget; a list makes one attrui per extra stage, not one attrui with many cords) and `ui: False` (route token + attrui, no widget/label/panel slot/`parameters` entry). Top level `inlet_fanout` (`{"texture": [[node, inlet], ...], "state": [node, ...], "state_param": name}`: routepass -> `vs_inState` -> each listed inlet, and the connected flag -> `prepend param <name>` -> inlet 0 of each `state` node; replaces the default feed of the primary) and `draw_triggers` (one `r draw`, obj-20a, to inlet 0 of each listed stage so a stage advances once per frame). The layout pass puts `r draw` beside `vs_inState` and gives the extra attruis their own role (`pre_extra`, override key `<param>.pre_extra.<k>`). `f_vf_fluid` is built from its `definition.py` with all of them. **Gaps that kept `f_sirds` and `f_vf_seeds` on custom scripts:** a templated per-node codebox, a module inlet fanned out to many stages, a plain non-`vs_inState` feed, native bypass to a target list, and ONE attrui whose cords reach many stages. The T019 keys in the next bullet (2026-10-06) closed them for `f_vf_seeds`; `f_sirds` has NOT been reassessed against them (Matt: leave it, `build_sirds.py` stays).
-- **T019 keys (2026-10-06; `build/spec.md` "T019 keys"; `tests/build/test_build_seeds_keys.py`), all default-off and loud; `f_vf_seeds` is built from its `definition.py` with them and `build_seeds_multistage.py` is gone.** Per `pix_chain` node `gen_code` (the codebox as an inline string instead of a `gen` filename, so a definition can render a template, e.g. hash salts, itself; loud with `gen`, empty, or not a string; the param-bypass `Param` check reads it too). Per param `pix_shared_attrui: True` (with a `pix_target` LIST: ONE attrui reaches every listed stage, no obj-700+ extras; loud without a list of two or more, with `ui: False` or `pix_wire: False`), `pix_attr` (bind the attrui to another attribute than the param's name, e.g. `bomb` -> `active_blend`; the widget, route token and varname keep the param's name) and `range_menu_outlet` (0, 1 or 2: which `live.menu` outlet feeds the range `sel`, default 0; needs `range_tiers`). Top level native `bypass_target` (a node id or list: the `@bypass` attrui is wired to each instead of only the primary; `bypass_param` stays loud in native mode) and `outlet_source` (`{outlet_index: [node, node_outlet]}`: that outlet comes from the named stage, not the primary; loud on a missing outlet, a stage outlet it lacks, or together with `outlet_source_override`). Per `mod_inlets` entry `fanout` (`[[node, inlet], ...]`: its `vs_inState` output, or the inlet itself with `vs_instate: False`, goes there instead of to the primary) and `state_nodes` (`[node, ...]`, `[]` = built but connected to nothing: where its `prepend param <state_param>` goes; needs a `state_param`); an unknown key in a `mod_inlets` entry is loud. **Builder fix found on the way:** support pix nodes get `obj-50+`, which collided with the per-param dial/attrui/label ids from ten widgets up (seeds has 13) and silently garbled cords; `chain_id_base` now moves the base clear of them only when they would collide (nothing else changed) and `build()` fails on any duplicate box id. If a rebuild's cords look absurd, check ids first. A definition that cannot be regenerated byte-for-byte can still carry its script-era quirks through `legacy` (seeds: `control_box` removes `param_connect`, `element_box` removes the `lbl_` label varnames).
-- **`legacy`** preserves what Max wrote when it re-created objects, so a patch can stay byte-faithful instead of being regenerated: the pix varname (`jit.gl.pix_AA`, which every dial's `param_connect` then follows), an auto-named `autopattr` (`u905020188`), the bypass jsui's inert saved block, and leftovers on single controls or elements (`control_valueof`, `control_box`, `element_valueof`, `element_box`). Regenerating would rename the `autopattr`, which could affect preset recall, and that cannot be verified offline. Delete an entry when the module is next regenerated.
-
----
-
-## moduleSize.js Chain
-
-Every bpatcher includes this chain to report its presentation size to Vsynth's module layout system:
-
-```
-loadbang → [getattr presentation_rect] → thispatcher → [zl slice 2] → [prepend tam] → js moduleSize.js
-```
-
----
-
-## UI Styling
-
-- **Font:** `"fontname": "Ableton Sans Light"` on all text-bearing objects
-- **Font sizes:** title 12pt, param labels 9.5pt
-- **Background:** `panel` object, black bg `[0,0,0,1]`, blue border `[0, 0.035, 0.227, 1.0]`, presentation only
-- **Dials:** `activedialcolor: [0.8, 0.8, 0.8, 1.0]`, `showname: 0`, `triangle: 1`, `valuepopup: 1`
-- **Numboxes:** `44×15` patching, `34×15` presentation, Ableton Sans Light
-
----
-
-## parameters Block (end of JSON)
-
-Every param registered in `live.dial`, `live.numbox`, or `jsui` must appear here:
-
-```json
-"parameters": {
-  "obj-2":  ["zoom", "zoom", 0],
-  "obj-24": ["bypass", "bypass", 0],
-  "obj-37": ["course_seed", "course_seed", 0],
-  "parameterbanks": {
-    "0": {
-      "index": 0, "name": "",
-      "parameters": ["-","-","-","-","-","-","-","-"],
-      "buttons":    ["-","-","-","-","-","-","-","-"]
-    }
-  },
-  "inherited_shortname": 1
-}
-```
-
-Format per entry: `"<obj-id>": ["<longname>", "<shortname>", 0]`
-
----
-
-## Control Message Convention
-
-External control arrives on in0 as named messages (after routepass peels the texture):
-
-```
-courses 16
-angle 45
-bypass 1
-course_seed 7
-```
-
-The `route` object dispatches by name to the correct `live.dial` or `live.numbox`.
-`bypass` is handled by the jsui directly — it does not go through `route`.
-
-A control normally answers to its param's name, but a param can set `route_name`: `f_vf_advect`'s `mix_pct` numbox answers to `mix`, while most modules' `mix_pct` answers to `mix_pct`. That inconsistency is real and unresolved (a `mix 50` message works on one and not the other); check how the dry/wet modules differ before unifying them.
-
-**Decision (2026-09-23):** the bypass *toggle* (jsui → `attrui @attr bypass` → pix)
-is the supported bypass path and works in every module. The `bypass 1` control
-message is routed only in the 9 oldest modules (`f_channel_grader`, `f_droste`,
-`f_grain`, `f_hue_processor`, `f_luma_processor`, `f_masonry`, `f_mobius`,
-`f_stereo`, `f_tone_curve`); generated modules do not route it and this is not a
-defect — do not retrofit. (Core Vsynth's convention is `enable`; only
-`vs_pixelator`/`vs_pixelator_2` route `bypass`.)
-
-**Native bypass caveat (bench-verified 2026-09-23):** the toggle sets the pix's
-*native* `bypass` attribute, which skips the shader entirely and passes the
-input straight through. On outlet 1 that is exact; on outlets 2+ the input comes
-out **vertically flipped**, and any `mix(..., bypass)` in the codebox never runs.
-So a module with a secondary outlet cannot give it a meaningful bypass state
-through the native attribute. `f_vf_warp` avoids this by driving a differently
-named codebox Param instead (`jsui → prepend param bypass_gate → pix`). Since
-2026-10-05 (T017) that is a builder key: top level `"bypass_mode": "param"`, with
-`bypass_param` (default `bypass_gate`, never `bypass`) and `bypass_target` (default the
-primary; a node id or a list for a multi-stage module; since 2026-10-06 also allowed in the default native mode, where it fans the `@bypass` attrui to each listed stage: `f_vf_seeds` bypasses its merge and composite stages that way). The builder refuses a target
-whose codebox does not declare `Param <bypass_param>(`, because the toggle would then do
-nothing; the codebox itself must implement the passthrough on EVERY outlet
-(`out1 = mix(effect, in1, bypass_gate)`, likewise `out2`...).
-
-**Convention (Matt, 2026-10-05): a bypassed module is a passthrough on every outlet.**
-`f_vf_warp`, `f_vf_fluid` and, since 2026-10-06, all 11 modules of plan.md item 10 follow it, each through `bypass_mode: "param"`. The rule used: every outlet mixes to the input of the same signal kind if the module has one, else its neutral value (black for textures, 0.5/0.5 for a vecfield); isolated-layer outlets pass the source. `tests/contracts/bench_modules.py` `BYPASS_EXPECT` states what each outlet must show, and `tests/contracts/test_bench_expect.py` fails when a `bypass_mode: "param"` module has an outlet with no expectation, so a new Param-bypass module MUST extend that table.
-`f_vf_warp`'s definition now reproduces the shipped patch, so it is no longer a special case. Multi-stage modules also need
-the bypass attrui wired to *every* pix stage, including stage 0 (`f_sirds` and
-`f_lens` were each missing one).
 
 ---
 
 ## Checklist: New Patcher
 
-- [ ] **Verification tiers recorded** in tasks.md Phase 0 — `tests/bench_<name>.py` exists and passes, or the reason it doesn't apply is written down
+- [ ] **Verification tiers recorded** in tasks.md Phase 0 — `tests/modules/<m>/bench_<m>.py` exists and passes, or the reason it doesn't apply is written down
 - [ ] File in `package/patchers/f_<name>.maxpat`
 - [ ] `"openinpresentation": 1`
-- [ ] `jit.gl.pix vsynth @name <prefix>_pix` — no `@dim`
+- [ ] `jit.gl.pix vsynth @name #0_<prefix>_pix` — no `@dim` (see the `#0_` item below)
 - [ ] `autopattr` box present with `varname` = `<prefix>_autopattr` (box text is just `autopattr`, no `@varname`)
 - [ ] `routepass jit_gl_texture jit_matrix` on inlet 0 — no param names on routepass
 - [ ] `route <params...>` separate from routepass — bypass NOT in route
@@ -985,7 +259,7 @@ the bypass attrui wired to *every* pix stage, including stage 0 (`f_sirds` and
 - [ ] Gen subpatcher: `in 1` present (upstream texture for processors; texture or vs_black for generators)
 - [ ] Gen subpatcher: `r dim` present if generator needs aspect correction (inlet 1 → codebox inlet 1)
 - [ ] Codebox `numinlets` matches wired inlets in gen patcher
-- [ ] Codebox: `Param bypass(0.0)` present, `mix()` on last line
+- [ ] Bypass: `bypass_mode: "param"` with `Param bypass_gate` mixed to the passthrough on EVERY outlet, and a `BYPASS_EXPECT` entry (`references/bypass-and-control.md`); native `Param bypass` only for a single-outlet module that needs nothing else
 - [ ] `bypass_toggle.js` jsui: `filename` key present, `numoutlets: 1`, wired directly to pix, **`param_connect` absent**
 - [ ] All float params: `live.dial` with `parameter_enable`, `varname`
 - [ ] All integer params: `live.numbox` with same wiring pattern; codebox uses `floor()`
@@ -1008,74 +282,3 @@ the bypass attrui wired to *every* pix stage, including stage 0 (`f_sirds` and
 - GL context creation (`vs_render`, `vs_modules`)
 - Preview windows (`jit.pwindow`)
 
----
-
-## f_modules — Module Menu
-
-`package/patchers/f_modules.maxpat` is the f_ module insertion menu. Drop it as a bpatcher directly into a user patch — no wrapper needed. Selecting an item from any category menu spawns the corresponding `f_` bpatcher adjacent to the menu.
-
-### Architecture
-
-- Eight categorized `live.menu` objects (visible, display names) each paired with a hidden `live.menu` (filenames) — reorganized 2026-07-10 from an earlier 5-category set (Generators/Processors/Color-Tone/Utilities/Vecfield), by visual character rather than module archetype; see the Module Categories table below
-- Selection: display menu outlet 0 → filename menu inlet 0; filename menu outlet 1 → `prepend addmod` → `gate` → `js f_addmod.js`
-- Gate is held open by `loadmess 1` → `pipe 250` on load (debounce — prevents spurious spawn on patch open)
-- `f_addmod.js` navigates **one level up** (`this.patcher.parentpatcher`) — f_modules is a direct bpatcher in the user's patch, not nested in a wrapper
-
-### f_addmod.js
-
-`javascript/f_addmod.js` spawns the bpatcher:
-
-```javascript
-function addmod(mod) {
-    var size = SIZES[mod] || [200, 150];
-    var loc = this.patcher.box.rect;       // f_modules coords in user's patch
-    var offset = 85;
-    var target = this.patcher.parentpatcher;
-    var myobj = target.newobject("bpatcher");
-    target.bringtofront(myobj);
-    myobj.message("bgmode", 1);
-    myobj.message("border", 0);           // no border — matches hand-placed convention
-    myobj.replace("f_" + mod + ".maxpat");
-    myobj.rect = [loc[0]+offset, loc[1], loc[0]+offset+w, loc[1]+h];
-}
-```
-
-Key decisions:
-- **Hardcoded size table** (`SIZES` dict keyed by bare module name) — not reliant on `moduleSize` Global, so sizing is correct even on cold spawn before the module has ever been opened
-- **`border: 0`** — matches how bpatchers look when placed by hand
-- **`bgmode: 1`** — required for bpatcher to show its presentation layer
-
-### Adding a New Module
-
-**`f_modules.maxpat` and the `SIZES` table of `f_addmod.js` are generated** (build_cleanup T021, 2026-10-05) by `build/generate_menu.py` from `src/f_modules/menu.py`: never hand-edit either file. `build/py.sh build/generate_menu.py --check` exits 1 if either is stale.
-
-To add a module, add one entry to `src/f_modules/menu.py` and regenerate:
-
-1. **`CATEGORIES`** — `(display, module, kinds)` in the right category, where `kinds` is `N` (neither), `V` (vecfield), `T` (tensor) or `VT` (both). The category labels and members must match the README Patches table (the table `f_Launch` is generated from); the generator fails loudly if they differ, if the patcher does not exist, or if a shipped patcher is neither in the menu nor in `NOT_IN_MENU` (with a reason). A ∇ category takes only modules that carry the vecfield kind, and a `T_` category only the tensor kind. The menu must also fit the 380 px panel the example patches embed it at: nine categories fit at the 39 px slot pitch, and the generator fails the check if a tenth would not (reduce the pitch, or grow the panel and re-size the embeds).
-2. **Size** — nothing to do: it is the module's presentation panel rect, rounded. Add a `SIZE_OVERRIDES` entry (with a reason) only for a module whose content extends past its panel; an override equal to the panel size fails the check as stale.
-
-### Why No f_menu Wrapper
-
-The original design had `f_menu.maxpat` as a thin bpatcher wrapper around `f_modules.maxpat` (mirroring Vsynth's `vs_menu` → `vs_modules` pattern). This was removed — `f_modules` is self-contained and the extra indirection broke the `f_addmod.js` parent navigation. Use `f_modules.maxpat` directly.
-
-### Editing Warning
-
-The generator reproduces the shipped patcher byte for byte, so a regeneration with unchanged data changes nothing (`git diff` it anyway). A tweak made by hand in Max is lost on the next regeneration and shows up as a stale file in `--check`: write it into `build/generate_menu.py` (the box templates) or `src/f_modules/menu.py` (the data) instead. The earlier one-off scripts in `tools/` and `build/tools/f_modules/build_modules.py` (the old 5-category generator) are deleted; they are in git history.
-
-### Module Categories
-
-Reorganized 2026-07-10 by visual character rather than generator/processor archetype — menu category doesn't have to equal module type. "∇"-prefixed categories are entirely vecfield-typed, and the `T_ Tensor` category (2026-10-17) is entirely tensor-typed; individual module labels also get a "∇" or " T_" suffix if they take or produce an `f_vecfield` or `f_tensor` texture, even outside those categories. Color / Tone sits above the vecfield groups (2026-10-17).
-
-| Category | Modules |
-|---|---|
-| Scope | Chladni |
-| Discrete | Masonry, Stipple, Grain, Weave, Seeds |
-| Spatial | Mobius, Stereo, SIRDS, Droste, Ngon |
-| Optical | Lens, Prism |
-| Color / Tone | Channel Grader, Hue Processor, Luma Processor, Tone Curve |
-| ∇ Generators | Vortex, Vortex Multi |
-| ∇ Processors | Caustic, Fieldmap, Flow, Repulse, Warp, Streak, Glow, Advect, Chroma, Optical Flow, Fluid |
-| T_ Tensor | Tensormap, Smooth, Sharpen, Aniso Blur, Hatch, Glyph, Axis Flow (carries both ∇ and T_) |
-| Utilities | Tex Router, Profile, Split, Potential, Matrix 2 |
-
-`f_apollonian`, `f_poincare`, and `f_vf_vorticity` are intentionally excluded (unshipped/unverified — see HANDOFF.md).
