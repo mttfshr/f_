@@ -1,6 +1,6 @@
 # f_ — Project Constitution
 
-_Last updated: 2026-10-26 (Verification Tiers: tier 3 amended)_
+_Last updated: 2026-11-15 (Skills in the Flow added)_
 
 ## Identity
 
@@ -152,6 +152,21 @@ Vsynth's real `vs_render` context (`tests/contracts/bench_modules.py` — params
 every outlet renders, bypass passes through). Run both after changing any
 shipped bpatcher. Not covered: whole multi-stage chains as one job (test
 stage by stage), `gen~` audio.
+
+### Skills in the Flow
+
+Skills are invoked primarily by the flow, and also by description matching. A `tasks.md` task that falls in a row below names its skill in the task text, and the skill is loaded before the task starts. Task generation reads this constitution, so each matching task carries the skill name when `tasks.md` is written.
+
+| The task | Skill |
+|---|---|
+| creates or changes a module's patcher, its `definition.py`, params, dials, bypass or inlets, or chooses its archetype | `vsynth-bpatcher` |
+| writes or debugs a gen~ codebox | `gen-tilde-codebox` |
+| writes or debugs a jit.gl.pix codebox | `jit-gen-codebox` |
+| writes or edits a bench test | `bench-test-authoring` |
+| writes or fixes a helpfile | `f-helpfile` |
+| checks readiness, or moves a module to `stable/` | `module-preflight` |
+
+**Amended 2026-11-15 (Matt).** Trigger: the skill trigger evals. `vsynth-bpatcher` is the one skill Matt would not call by name, and its eval misses (9/12 on runner 2) all opened with a repo read, so the description is not the lever (cause inferred). Decision: the flow is the primary route and names skills explicitly; description matching stays as the second route, but no further description-trigger evals for it. Impact: new section only; older `tasks.md` files describe their own history and are left as written.
 
 ### Planning Workspace
 
