@@ -27,7 +27,7 @@ var SIZES = {
     "halftone":       [290, 164],
     "hue_processor":  [150, 120],
     "luma_processor": [150, 120],
-    "separate":       [240, 106],
+    "separate":       [300, 118],
     "tone_curve":     [150, 120],
     "vf_ch":          [190, 150],
     "vf_flow":        [150,  80],

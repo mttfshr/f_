@@ -404,15 +404,15 @@
 					"patching_rect": [
 						1131.5,
 						260.0,
-						240.0,
-						106.0
+						300.0,
+						118.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						0.0,
 						0.0,
-						240.0,
-						106.0
+						300.0,
+						118.0
 					],
 					"proportion": 0.5
 				}
@@ -1232,7 +1232,7 @@
 					"presentation": 1,
 					"presentation_rect": [
 						43.0,
-						64.0,
+						68.0,
 						44.0,
 						15.0
 					],
@@ -1324,7 +1324,7 @@
 					"presentation": 1,
 					"presentation_rect": [
 						91.0,
-						64.0,
+						68.0,
 						44.0,
 						15.0
 					],
@@ -1416,7 +1416,7 @@
 					"presentation": 1,
 					"presentation_rect": [
 						139.0,
-						64.0,
+						68.0,
 						44.0,
 						15.0
 					],
@@ -1508,7 +1508,7 @@
 					"presentation": 1,
 					"presentation_rect": [
 						187.0,
-						64.0,
+						68.0,
 						44.0,
 						15.0
 					],
@@ -1600,7 +1600,7 @@
 					"presentation": 1,
 					"presentation_rect": [
 						43.0,
-						84.0,
+						92.0,
 						44.0,
 						15.0
 					],
@@ -1692,7 +1692,7 @@
 					"presentation": 1,
 					"presentation_rect": [
 						91.0,
-						84.0,
+						92.0,
 						44.0,
 						15.0
 					],
@@ -1784,7 +1784,7 @@
 					"presentation": 1,
 					"presentation_rect": [
 						139.0,
-						84.0,
+						92.0,
 						44.0,
 						15.0
 					],
@@ -1876,7 +1876,7 @@
 					"presentation": 1,
 					"presentation_rect": [
 						187.0,
-						84.0,
+						92.0,
 						44.0,
 						15.0
 					],
@@ -1964,7 +1964,7 @@
 						12.0
 					],
 					"presentation_rect": [
-						218.0,
+						278.0,
 						5.0,
 						18.0,
 						12.0
@@ -2056,7 +2056,7 @@
 					],
 					"presentation_rect": [
 						41.0,
-						28.0,
+						26.0,
 						48.0,
 						16.0
 					],
@@ -2082,7 +2082,7 @@
 					],
 					"presentation_rect": [
 						89.0,
-						28.0,
+						26.0,
 						48.0,
 						16.0
 					],
@@ -2108,7 +2108,7 @@
 					],
 					"presentation_rect": [
 						137.0,
-						28.0,
+						26.0,
 						48.0,
 						16.0
 					],
@@ -2134,8 +2134,34 @@
 					],
 					"presentation_rect": [
 						185.0,
-						28.0,
+						26.0,
 						48.0,
+						16.0
+					],
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.5,
+					"textjustification": 1,
+					"numinlets": 1,
+					"numoutlets": 0,
+					"outlettype": [],
+					"presentation": 1
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-head4",
+					"maxclass": "comment",
+					"text": "Color",
+					"patching_rect": [
+						170.0,
+						630.0,
+						50.0,
+						18.0
+					],
+					"presentation_rect": [
+						238.0,
+						26.0,
+						56.0,
 						16.0
 					],
 					"fontname": "Ableton Sans Light",
@@ -2188,7 +2214,7 @@
 					],
 					"presentation_rect": [
 						15.0,
-						63.0,
+						67.0,
 						24.0,
 						16.0
 					],
@@ -2215,7 +2241,7 @@
 					],
 					"presentation_rect": [
 						15.0,
-						83.0,
+						91.0,
 						24.0,
 						16.0
 					],
@@ -2226,6 +2252,579 @@
 					"numoutlets": 0,
 					"outlettype": [],
 					"presentation": 1
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-sw1",
+					"maxclass": "swatch",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						"float"
+					],
+					"patching_rect": [
+						350.0,
+						632.0,
+						60.0,
+						30.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						238.0,
+						42.0,
+						56.0,
+						19.0
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-div1",
+					"maxclass": "newobj",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						"float"
+					],
+					"patching_rect": [
+						350.0,
+						542.0,
+						50.0,
+						22.0
+					],
+					"text": "/ 360."
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-pak1",
+					"maxclass": "newobj",
+					"numinlets": 3,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						350.0,
+						572.0,
+						80.0,
+						22.0
+					],
+					"text": "pak 0. 0. 0."
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-sethsl1",
+					"maxclass": "newobj",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						350.0,
+						602.0,
+						90.0,
+						22.0
+					],
+					"text": "prepend sethsl"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-zl1",
+					"maxclass": "newobj",
+					"numinlets": 2,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						""
+					],
+					"patching_rect": [
+						350.0,
+						672.0,
+						70.0,
+						22.0
+					],
+					"text": "zl.slice 3"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-tr1",
+					"maxclass": "newobj",
+					"numinlets": 1,
+					"numoutlets": 3,
+					"outlettype": [
+						"",
+						"",
+						""
+					],
+					"patching_rect": [
+						350.0,
+						702.0,
+						60.0,
+						22.0
+					],
+					"text": "t l l l"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-eh1",
+					"maxclass": "newobj",
+					"numinlets": 3,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						550.0,
+						642.0,
+						300.0,
+						22.0
+					],
+					"text": "expr ((max(max($f1\\, $f2)\\, $f3) - min(min($f1\\, $f2)\\, $f3)) > 0.) * 60. * ((max(max($f1\\, $f2)\\, $f3) == $f1) * ((($f2 - $f3) / ((max(max($f1\\, $f2)\\, $f3) - min(min($f1\\, $f2)\\, $f3)) + ((max(max($f1\\, $f2)\\, $f3) - min(min($f1\\, $f2)\\, $f3)) == 0.))) + 6. * ((($f2 - $f3) / ((max(max($f1\\, $f2)\\, $f3) - min(min($f1\\, $f2)\\, $f3)) + ((max(max($f1\\, $f2)\\, $f3) - min(min($f1\\, $f2)\\, $f3)) == 0.))) < 0.)) + (1. - (max(max($f1\\, $f2)\\, $f3) == $f1)) * (max(max($f1\\, $f2)\\, $f3) == $f2) * (($f3 - $f1) / ((max(max($f1\\, $f2)\\, $f3) - min(min($f1\\, $f2)\\, $f3)) + ((max(max($f1\\, $f2)\\, $f3) - min(min($f1\\, $f2)\\, $f3)) == 0.)) + 2.) + (1. - (max(max($f1\\, $f2)\\, $f3) == $f1)) * (1. - (max(max($f1\\, $f2)\\, $f3) == $f2)) * (($f1 - $f2) / ((max(max($f1\\, $f2)\\, $f3) - min(min($f1\\, $f2)\\, $f3)) + ((max(max($f1\\, $f2)\\, $f3) - min(min($f1\\, $f2)\\, $f3)) == 0.)) + 4.)) - ((max(max($f1\\, $f2)\\, $f3) - min(min($f1\\, $f2)\\, $f3)) == 0.)"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-split1",
+					"maxclass": "newobj",
+					"numinlets": 3,
+					"numoutlets": 2,
+					"outlettype": [
+						"float",
+						"float"
+					],
+					"patching_rect": [
+						550.0,
+						672.0,
+						90.0,
+						22.0
+					],
+					"text": "split 0. 360."
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-es1",
+					"maxclass": "newobj",
+					"numinlets": 3,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						550.0,
+						702.0,
+						300.0,
+						22.0
+					],
+					"text": "expr (max(max($f1\\, $f2)\\, $f3) - min(min($f1\\, $f2)\\, $f3)) / (1. - abs(max(max($f1\\, $f2)\\, $f3) + min(min($f1\\, $f2)\\, $f3) - 1.) + ((max(max($f1\\, $f2)\\, $f3) - min(min($f1\\, $f2)\\, $f3)) == 0.))"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-el1",
+					"maxclass": "newobj",
+					"numinlets": 3,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						550.0,
+						732.0,
+						300.0,
+						22.0
+					],
+					"text": "expr (max(max($f1\\, $f2)\\, $f3) + min(min($f1\\, $f2)\\, $f3)) / 2."
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-sw2",
+					"maxclass": "swatch",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						"float"
+					],
+					"patching_rect": [
+						350.0,
+						832.0,
+						60.0,
+						30.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						238.0,
+						66.0,
+						56.0,
+						19.0
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-div2",
+					"maxclass": "newobj",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						"float"
+					],
+					"patching_rect": [
+						350.0,
+						742.0,
+						50.0,
+						22.0
+					],
+					"text": "/ 360."
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-pak2",
+					"maxclass": "newobj",
+					"numinlets": 3,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						350.0,
+						772.0,
+						80.0,
+						22.0
+					],
+					"text": "pak 0. 0. 0."
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-sethsl2",
+					"maxclass": "newobj",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						350.0,
+						802.0,
+						90.0,
+						22.0
+					],
+					"text": "prepend sethsl"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-zl2",
+					"maxclass": "newobj",
+					"numinlets": 2,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						""
+					],
+					"patching_rect": [
+						350.0,
+						872.0,
+						70.0,
+						22.0
+					],
+					"text": "zl.slice 3"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-tr2",
+					"maxclass": "newobj",
+					"numinlets": 1,
+					"numoutlets": 3,
+					"outlettype": [
+						"",
+						"",
+						""
+					],
+					"patching_rect": [
+						350.0,
+						902.0,
+						60.0,
+						22.0
+					],
+					"text": "t l l l"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-eh2",
+					"maxclass": "newobj",
+					"numinlets": 3,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						550.0,
+						842.0,
+						300.0,
+						22.0
+					],
+					"text": "expr ((max(max($f1\\, $f2)\\, $f3) - min(min($f1\\, $f2)\\, $f3)) > 0.) * 60. * ((max(max($f1\\, $f2)\\, $f3) == $f1) * ((($f2 - $f3) / ((max(max($f1\\, $f2)\\, $f3) - min(min($f1\\, $f2)\\, $f3)) + ((max(max($f1\\, $f2)\\, $f3) - min(min($f1\\, $f2)\\, $f3)) == 0.))) + 6. * ((($f2 - $f3) / ((max(max($f1\\, $f2)\\, $f3) - min(min($f1\\, $f2)\\, $f3)) + ((max(max($f1\\, $f2)\\, $f3) - min(min($f1\\, $f2)\\, $f3)) == 0.))) < 0.)) + (1. - (max(max($f1\\, $f2)\\, $f3) == $f1)) * (max(max($f1\\, $f2)\\, $f3) == $f2) * (($f3 - $f1) / ((max(max($f1\\, $f2)\\, $f3) - min(min($f1\\, $f2)\\, $f3)) + ((max(max($f1\\, $f2)\\, $f3) - min(min($f1\\, $f2)\\, $f3)) == 0.)) + 2.) + (1. - (max(max($f1\\, $f2)\\, $f3) == $f1)) * (1. - (max(max($f1\\, $f2)\\, $f3) == $f2)) * (($f1 - $f2) / ((max(max($f1\\, $f2)\\, $f3) - min(min($f1\\, $f2)\\, $f3)) + ((max(max($f1\\, $f2)\\, $f3) - min(min($f1\\, $f2)\\, $f3)) == 0.)) + 4.)) - ((max(max($f1\\, $f2)\\, $f3) - min(min($f1\\, $f2)\\, $f3)) == 0.)"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-split2",
+					"maxclass": "newobj",
+					"numinlets": 3,
+					"numoutlets": 2,
+					"outlettype": [
+						"float",
+						"float"
+					],
+					"patching_rect": [
+						550.0,
+						872.0,
+						90.0,
+						22.0
+					],
+					"text": "split 0. 360."
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-es2",
+					"maxclass": "newobj",
+					"numinlets": 3,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						550.0,
+						902.0,
+						300.0,
+						22.0
+					],
+					"text": "expr (max(max($f1\\, $f2)\\, $f3) - min(min($f1\\, $f2)\\, $f3)) / (1. - abs(max(max($f1\\, $f2)\\, $f3) + min(min($f1\\, $f2)\\, $f3) - 1.) + ((max(max($f1\\, $f2)\\, $f3) - min(min($f1\\, $f2)\\, $f3)) == 0.))"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-el2",
+					"maxclass": "newobj",
+					"numinlets": 3,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						550.0,
+						932.0,
+						300.0,
+						22.0
+					],
+					"text": "expr (max(max($f1\\, $f2)\\, $f3) + min(min($f1\\, $f2)\\, $f3)) / 2."
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-sw3",
+					"maxclass": "swatch",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						"float"
+					],
+					"patching_rect": [
+						350.0,
+						1032.0,
+						60.0,
+						30.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						238.0,
+						90.0,
+						56.0,
+						19.0
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-div3",
+					"maxclass": "newobj",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						"float"
+					],
+					"patching_rect": [
+						350.0,
+						942.0,
+						50.0,
+						22.0
+					],
+					"text": "/ 360."
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-pak3",
+					"maxclass": "newobj",
+					"numinlets": 3,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						350.0,
+						972.0,
+						80.0,
+						22.0
+					],
+					"text": "pak 0. 0. 0."
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-sethsl3",
+					"maxclass": "newobj",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						350.0,
+						1002.0,
+						90.0,
+						22.0
+					],
+					"text": "prepend sethsl"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-zl3",
+					"maxclass": "newobj",
+					"numinlets": 2,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						""
+					],
+					"patching_rect": [
+						350.0,
+						1072.0,
+						70.0,
+						22.0
+					],
+					"text": "zl.slice 3"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-tr3",
+					"maxclass": "newobj",
+					"numinlets": 1,
+					"numoutlets": 3,
+					"outlettype": [
+						"",
+						"",
+						""
+					],
+					"patching_rect": [
+						350.0,
+						1102.0,
+						60.0,
+						22.0
+					],
+					"text": "t l l l"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-eh3",
+					"maxclass": "newobj",
+					"numinlets": 3,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						550.0,
+						1042.0,
+						300.0,
+						22.0
+					],
+					"text": "expr ((max(max($f1\\, $f2)\\, $f3) - min(min($f1\\, $f2)\\, $f3)) > 0.) * 60. * ((max(max($f1\\, $f2)\\, $f3) == $f1) * ((($f2 - $f3) / ((max(max($f1\\, $f2)\\, $f3) - min(min($f1\\, $f2)\\, $f3)) + ((max(max($f1\\, $f2)\\, $f3) - min(min($f1\\, $f2)\\, $f3)) == 0.))) + 6. * ((($f2 - $f3) / ((max(max($f1\\, $f2)\\, $f3) - min(min($f1\\, $f2)\\, $f3)) + ((max(max($f1\\, $f2)\\, $f3) - min(min($f1\\, $f2)\\, $f3)) == 0.))) < 0.)) + (1. - (max(max($f1\\, $f2)\\, $f3) == $f1)) * (max(max($f1\\, $f2)\\, $f3) == $f2) * (($f3 - $f1) / ((max(max($f1\\, $f2)\\, $f3) - min(min($f1\\, $f2)\\, $f3)) + ((max(max($f1\\, $f2)\\, $f3) - min(min($f1\\, $f2)\\, $f3)) == 0.)) + 2.) + (1. - (max(max($f1\\, $f2)\\, $f3) == $f1)) * (1. - (max(max($f1\\, $f2)\\, $f3) == $f2)) * (($f1 - $f2) / ((max(max($f1\\, $f2)\\, $f3) - min(min($f1\\, $f2)\\, $f3)) + ((max(max($f1\\, $f2)\\, $f3) - min(min($f1\\, $f2)\\, $f3)) == 0.)) + 4.)) - ((max(max($f1\\, $f2)\\, $f3) - min(min($f1\\, $f2)\\, $f3)) == 0.)"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-split3",
+					"maxclass": "newobj",
+					"numinlets": 3,
+					"numoutlets": 2,
+					"outlettype": [
+						"float",
+						"float"
+					],
+					"patching_rect": [
+						550.0,
+						1072.0,
+						90.0,
+						22.0
+					],
+					"text": "split 0. 360."
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-es3",
+					"maxclass": "newobj",
+					"numinlets": 3,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						550.0,
+						1102.0,
+						300.0,
+						22.0
+					],
+					"text": "expr (max(max($f1\\, $f2)\\, $f3) - min(min($f1\\, $f2)\\, $f3)) / (1. - abs(max(max($f1\\, $f2)\\, $f3) + min(min($f1\\, $f2)\\, $f3) - 1.) + ((max(max($f1\\, $f2)\\, $f3) - min(min($f1\\, $f2)\\, $f3)) == 0.))"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-el3",
+					"maxclass": "newobj",
+					"numinlets": 3,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						550.0,
+						1132.0,
+						300.0,
+						22.0
+					],
+					"text": "expr (max(max($f1\\, $f2)\\, $f3) + min(min($f1\\, $f2)\\, $f3)) / 2."
 				}
 			}
 		],
@@ -2922,6 +3521,546 @@
 					],
 					"destination": [
 						"obj-5",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-26",
+						0
+					],
+					"destination": [
+						"obj-raw-div1",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-div1",
+						0
+					],
+					"destination": [
+						"obj-raw-pak1",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-29",
+						0
+					],
+					"destination": [
+						"obj-raw-pak1",
+						1
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-32",
+						0
+					],
+					"destination": [
+						"obj-raw-pak1",
+						2
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-pak1",
+						0
+					],
+					"destination": [
+						"obj-raw-sethsl1",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-sethsl1",
+						0
+					],
+					"destination": [
+						"obj-raw-sw1",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-sw1",
+						0
+					],
+					"destination": [
+						"obj-raw-zl1",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-zl1",
+						0
+					],
+					"destination": [
+						"obj-raw-tr1",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-tr1",
+						2
+					],
+					"destination": [
+						"obj-raw-eh1",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-eh1",
+						0
+					],
+					"destination": [
+						"obj-raw-split1",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-split1",
+						0
+					],
+					"destination": [
+						"obj-26",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-tr1",
+						1
+					],
+					"destination": [
+						"obj-raw-es1",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-es1",
+						0
+					],
+					"destination": [
+						"obj-29",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-tr1",
+						0
+					],
+					"destination": [
+						"obj-raw-el1",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-el1",
+						0
+					],
+					"destination": [
+						"obj-32",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-38",
+						0
+					],
+					"destination": [
+						"obj-raw-div2",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-div2",
+						0
+					],
+					"destination": [
+						"obj-raw-pak2",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-41",
+						0
+					],
+					"destination": [
+						"obj-raw-pak2",
+						1
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-44",
+						0
+					],
+					"destination": [
+						"obj-raw-pak2",
+						2
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-pak2",
+						0
+					],
+					"destination": [
+						"obj-raw-sethsl2",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-sethsl2",
+						0
+					],
+					"destination": [
+						"obj-raw-sw2",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-sw2",
+						0
+					],
+					"destination": [
+						"obj-raw-zl2",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-zl2",
+						0
+					],
+					"destination": [
+						"obj-raw-tr2",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-tr2",
+						2
+					],
+					"destination": [
+						"obj-raw-eh2",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-eh2",
+						0
+					],
+					"destination": [
+						"obj-raw-split2",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-split2",
+						0
+					],
+					"destination": [
+						"obj-38",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-tr2",
+						1
+					],
+					"destination": [
+						"obj-raw-es2",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-es2",
+						0
+					],
+					"destination": [
+						"obj-41",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-tr2",
+						0
+					],
+					"destination": [
+						"obj-raw-el2",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-el2",
+						0
+					],
+					"destination": [
+						"obj-44",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-50",
+						0
+					],
+					"destination": [
+						"obj-raw-div3",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-div3",
+						0
+					],
+					"destination": [
+						"obj-raw-pak3",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-53",
+						0
+					],
+					"destination": [
+						"obj-raw-pak3",
+						1
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-56",
+						0
+					],
+					"destination": [
+						"obj-raw-pak3",
+						2
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-pak3",
+						0
+					],
+					"destination": [
+						"obj-raw-sethsl3",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-sethsl3",
+						0
+					],
+					"destination": [
+						"obj-raw-sw3",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-sw3",
+						0
+					],
+					"destination": [
+						"obj-raw-zl3",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-zl3",
+						0
+					],
+					"destination": [
+						"obj-raw-tr3",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-tr3",
+						2
+					],
+					"destination": [
+						"obj-raw-eh3",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-eh3",
+						0
+					],
+					"destination": [
+						"obj-raw-split3",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-split3",
+						0
+					],
+					"destination": [
+						"obj-50",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-tr3",
+						1
+					],
+					"destination": [
+						"obj-raw-es3",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-es3",
+						0
+					],
+					"destination": [
+						"obj-53",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-tr3",
+						0
+					],
+					"destination": [
+						"obj-raw-el3",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-el3",
+						0
+					],
+					"destination": [
+						"obj-56",
 						0
 					]
 				}

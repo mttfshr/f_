@@ -239,8 +239,8 @@
 					"patching_rect": [
 						338.0,
 						175.0,
-						240.0,
-						106.0
+						300.0,
+						118.0
 					],
 					"viewvisibility": 1,
 					"varname": "f_separate"
