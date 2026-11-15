@@ -123,7 +123,7 @@
                     "numoutlets": 4,
                     "offset": [ 0.0, 0.0 ],
                     "outlettype": [ "jit_gl_texture", "jit_gl_texture", "jit_gl_texture", "jit_gl_texture" ],
-                    "patching_rect": [ 689.0, 184.0, 191.0, 200.0 ],
+                    "patching_rect": [ 689.0, 184.0, 240.0, 106.0 ],
                     "varname": "f_separate",
                     "viewvisibility": 1
                 }
@@ -244,19 +244,19 @@
             {
                 "patchline": {
                     "destination": [ "obj-37", 3 ],
-                    "source": [ "obj-11", 2 ]
+                    "source": [ "obj-11", 3 ]
                 }
             },
             {
                 "patchline": {
                     "destination": [ "obj-37", 2 ],
-                    "source": [ "obj-11", 1 ]
+                    "source": [ "obj-11", 2 ]
                 }
             },
             {
                 "patchline": {
                     "destination": [ "obj-37", 1 ],
-                    "source": [ "obj-11", 0 ]
+                    "source": [ "obj-11", 1 ]
                 }
             },
             {

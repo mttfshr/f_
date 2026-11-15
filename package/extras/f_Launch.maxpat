@@ -2047,7 +2047,7 @@
 										150.0,
 										20.0
 									],
-									"text": "Splits an image into up to three spot-color plates of additive inks, plus a summed preview",
+									"text": "Splits an image into up to three spot-color plates of additive HSL inks, plus their composite",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,

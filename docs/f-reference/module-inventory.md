@@ -25,7 +25,7 @@ Stateless, texture→texture, no geometric displacement. Reach for these when th
 | `f_hue_processor` | tex → tex | Isolates a hue band (center + asymmetric width + falloff), adjusts sat/lum/hue within it only. Low-sat regions gated out. ⚠ open UI bug on `hue_lower`/`hue_upper` |
 | `f_luma_processor` | tex → tex | Isolates a luma range (shadow/mid/high breakpoints), adjusts sat/lum/hue within it only. Structurally parallel to `f_tone_curve` |
 | `f_halftone` | tex (+ 3 plate texs) → tex (screen) + tex x 3 (plates) | Halftone screen: Dot, Line, Threshold, Bayer, Blue or Random marks at a fixed angle per plate, in Channels, Single or Plates (from `f_separate`) mode; plate outlets gray or color. See `f_halftone.md` |
-| `f_separate` | tex → tex x 3 (plates) + tex (preview) | Splits a color image into up to three spot-color plates, inks as colors of light that add on black; Unmix, Nearest or Project per pixel, stateless |
+| `f_separate` | tex → tex (composite) + tex x 3 (plates) | Splits a color image into up to three spot-color plates, inks (H, S, L) as colors of light that add on black; Unmix, Nearest or Project per pixel, stateless |
 | `f_vf_erode` | tex + terrain tex + vecfield + background tex → ink tex + thickness tex, **temporal** | Water and pigment solver: wet once (or Feed continuously) and ink pools in the low places of a terrain, pushed by a vecfield; Darker or Lighter polarity, Fade keeps a fed frame from saturating. Optional inlets 1-3 |
 | `f_tone_curve` | tex → tex | Shadow/midtone/highlight brightness lift by tonal band; additive, not a curve editor. Structurally parallel to `f_luma_processor` |
 
@@ -139,7 +139,7 @@ Added 2026-10-22 from the per-module docs in this folder. This is a wiring cheat
 | `f_hue_processor` | 1: tex + ctrl | 1: tex | Required | Source passthrough (convention) |
 | `f_luma_processor` | 1: tex + ctrl | 1: tex | Required | Source passthrough (convention) |
 | `f_halftone` | 4: tex + ctrl; plates 1-3 (Plates mode) | 4: tex (screen); tex (plates 1-3) | Required (Plates mode: the plate inlets) | Source on outlet 1, each plate's part of it on outlets 2-4 (`bypass_gate`; contract bench clean 2026-11-14) |
-| `f_separate` | 1: tex + ctrl | 4: tex (plates 1-3); tex (preview) | Required | Source on all four outlets (`bypass_gate`; codebox bench 5/5, contract bench 2/2) |
+| `f_separate` | 1: tex + ctrl | 4: tex (composite); tex (plates 1-3) | Required | Source on all four outlets (`bypass_gate`; codebox bench 5/5, contract bench 2/2) |
 | `f_vf_erode` | 4: picture tex + ctrl; terrain tex; vecfield; background tex | 2: tex (ink); tex (thickness) | Optional (picture required to draw) | Picture on both outlets (`bypass_gate` in `enc`; the solver keeps running). **temporal** |
 | `f_tone_curve` | 1: tex + ctrl | 1: tex | Required | Source passthrough (native `@bypass`, `G-bypass-native`) |
 

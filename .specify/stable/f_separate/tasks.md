@@ -52,6 +52,17 @@ package/patchers/f_separate.maxpat    docs/f-reference/f_separate.md    package/
 - [x] T040 (2026-11-08, offline, Claude; helpfile passed Matt's look the same day) Reference doc `docs/f-reference/f_separate.md`, helpfile (the `f-helpfile` skill), menu placement (T011), README Patches row (110 characters; regenerate the launcher), inventory rows.
 - [x] T041 (2026-11-08; preflight record below, digest look passed by Matt) `ideas/f_print_styles.md` stage 1 status; INDEX entry; `.specify/gates.md` rows; module-preflight checklist before `.specify/stable/`.
 
+## Phase 4: revision (Matt, 2026-11-14)
+
+Asked in chat: three inks by default; outlet 0 the composite and 1-3 the plates (as `f_halftone`); the ink table in `f_halftone`'s style; each ink as H, S, L number boxes. Design agreed in chat before code (Matt: "Yes, build it"): the HSL to RGB conversion in the codebox (`hsl2rgb`), so the swatches, Sat dials and load-timed bang are removed; `inkN h s l` messages are replaced by the per-Param `inkN_h` / `_s` / `_l`; no color chip; hue 0-360 degrees.
+
+- [x] T050 Codebox: `inkN_h/s/l` Params through `hsl2rgb`, `n_inks` default 3, out1 the composite and out2-out4 the plates.
+- [x] T051 Definition: the ink table (rows 1-3; H, S, L, Gain number boxes), Mode and Inks in the title bar, panel 240 x 106; swatch raw boxes removed. Menu sizes and launcher regenerated.
+- [x] T052 Benches rewritten for the HSL Params and outlet order (`bench_separate.py` gains `test_hsl_params`; `bench_separate_module.py` loses the swatch and Sat tests); mirror gains `hsl_to_rgb` / `rgb_to_hsl`.
+- [x] T053 Consumers: helpfile (bpatcher size, preview captions, messages); demo cords (`f_demo_halftone` plates 0-2 to 1-3; `f_demo_erode`, `f_demo_lbm`, `f_demo_poincare` preview 3 to 0) and bpatcher sizes; the two demo presets' swatch values converted to `inkN_h/s/l`, `satN` dropped.
+- [ ] T054 Bench run (Matt's go): `bench_separate.py`, `bench_separate_module.py`, contract bench.
+- [ ] T055 Live look (Matt): the panel, the helpfile, the four demos (presets recalling their inks).
+
 ## Dependencies and order
 
 Phase 0 gates, then the mirror (T014) before any codebox; T009 (the colour route) gates T021; T020 to T022 in order; T023 and T024 both edit `codebox_separate.gen`, so they run in sequence.
@@ -80,3 +91,5 @@ Phase 0 gates, then the mirror (T014) before any codebox; T009 (the colour route
 - 2026-11-08 (live by Matt; session 4): `get_filterset` / `gettype` also print when `f_poincare.maxhelp` is opened on its own, so they are not specific to `f_separate` and do not block T041. The cause is still not found; parked as `P-console`. One other module was checked, so "library-wide" is INFERRED. T041 still needs Matt's look at the three-line digest.
 - 2026-11-08 (live by Matt; session 4): the three-line helpfile digest fits ("Fits, move to stable"), which closes T041. Moved to `.specify/stable/f_separate/`. T004, T006, T007 and T011 are still unticked PRELIMINARY gates (`G-print-prelim`); the move does not decide them. The menu category is still provisional (`G-menu`). The 1080p cost is unmeasured (T022).
 - 2026-11-09 (bench, Claude; Matt's go in chat): the pix name is now `#0_separate_pix` (`object_name`, definition.py). The bare name collided when a second f_separate shared the GL context ("name separate_pix already in use", then no attribute on its dials; contract bench `tests/logs/20261109-083659-bench.log`). After: module bench 5/5 (`tests/logs/20261109-084840-bench.log`), contract bench 2/2 (`tests/logs/20261109-084909-bench.log`), drift 16/16 (`tests/logs/20261109-084828-offline.log`). The patcher diff is the name only.
+- 2026-11-14 (offline, Claude): T050-T053 done (Phase 4). Default HSL inks reproduce the old RGB inks exactly through the mirror's `hsl_to_rgb` (offline check). `test_separate.py` 13/13, `test_drift.py` 16/16, `test_generate_menu.py` 17/17, `test_build_conventions.py` 40/40, `test_bench_expect.py` 10/10 (log `tests/logs/20261114-214526-offline.log`); `test_module_contracts.py` 8/9 and `test_layout.py`, the only failures the known `f_util_vary_row` and `f_vf_erode` ones (log `tests/logs/20261114-214344-offline.log`). INFERRED, not run: that jit.gl.pix `hsl2rgb` follows the standard model with hue in 0..1 (as `f_vf_chroma` uses it); `test_hsl_params` checks it. Not run: the benches (T054). Not seen in Max (T055). Left in place: `swatch` in `tests/lib/module_contract.py`'s traversal list (no module uses it now).
+

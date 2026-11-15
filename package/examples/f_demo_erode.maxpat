@@ -27,7 +27,7 @@
                     "numoutlets": 4,
                     "offset": [ 0.0, 0.0 ],
                     "outlettype": [ "jit_gl_texture", "jit_gl_texture", "jit_gl_texture", "jit_gl_texture" ],
-                    "patching_rect": [ 297.0, 473.0, 191.0, 200.0 ],
+                    "patching_rect": [ 297.0, 473.0, 240.0, 106.0 ],
                     "varname": "f_separate",
                     "viewvisibility": 1
                 }
@@ -407,7 +407,7 @@
             {
                 "patchline": {
                     "destination": [ "obj-4", 0 ],
-                    "source": [ "obj-15", 3 ]
+                    "source": [ "obj-15", 0 ]
                 }
             },
             {

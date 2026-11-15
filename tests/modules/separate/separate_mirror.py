@@ -61,6 +61,21 @@ def ridge_inverse(k):
     return inv_cofactor(ktk + lam * np.eye(n, dtype=F32))
 
 
+def hsl_to_rgb(h, s, l):
+    """One ink color from the module's Params (2026-11-14): H in degrees (wraps), S and L in 0..1, the standard HSL
+    model (colorsys). The codebox uses jit.gl.pix's hsl2rgb with the hue / 360; that they agree is the bench's to show."""
+    import colorsys
+    return np.array(colorsys.hls_to_rgb((float(h) / 360.0) % 1.0, min(max(float(l), 0.0), 1.0),
+                                        min(max(float(s), 0.0), 1.0)), dtype=F32)
+
+
+def rgb_to_hsl(r, g, b):
+    """The inverse, for tests that think in RGB: (H degrees, S, L)."""
+    import colorsys
+    h, l, s = colorsys.rgb_to_hls(float(r), float(g), float(b))
+    return 360.0 * h, s, l
+
+
 def separate_stage(src, inks, n_inks=3, mode="unmix", gains=(1, 1, 1), bypass=0, bug=None):
     """src: (H, W, 4) float32 or None. inks: (3, 3) rows = ink colors. Returns four (H, W, 4) arrays."""
     if src is None:

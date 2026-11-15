@@ -100,7 +100,7 @@
 						270.0,
 						140.0
 					],
-					"text": "External Control Messages\n\nn_inks [1 – 3]\nsep_mode [0 Unmix / 1 Nearest / 2 Project]\ngain1 gain2 gain3 [0.0 – 2.0]\nsat1 sat2 sat3 [0.0 – 1.0]\nink1 ink2 ink3 [r g b, each 0.0 – 1.0]",
+					"text": "External Control Messages\n\nn_inks [1 – 3]\nsep_mode [0 Unmix / 1 Nearest / 2 Project]\ngain1 gain2 gain3 [0.0 – 2.0]\nink1_h ink2_h ink3_h [hue, 0 – 360 degrees]\nink1_s ink2_s ink3_s [0.0 – 1.0]\nink1_l ink2_l ink3_l [0.0 – 1.0]",
 					"linecount": 7,
 					"saved_attribute_attributes": {
 						"textcolor": {
@@ -129,7 +129,7 @@
 						270.0,
 						225.0
 					],
-					"text": "Modes\n\nUnmix: the best fit of all the inks together. Plates depend on each other.\n\nNearest: each pixel wholly to its nearest ink, or to none when black is nearest.\n\nProject: each ink alone, so moving one ink never changes another plate. The preview can overshoot.",
+					"text": "Modes\n\nUnmix: the best fit of all the inks together. Plates depend on each other.\n\nNearest: each pixel wholly to its nearest ink, or to none when black is nearest.\n\nProject: each ink alone, so moving one ink never changes another plate. The composite can overshoot.",
 					"linecount": 12,
 					"saved_attribute_attributes": {
 						"textcolor": {
@@ -239,8 +239,8 @@
 					"patching_rect": [
 						338.0,
 						175.0,
-						191.0,
-						200.0
+						240.0,
+						106.0
 					],
 					"viewvisibility": 1,
 					"varname": "f_separate"
@@ -386,7 +386,7 @@
 						236.0,
 						22.0
 					],
-					"text": "Plate 1",
+					"text": "Composite (plates summed)",
 					"linecount": 1,
 					"saved_attribute_attributes": {
 						"textcolor": {
@@ -415,7 +415,7 @@
 						236.0,
 						22.0
 					],
-					"text": "Plate 2",
+					"text": "Plate 1",
 					"linecount": 1,
 					"saved_attribute_attributes": {
 						"textcolor": {
@@ -444,7 +444,7 @@
 						236.0,
 						22.0
 					],
-					"text": "Plate 3",
+					"text": "Plate 2",
 					"linecount": 1,
 					"saved_attribute_attributes": {
 						"textcolor": {
@@ -473,7 +473,7 @@
 						236.0,
 						22.0
 					],
-					"text": "Preview (plates summed)",
+					"text": "Plate 3",
 					"linecount": 1,
 					"saved_attribute_attributes": {
 						"textcolor": {

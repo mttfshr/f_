@@ -5,8 +5,13 @@ diffed against separate_mirror.separate_stage. One pass per job, one input (the 
 This is also the first time the codebox is COMPILED: a syntax error shows as a failed job (status and errors in the
 message), and Matt's first Max look (2026-11-08) found black outputs that offline tests cannot explain.
 
-Every Param is pinned in every job (the bench keeps a Param's last value). Params: the nine ink colors, n_inks, sep_mode
-(0 Unmix, 1 Nearest, 2 Project), gain1-3, bypass_gate.
+Every Param is pinned in every job (the bench keeps a Param's last value). Params: the nine ink colors as H (degrees), S, L
+(inkN_h/s/l, 2026-11-14; RGB before), n_inks, sep_mode (0 Unmix, 1 Nearest, 2 Project), gain1-3, bypass_gate. The tests
+think in RGB: `ink(n, rgb)` turns a color into its three Params, and the mirror turns them back (separate_mirror.hsl_to_rgb),
+so the GPU's hsl2rgb is checked against the standard model on every row.
+
+Outlets (2026-11-14): the module's outlet 0 (gen out1) is the composite, 1 to 3 the plates; gpu() reorders them to the
+mirror's (plates 1 to 3, composite).
 
 Tolerances:
   TOL  the codebox does the same float32 arithmetic as the mirror but in a different order (cofactors, the ridge, divisions),
@@ -27,16 +32,22 @@ import numpy as np
 
 import benchclient as bc
 from harness import check, note, run, slow
-from separate_mirror import F32, separate_stage
+from separate_mirror import F32, hsl_to_rgb, rgb_to_hsl, separate_stage
 
 CODE = (_paths.REPO / "src" / "f_separate" / "codebox_separate.gen").read_text()
 N = 64
 TOL = 2e-3
 SPOT = np.array([[1.0, 0.25, 0.0], [0.0, 0.6, 0.6], [0.45, 0.0, 1.0]], dtype=F32)
 PINNED = {"n_inks": 3.0, "sep_mode": 0.0, "gain1": 1.0, "gain2": 1.0, "gain3": 1.0, "bypass_gate": 0.0}
+
+
+def ink(n, rgb):
+    """The three Params of ink n for an RGB color."""
+    return dict(zip((f"ink{n}_h", f"ink{n}_s", f"ink{n}_l"), rgb_to_hsl(*rgb)))
+
+
 for _i in range(3):
-    for _c, _ch in enumerate("rgb"):
-        PINNED[f"ink{_i + 1}_{_ch}"] = float(SPOT[_i, _c])
+    PINNED.update(ink(_i + 1, SPOT[_i]))
 MODES = {0: "unmix", 1: "nearest", 2: "project"}
 
 
@@ -62,13 +73,13 @@ def gpu(src, **deltas):
                           all_outputs=True)
     if r["status"] != "ok" or any(o is None for o in outs):
         raise AssertionError(f"bench job failed: {r['status']} {r['errors']} ({r['job_dir']})")
-    return outs
+    return outs[1:] + outs[:1]          # outlets (composite, plates) -> the mirror's (plates, composite)
 
 
 def mirror(src, **deltas):
     p = dict(PINNED)
     p.update(deltas)
-    inks = np.array([[p[f"ink{i}_{c}"] for c in "rgb"] for i in (1, 2, 3)], dtype=F32)
+    inks = np.array([hsl_to_rgb(p[f"ink{i}_h"], p[f"ink{i}_s"], p[f"ink{i}_l"]) for i in (1, 2, 3)], dtype=F32)
     return separate_stage(src, inks, n_inks=int(p["n_inks"]), mode=MODES[int(p["sep_mode"])],
                           gains=(p["gain1"], p["gain2"], p["gain3"]), bypass=int(p["bypass_gate"]))
 
@@ -104,20 +115,34 @@ def test_fewer_inks_and_gains():
 
 def test_palettes():
     t = photo()
-    both("black ink", t, ink1_r=0.0, ink1_g=0.0, ink1_b=0.0)
-    both("duplicate inks", t, ink2_r=1.0, ink2_g=0.25, ink2_b=0.0)
-    both("orthogonal inks", t, ink1_r=1.0, ink1_g=0.0, ink1_b=0.0, ink2_r=0.0, ink2_g=1.0, ink2_b=0.0,
-         ink3_r=0.0, ink3_g=0.0, ink3_b=1.0)
+    both("black ink", t, **ink(1, (0.0, 0.0, 0.0)))
+    both("duplicate inks", t, **ink(2, (1.0, 0.25, 0.0)))
+    both("orthogonal inks", t, **ink(1, (1.0, 0.0, 0.0)), **ink(2, (0.0, 1.0, 0.0)), **ink(3, (0.0, 0.0, 1.0)))
+    both("pastel and gray inks", t, **ink(1, (0.6, 0.5, 0.4)), **ink(2, (0.5, 0.5, 0.5)))
+
+
+def test_hsl_params():
+    """The codebox's hsl2rgb against the standard model: every 30 degrees of hue at two lightnings, read back from a white
+    patch in Project mode (coverage clamps to 1, so plate 1 is the ink). Hue wraps: 360 is 0, -30 is 330."""
+    t = np.ones((4, 4, 4), np.float32)
+    worst = 0.0
+    for h in range(0, 361, 30):
+        for s_, l_ in ((1.0, 0.5), (0.4, 0.7)):
+            got = gpu(t, sep_mode=2.0, ink1_h=float(h), ink1_s=s_, ink1_l=l_)[0][0, 0, :3]
+            worst = max(worst, mx(got, hsl_to_rgb(h, s_, l_)))
+    note("hsl2rgb vs the standard model, worst over hues and two S, L", worst)
+    check("ink colors follow the standard HSL model", worst, TOL)
+    check("hue wraps: -30 is 330", mx(gpu(t, sep_mode=2.0, ink1_h=-30.0)[0], gpu(t, sep_mode=2.0, ink1_h=330.0)[0]), 1e-5)
 
 
 def test_independence_in_project_mode():
     """Moving ink 1 must not change plates 2 and 3 in Project mode: the property Matt asked for."""
     t = photo()
     a = gpu(t, sep_mode=2.0)
-    b = gpu(t, sep_mode=2.0, ink1_r=0.3, ink1_g=0.9, ink1_b=0.1)
+    b = gpu(t, sep_mode=2.0, **ink(1, (0.3, 0.9, 0.1)))
     check("project: plate 2 unchanged when ink 1 moves", mx(a[1], b[1]), 0.0)
     check("project: plate 3 unchanged when ink 1 moves", mx(a[2], b[2]), 0.0)
-    u = gpu(t, sep_mode=0.0, ink1_r=0.3, ink1_g=0.9, ink1_b=0.1)
+    u = gpu(t, sep_mode=0.0, **ink(1, (0.3, 0.9, 0.1)))
     c = gpu(t, sep_mode=0.0)
     note("unmix: plate 2 change when ink 1 moves (expected non-zero)", mx(u[1], c[1]))
 

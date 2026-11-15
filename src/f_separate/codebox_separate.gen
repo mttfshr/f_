@@ -2,7 +2,7 @@
 // Stateless, per pixel. Float32. Mirror: tests/modules/separate/separate_mirror.separate_stage().
 //
 // Model (Matt, 2026-11-08): black background, inks are colors of light that ADD. pixel = sum_i c_i * k_i, k_i the
-// ink color (Params inkN_r/g/b), c_i the coverage in 0..1.
+// ink color (from Params inkN_h/s/l through hsl2rgb, 2026-11-14; before that inkN_r/g/b from swatches), c_i the coverage.
 //   - unmix: c = clamp(gain * (K^T K + lam I)^-1 K^T x, 0, 1), K = 3 x N (N = n_inks). The 3x3 inverse is by
 //     cofactors. Inks beyond n_inks have a zero column in K and a 1 on the diagonal, so they decouple and come out 0.
 //     lam = 1e-4 * trace(K^T K) / N + 1e-8 (relative ridge; an inferred choice, gate G3)
@@ -10,7 +10,8 @@
 //     last) gets coverage 1, the others 0; then gain and the same clamp
 //   - project (sep_mode 2): each ink alone, c_i = clamp(gain_i * (k_i . x) / (k_i . k_i), 0, 1); a plate depends only on
 //     the source and its own ink (Matt, 2026-11-08: easier to reason about than the joint solve)
-//   - outlets: 1 to 3 = the plates, coverage * ink color; 4 = the preview, the sum of the plates clamped to 0..1.
+//   - outlets (Matt, 2026-11-14, as f_halftone): 1 = the composite, the sum of the plates clamped to 0..1; 2 to 4 = the
+//     plates, coverage * ink color.
 //     Alpha is the source's on all four.
 //   - bypass_gate = 1: the (zapped) source on all four outlets
 //   - non-finite input components are zapped to 0 first: abs(x) < 1e30 with switch() (NaN == NaN is TRUE on this GPU)
@@ -19,16 +20,16 @@ zap(xv) {
     return switch(abs(xv) < 1e30, xv, 0);
 }
 
-Param ink1_r(1.0);
-Param ink1_g(0.25);
-Param ink1_b(0.0);
-Param ink2_r(0.0);
-Param ink2_g(0.6);
-Param ink2_b(0.6);
-Param ink3_r(0.45);
-Param ink3_g(0.0);
-Param ink3_b(1.0);
-Param n_inks(2);
+Param ink1_h(15);
+Param ink1_s(1);
+Param ink1_l(0.5);
+Param ink2_h(180);
+Param ink2_s(1);
+Param ink2_l(0.3);
+Param ink3_h(267);
+Param ink3_s(1);
+Param ink3_l(0.5);
+Param n_inks(3);
 Param sep_mode(0);
 Param gain1(1);
 Param gain2(1);
@@ -44,15 +45,20 @@ act1 = switch(n_inks >= 0.5, 1, 0);
 act2 = switch(n_inks >= 1.5, 1, 0);
 act3 = switch(n_inks >= 2.5, 1, 0);
 
-k1r = clamp(ink1_r, 0, 1) * act1;
-k1g = clamp(ink1_g, 0, 1) * act1;
-k1b = clamp(ink1_b, 0, 1) * act1;
-k2r = clamp(ink2_r, 0, 1) * act2;
-k2g = clamp(ink2_g, 0, 1) * act2;
-k2b = clamp(ink2_b, 0, 1) * act2;
-k3r = clamp(ink3_r, 0, 1) * act3;
-k3g = clamp(ink3_g, 0, 1) * act3;
-k3b = clamp(ink3_b, 0, 1) * act3;
+// ink colors from H (degrees), S, L (Matt, 2026-11-14); hsl2rgb takes hue in 0..1. One call per ink, components taken
+// separately (vec(vec3, scalar) does not build a vec4, skills/jit-gen-codebox)
+rgb1 = hsl2rgb(vec(wrap(ink1_h / 360, 0, 1), clamp(ink1_s, 0, 1), clamp(ink1_l, 0, 1), 1));
+rgb2 = hsl2rgb(vec(wrap(ink2_h / 360, 0, 1), clamp(ink2_s, 0, 1), clamp(ink2_l, 0, 1), 1));
+rgb3 = hsl2rgb(vec(wrap(ink3_h / 360, 0, 1), clamp(ink3_s, 0, 1), clamp(ink3_l, 0, 1), 1));
+k1r = clamp(rgb1.x, 0, 1) * act1;
+k1g = clamp(rgb1.y, 0, 1) * act1;
+k1b = clamp(rgb1.z, 0, 1) * act1;
+k2r = clamp(rgb2.x, 0, 1) * act2;
+k2g = clamp(rgb2.y, 0, 1) * act2;
+k2b = clamp(rgb2.z, 0, 1) * act2;
+k3r = clamp(rgb3.x, 0, 1) * act3;
+k3g = clamp(rgb3.y, 0, 1) * act3;
+k3b = clamp(rgb3.z, 0, 1) * act3;
 
 // K^T K (symmetric) and the ridge
 m11 = k1r * k1r + k1g * k1g + k1b * k1b;
@@ -116,7 +122,7 @@ sr = clamp(p1r + p2r + p3r, 0, 1);
 sg = clamp(p1g + p2g + p3g, 0, 1);
 sb = clamp(p1b + p2b + p3b, 0, 1);
 
-out1 = vec(mix(p1r, xr, bypass_gate), mix(p1g, xg, bypass_gate), mix(p1b, xb, bypass_gate), xa);
-out2 = vec(mix(p2r, xr, bypass_gate), mix(p2g, xg, bypass_gate), mix(p2b, xb, bypass_gate), xa);
-out3 = vec(mix(p3r, xr, bypass_gate), mix(p3g, xg, bypass_gate), mix(p3b, xb, bypass_gate), xa);
-out4 = vec(mix(sr, xr, bypass_gate), mix(sg, xg, bypass_gate), mix(sb, xb, bypass_gate), xa);
+out1 = vec(mix(sr, xr, bypass_gate), mix(sg, xg, bypass_gate), mix(sb, xb, bypass_gate), xa);
+out2 = vec(mix(p1r, xr, bypass_gate), mix(p1g, xg, bypass_gate), mix(p1b, xb, bypass_gate), xa);
+out3 = vec(mix(p2r, xr, bypass_gate), mix(p2g, xg, bypass_gate), mix(p2b, xb, bypass_gate), xa);
+out4 = vec(mix(p3r, xr, bypass_gate), mix(p3g, xg, bypass_gate), mix(p3b, xb, bypass_gate), xa);

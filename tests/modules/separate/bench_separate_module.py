@@ -1,33 +1,29 @@
 """
 bench_separate_module.py -- f_separate T022 (module half): the shipped patcher in the live module bench. The codebox bench
-(bench_separate.py) cannot see this layer: the `r draw` -> delay -> bang that sends the default colors, the route -> swatch ->
-unpack -> `prepend param` chain, the saturation dials, the Mode menu. That layer is where Matt's all-black look of 2026-11-08 was.
+(bench_separate.py) cannot see this layer: the route -> numbox -> pix chain for the ink table (H, S, L and Gain per ink), the
+Inks numbox, the Mode menu, the default values at load. Rewritten 2026-11-14 for the HSL ink table (the swatches, their
+saturation dials and the load-timed bang are gone) and the outlet order (outlet 0 the composite, 1 to 3 the plates).
 
 Each job is a `segments` timeline (bench_module.js): control messages one per frame, a wait in frames, a snapshot of all four
 outlets. The source is fed every frame at the render size, 640 x 640 (bench_modules.RENDER_DIM_SIZE); each snapshot's shape is
-checked.
+checked. outs() returns the snapshot in the mirror's order (plates 1 to 3, composite).
 
 Reading the inks back. In Project mode with gain 1, a white pixel has coverage sum(k) / sum(k*k), which is at least 1 for k in
 0..1, so it clamps to 1 and the plate shows the ink color exactly. The source has a white patch for this. The rows that compare
-against the mirror use the inks READ BACK, so a swatch error cannot pass as, or be hidden by, a solve error; the read-back inks
-get their own rows.
+against the mirror use the inks READ BACK, so a color error cannot pass as, or be hidden by, a solve error; the read-back inks
+get their own rows, against the standard HSL model (separate_mirror.hsl_to_rgb).
 
 Asserted (thresholds written before the first run; not to be loosened to make a failure pass):
-  - load, no messages at all: plates 1 and 2 are not black, plate 3 is, all four match the mirror (the all-black regression)
-  - the default inks arrive close to the definition's colors (BANG_TOL)
+  - load, no messages at all: all three plates and the composite are not black, and all four match the mirror
+  - the default inks arrive as the definition's colors (INK_TOL)
   - Mode menu and Inks: Unmix, Nearest, Project at three inks, and one ink, match the mirror
-  - `inkN r g b` reaches ink N only, close to the commanded color (LIST_TOL), and leaves the other plates exactly unchanged
+  - `inkN_h` / `inkN_s` / `inkN_l` reach ink N only, as the commanded color (INK_TOL), and leave the other plates exactly unchanged
   - gains reach the pix
-  - a saturation dial changes its own ink and leaves the other plates exactly unchanged (T021's open question)
 
 Tolerances:
-  TOL       the codebox bench's (bench_separate.py); the same codebox, measured worst 4.8e-7 for non-degenerate palettes.
-  LIST_TOL  a list into a swatch "sets the four RGBA color components" and outputs them (swatch.maxref). 2e-2 allows the swatch's
-            own conversion; unmeasured, the first run records the real number.
-  BANG_TOL  the defaults arrive by `set` then a bang, and a bang outputs "the current color at the selected (x,y) position"
-            (swatch.maxref), so they may be quantised to the swatch's pixels. INFERRED from the maxref, not measured: one pixel of
-            hue across about 56 pixels is about 6/56 = 0.11 in RGB, half of that from rounding, plus lightness. 0.15 catches a
-            wrong color, not a slightly different one. The real number is noted; recalibrate from it and record why.
+  TOL      the codebox bench's (bench_separate.py); the same codebox, measured worst 4.8e-7 for non-degenerate palettes.
+  INK_TOL  the module's hsl2rgb against colorsys. The same as TOL: no swatch in the path any more, so there is no
+           quantisation to allow for. If the first run disagrees, the number is recorded, not the threshold widened.
 
 Not here: bypass is the contract bench's (tests/contracts/bench_modules.py, BYPASS_EXPECT); the 1080p cost; persistence across a
 plain reopen (not reachable from this harness; Matt's look). The source stays inside 0..1 and is finite: out-of-range and
@@ -49,15 +45,14 @@ import benchclient as bc
 import jxf
 import modulebench as mb
 from harness import check, note, run
-from separate_mirror import F32, separate_stage
+from separate_mirror import F32, hsl_to_rgb, separate_stage
 
 N = 640
-SETTLE = 60            # frames after a control message; the load path's delay is 100 ms after the first draw
+SETTLE = 60            # frames after a control message
 PATCH = 32             # the white patch's side, top left of the source
 TOL = 2e-3
-LIST_TOL = 2e-2
-BANG_TOL = 0.15
-DEFAULTS = np.array([[1.0, 0.25, 0.0], [0.0, 0.6, 0.6], [0.45, 0.0, 1.0]], dtype=F32)   # definition.py DEFAULTS
+INK_TOL = 2e-3
+DEFAULTS = np.array([[1.0, 0.25, 0.0], [0.0, 0.6, 0.6], [0.45, 0.0, 1.0]], dtype=F32)   # definition.py DEFAULTS, in RGB
 
 
 def photo(seed=5, n=N):
@@ -96,9 +91,10 @@ def mx(a, b):
 
 
 def outs(frames, tag):
-    """The four outlets of one snapshot, as a list (plates 1 to 3, preview)."""
+    """The four outlets of one snapshot, in the mirror's order (plates 1 to 3, composite). Snapshot k is module outlet k - 1:
+    1 the composite, 2 to 4 the plates."""
     assert tag in frames and all(k in frames[tag] for k in (1, 2, 3, 4)), f"no complete {tag} snapshot: {sorted(frames)}"
-    got = [frames[tag][k] for k in (1, 2, 3, 4)]
+    got = [frames[tag][k] for k in (2, 3, 4, 1)]
     check(f"{tag}: all four outlets at the render size", float(any(g_.shape[:2] != (N, N) for g_ in got)), 0.0)
     return got
 
@@ -120,17 +116,15 @@ READ = {"params": [["n_inks", 3], ["sep_mode", 2]], "wait": SETTLE, "snap": "rea
 
 
 def test_load_touching_nothing():
-    """The all-black regression: no message reaches the module before the first snapshot."""
+    """No message reaches the module before the first snapshot: the defaults alone (three inks)."""
     f = job([{"wait": SETTLE, "snap": "load"}, READ])
     load, inks = outs(f, "load"), readback(outs(f, "read"))
     note("default inks read back", inks.tolist())
     note("default inks: worst distance from the definition's colors", mx(inks, DEFAULTS))
-    check("default inks arrive near the definition's colors", mx(inks, DEFAULTS), BANG_TOL)
-    check("load: plate 1 is not black", float(load[0][..., :3].max() < 0.1), 0.0)
-    check("load: plate 2 is not black", float(load[1][..., :3].max() < 0.1), 0.0)
-    check("load: preview is not black", float(load[3][..., :3].max() < 0.1), 0.0)
-    check("load: plate 3 is black (default two inks)", float(np.abs(load[2][..., :3]).max()), 1e-6)
-    matches(load, "load, defaults", inks, n_inks=2)
+    check("default inks arrive as the definition's colors", mx(inks, DEFAULTS), INK_TOL)
+    for i, name in enumerate(("plate 1", "plate 2", "plate 3", "composite")):
+        check(f"load: {name} is not black", float(load[i][..., :3].max() < 0.1), 0.0)
+    matches(load, "load, defaults (three inks)", inks)
 
 
 def test_mode_menu_and_ink_count():
@@ -147,21 +141,21 @@ def test_mode_menu_and_ink_count():
     matches(outs(f, "unmix1"), "Unmix, one ink", inks, n_inks=1)
 
 
-def test_ink_message_reaches_one_ink():
-    """`inkN r g b` goes route -> swatch -> unpack -> `prepend param`. The second color is a pastel, off the swatch's plane."""
-    one, two = np.array([0.2, 0.0, 0.8], F32), np.array([0.6, 0.5, 0.4], F32)
+def test_ink_params_reach_one_ink():
+    """`inkN_h` / `_s` / `_l` go route -> numbox -> pix. The second color is a pastel."""
+    one, two = (255.0, 1.0, 0.4), (30.0, 0.2, 0.5)          # (0.2, 0, 0.8) and the pastel (0.6, 0.5, 0.4)
     f = job([READ,
-             {"params": [["ink1", *one.tolist()]], "wait": SETTLE, "snap": "moved1"},
-             {"params": [["ink2", *two.tolist()]], "wait": SETTLE, "snap": "moved2"}])
+             {"params": [["ink1_h", one[0]], ["ink1_s", one[1]], ["ink1_l", one[2]]], "wait": SETTLE, "snap": "moved1"},
+             {"params": [["ink2_h", two[0]], ["ink2_s", two[1]], ["ink2_l", two[2]]], "wait": SETTLE, "snap": "moved2"}])
     before, moved1, moved2 = outs(f, "read"), outs(f, "moved1"), outs(f, "moved2")
-    note("ink 1 commanded distance", mx(readback(moved1)[0], one))
-    note("ink 2 (pastel) commanded distance", mx(readback(moved2)[1], two))
-    check("ink1 message: ink 1 is the commanded color", mx(readback(moved1)[0], one), LIST_TOL)
-    check("ink2 message: ink 2 is the commanded pastel", mx(readback(moved2)[1], two), LIST_TOL)
-    check("ink1 message: plate 2 exactly unchanged (Project)", mx(moved1[1], before[1]), 0.0)
-    check("ink1 message: plate 3 exactly unchanged (Project)", mx(moved1[2], before[2]), 0.0)
-    check("ink2 message: plate 1 exactly unchanged (Project)", mx(moved2[0], moved1[0]), 0.0)
-    matches(moved2, "Project after both messages", readback(moved2), mode="project")
+    note("ink 1 commanded distance", mx(readback(moved1)[0], hsl_to_rgb(*one)))
+    note("ink 2 (pastel) commanded distance", mx(readback(moved2)[1], hsl_to_rgb(*two)))
+    check("ink 1 Params: ink 1 is the commanded color", mx(readback(moved1)[0], hsl_to_rgb(*one)), INK_TOL)
+    check("ink 2 Params: ink 2 is the commanded pastel", mx(readback(moved2)[1], hsl_to_rgb(*two)), INK_TOL)
+    check("ink 1 Params: plate 2 exactly unchanged (Project)", mx(moved1[1], before[1]), 0.0)
+    check("ink 1 Params: plate 3 exactly unchanged (Project)", mx(moved1[2], before[2]), 0.0)
+    check("ink 2 Params: plate 1 exactly unchanged (Project)", mx(moved2[0], moved1[0]), 0.0)
+    matches(moved2, "Project after both inks moved", readback(moved2), mode="project")
 
 
 def test_gains():
@@ -172,21 +166,6 @@ def test_gains():
     got = outs(f, "gains")
     matches(got, "Unmix, gains 0.5, 2, 0", readback(outs(f, "read")), gains=gains)
     check("gain 0 empties plate 3", float(np.abs(got[2][..., :3]).max()), 1e-6)
-
-
-def test_saturation_dial():
-    """T021's open question: dial -> expr -> [t b f] -> `saturation`, then a bang, so the swatch sends its color again."""
-    f = job([READ,
-             {"params": [["sat1", 0.5]], "wait": SETTLE, "snap": "half"},
-             {"params": [["sat1", 1.0]], "wait": SETTLE, "snap": "back"}])
-    before, half, back = outs(f, "read"), outs(f, "half"), outs(f, "back")
-    note("ink 1 at Sat 1 = 1", readback(before)[0].tolist())
-    note("ink 1 at Sat 1 = 0.5", readback(half)[0].tolist())
-    note("ink 1 after Sat 1 returns to 1 (noted, not asserted)", readback(back)[0].tolist())
-    check("Sat 1 changes ink 1", float(mx(readback(half)[0], readback(before)[0]) < 0.05), 0.0)
-    check("Sat 1: plate 2 exactly unchanged (Project)", mx(half[1], before[1]), 0.0)
-    check("Sat 1: plate 3 exactly unchanged (Project)", mx(half[2], before[2]), 0.0)
-    matches(half, "Project at Sat 1 = 0.5", readback(half), mode="project")
 
 
 if __name__ == "__main__":
