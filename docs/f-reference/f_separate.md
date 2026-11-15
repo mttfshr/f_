@@ -1,7 +1,7 @@
 # f_separate
 
 **Type:** Processor: stateless, per pixel. One texture in; four textures out (the composite, then three plates).
-**Status:** Built 2026-11-08. Tier 1 and both benches green (Verification below). Tuning looks passed, live by Matt 2026-11-08 (T030, T031). Revised 2026-11-14 (Matt): three inks by default, outlet 0 the composite and 1 to 3 the plates (as `f_halftone`), and the panel an ink table in `f_halftone`'s style with each ink as H, S, L number boxes (the swatches are gone). The revision is built and tested offline; its benches and a live look are owed (Verification).
+**Status:** Built 2026-11-08. Tier 1 and both benches green (Verification below). Tuning looks passed, live by Matt 2026-11-08 (T030, T031). Revised 2026-11-14 (Matt): three inks by default, outlet 0 the composite and 1 to 3 the plates (as `f_halftone`), and the panel an ink table in `f_halftone`'s style with each ink as H, S, L number boxes (the swatches are gone). The revision is built and benched; a live look is owed (Verification).
 
 _Reference written 2026-11-08 from `src/f_separate/` (definition and codebox), `.specify/stable/f_separate/{spec,plan,tasks}.md` and the module's tests._
 
@@ -93,7 +93,7 @@ Per pixel, with `x` the source RGB and `K` the 3 x N matrix of active inks:
 - `bench_separate_module.py`: the shipped patcher, 5/5, worst 6.6e-7 on the first green run (latest log `tests/logs/20261108-224811-bench.log`): load touching nothing, Mode and ink count, `inkN` messages, gains, the Sat dial.
 - `tests/contracts/bench_modules.py`: 2/2 (log `tests/logs/20261108-224839-bench.log`), including bypass passing the source on all four outlets.
 - Live (Matt, 2026-11-08): the swatch route (T009), the plates showing after `aeaf7b3`, the tuning looks (T030, T031), the Sat dial, the helpfile, the panel, a plain reopen keeping a changed swatch.
-- 2026-11-14 revision (HSL table, outlet order, three inks): offline only so far (Claude): `test_separate.py` 13/13, drift, menu and conventions tests pass (log `tests/logs/20261114-214526-offline.log`). Both benches were rewritten for it (`test_hsl_params` checks the codebox's `hsl2rgb` against the standard model) and have NOT been run; the counts and logs above are from the swatch version. Not seen in Max.
+- 2026-11-14 revision (HSL table, outlet order, three inks): offline only so far (Claude): `test_separate.py` 13/13, drift, menu and conventions tests pass (log `tests/logs/20261114-214526-offline.log`). Benches 2026-11-14 (Claude, Matt's go): `bench_separate.py` 6/6, `hsl2rgb` within 3.6e-7 of the standard model (`tests/logs/20261114-215419-bench.log`); `bench_separate_module.py` 4/4 (`tests/logs/20261114-215434-bench.log`); contract bench clean for this module (`tests/logs/20261114-215504-bench.log`). The counts and logs above are from the swatch version. Not seen in Max.
 
 ## References
 

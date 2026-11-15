@@ -33,7 +33,7 @@ Closed 2026-10-30/31: the `render_dim` migration (all tensor modules, vorticity,
 
 ## Owed to Matt
 
-- **Runs and looks:** the `f_separate` revision of 2026-11-14 (HSL ink table, composite on outlet 0, three inks): its benches (T054) and a live look at the panel, helpfile and four demos (T055), record `.specify/stable/f_separate/tasks.md` Phase 4; the new `f_vf_stamp` helpfile; the regenerated `f_modules` dropdowns; the corrected helpfile (Caustic notes); `f_caustic` demo-patch chain-cost check (untouched since 2026-10-08).
+- **Runs and looks:** the `f_separate` revision of 2026-11-14 (HSL ink table, composite on outlet 0, three inks): benched green 2026-11-14 (T054); owed: a live look at the panel, helpfile and four demos (T055), record `.specify/stable/f_separate/tasks.md` Phase 4; the new `f_vf_stamp` helpfile; the regenerated `f_modules` dropdowns; the corrected helpfile (Caustic notes); `f_caustic` demo-patch chain-cost check (untouched since 2026-10-08).
 - **Decisions (print-styles):** the PRELIMINARY gates in the `f_vf_erode` and `f_engrave` `tasks.md` files (`f_halftone`'s all confirmed 2026-11-14) and the remaining ones in `f_separate` (`G-print-prelim`); which `f_separate` mode to keep or default to (Unmix, Nearest, Project); then `f_engrave`'s method, once its spike report exists (`G-engrave-method`).
 - **Decisions:** Batch 4: the remaining calls are the optical_flow / seeds passthrough details and the vortex mod-inlet gating (Matt: later).
 - **Optional cleanup:** `scratch/experiments/f_weave_character/` (local, gitignored) is redundant with the shipped `f_weave`; delete whenever.

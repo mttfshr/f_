@@ -61,7 +61,11 @@ def photo(seed=3, n=N):
     t[1, :4, :3] = -0.3
     for i in range(3):
         t[4:8, 4 * i:4 * i + 4, :3] = SPOT[i]
-        t[8:12, 4 * i:4 * i + 4, :3] = 0.5 * SPOT[i]
+        # 0.55, not 0.5: half an ink is an exact Nearest tie between the ink and black, and since the inks come through
+        # hsl2rgb (2026-11-14) the GPU's ink differs from the mirror's by about 6e-7, enough to flip the tie (measured:
+        # the 0.5 x ink 3 patch was the only mismatch, tests/logs/20261114-215347-bench.log). The tie rule itself is
+        # test_separate.py's (offline, exact inks).
+        t[8:12, 4 * i:4 * i + 4, :3] = 0.55 * SPOT[i]
     t[12:16, 0:4, :3] = 0.0
     return t
 
