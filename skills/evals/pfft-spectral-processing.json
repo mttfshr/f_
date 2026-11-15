@@ -1,0 +1,50 @@
+[
+ {
+  "query": "build a spectral freeze in Max with pfft~",
+  "should_trigger": true
+ },
+ {
+  "query": "a Param I send has no effect inside my pfft~ subpatch",
+  "should_trigger": true
+ },
+ {
+  "query": "'pfft~ no patcher' on load, my subpatch is embedded",
+  "should_trigger": true
+ },
+ {
+  "query": "how do I get a per-bin gain curve into a phase vocoder, it should follow a live dial",
+  "should_trigger": true
+ },
+ {
+  "query": "f_a_ripple: add a depth control to the per-bin AM",
+  "should_trigger": true
+ },
+ {
+  "query": "my pfft~ box lost its inlets after I saved",
+  "should_trigger": true
+ },
+ {
+  "query": "what's the frequency of bin k with fftin~ at 2048 overlap 4",
+  "should_trigger": true
+ },
+ {
+  "query": "write a gen~ codebox for an FIR filter",
+  "should_trigger": false
+ },
+ {
+  "query": "FFT of an image in jit.gl.pix for a blur",
+  "should_trigger": false
+ },
+ {
+  "query": "fft~ and ifft~ without pfft~, we have no notes on them, how do I start",
+  "should_trigger": false
+ },
+ {
+  "query": "compute the spectrum in numpy for the f_wave_field mirror test",
+  "should_trigger": false
+ },
+ {
+  "query": "decorrelate stereo with allpass filters in gen~",
+  "should_trigger": false
+ }
+]

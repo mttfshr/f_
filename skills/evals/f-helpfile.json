@@ -1,0 +1,50 @@
+[
+ {
+  "query": "write the help for f_vf_erode",
+  "should_trigger": true
+ },
+ {
+  "query": "the f_halftone helpfile looks wrong, the module UI is cut off at the bottom",
+  "should_trigger": true
+ },
+ {
+  "query": "the time_s LFO in the f_wave_field help patch does nothing",
+  "should_trigger": true
+ },
+ {
+  "query": "write docs/f-reference/f_engrave.md so the helpfile can be built from it",
+  "should_trigger": true
+ },
+ {
+  "query": "review package/help/f_poincare.maxhelp before I call it done",
+  "should_trigger": true
+ },
+ {
+  "query": "the helpfile text says what f_separate is but not what you'd use it for \u2014 fix it",
+  "should_trigger": true
+ },
+ {
+  "query": "add the External Control Messages block to f_wc's help",
+  "should_trigger": true
+ },
+ {
+  "query": "write the README Patches row for f_halftone",
+  "should_trigger": false
+ },
+ {
+  "query": "generate the f_Launch launcher patcher",
+  "should_trigger": false
+ },
+ {
+  "query": "is f_vf_erode ready to move to stable",
+  "should_trigger": false
+ },
+ {
+  "query": "edit the demo patch f_demo_halftone.maxpat to add a second instance",
+  "should_trigger": false
+ },
+ {
+  "query": "document the vs_black pattern in docs/vsynth-reference/patterns.md",
+  "should_trigger": false
+ }
+]

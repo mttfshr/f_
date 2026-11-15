@@ -1,0 +1,50 @@
+[
+ {
+  "query": "edit package/examples/f_demo_halftone.maxpat to change the dial's initial value to 0.3 without making Max rewrite the whole file",
+  "should_trigger": true
+ },
+ {
+  "query": "write a script that generates a .maxpat with 8 bpatchers in a row, each loading f_vf_glow",
+  "should_trigger": true
+ },
+ {
+  "query": "I hand-wrote this maxpat and when I open it half the patchcords are missing",
+  "should_trigger": true
+ },
+ {
+  "query": "pfft~ says 'no patcher' when loading the patch I generated as JSON",
+  "should_trigger": true
+ },
+ {
+  "query": "a dial bound with param_connect has the wrong range and won't move, the patch was made from a python script",
+  "should_trigger": true
+ },
+ {
+  "query": "review this maxpat diff before I commit, I edited the boxes by hand",
+  "should_trigger": true
+ },
+ {
+  "query": "the codebox in the file I wrote shows 'out1 = in1;' instead of my code",
+  "should_trigger": true
+ },
+ {
+  "query": "add a module to the f_modules menu and rebuild f_halftone from its definition",
+  "should_trigger": false
+ },
+ {
+  "query": "write out the patch for a sidechain compressor in text so I can build it in Max myself",
+  "should_trigger": false
+ },
+ {
+  "query": "the f_wc helpfile crops the module UI, fix the layout",
+  "should_trigger": false
+ },
+ {
+  "query": "my gen~ codebox code has 'extra arguments for message' on a Param",
+  "should_trigger": false
+ },
+ {
+  "query": "write a jit.gl.pix codebox for a radial blur",
+  "should_trigger": false
+ }
+]

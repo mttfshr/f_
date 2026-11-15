@@ -1,0 +1,50 @@
+[
+ {
+  "query": "add a bench test for the new erode codebox step against the numpy mirror",
+  "should_trigger": true
+ },
+ {
+  "query": "bench_halftone passes alone but fails when run after bench_vf_erode",
+  "should_trigger": true
+ },
+ {
+  "query": "temporal test for f_vf_advect \u2014 every step returns the same frame",
+  "should_trigger": true
+ },
+ {
+  "query": "GPU vs numpy mismatch only at 640x360, square sizes are fine",
+  "should_trigger": true
+ },
+ {
+  "query": "add a BYPASS_EXPECT entry for f_weave in the contract bench",
+  "should_trigger": true
+ },
+ {
+  "query": "what tolerance should the bench use for the blue-noise threshold comparison",
+  "should_trigger": true
+ },
+ {
+  "query": "register bench_vf_seeds in benchdeps.py",
+  "should_trigger": true
+ },
+ {
+  "query": "write the numpy mirror test for f_tone_curve in tests/modules (tier 1, no Max)",
+  "should_trigger": false
+ },
+ {
+  "query": "is f_vf_fluid ready to ship? it fails the contract bench",
+  "should_trigger": false
+ },
+ {
+  "query": "the pix renders black when I open it in Max, debug the codebox",
+  "should_trigger": false
+ },
+ {
+  "query": "run the bench and tell me if it's green",
+  "should_trigger": false
+ },
+ {
+  "query": "write a unit test for build/generate_menu.py",
+  "should_trigger": false
+ }
+]
