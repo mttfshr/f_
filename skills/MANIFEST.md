@@ -4,17 +4,17 @@ State of each skill as of the last claude.ai upload.
 Regenerate with `./skills/check.sh stamp` immediately AFTER uploading.
 Check with `./skills/check.sh`.
 
-_Stamped: 2026-11-14_
+_Stamped: 2026-11-15_
 
 | skill | sha256(12) | lines |
 |---|---|---|
-| `bench-test-authoring` | 8921f9879735 | 118 |
-| `f-helpfile` | 50319882f416 | 296 |
-| `gen-tilde-codebox` | a838e0d3451b | 488 |
-| `jit-gen-codebox` | d6f5e4e81317 | 1113 |
-| `max-advanced-object-methodology` | c6bddc6986bf | 125 |
-| `max-patch-notation` | 143cc18a4e05 | 182 |
-| `maxpat-json-authoring` | 49a080bca1ac | 152 |
-| `module-preflight` | 2498f8f30772 | 115 |
-| `pfft-spectral-processing` | bdbd28827121 | 248 |
-| `vsynth-bpatcher` | f141032a1f68 | 1081 |
+| `bench-test-authoring` | f05b95bf7af5 | 138 |
+| `f-helpfile` | 4f3701c65a17 | 322 |
+| `gen-tilde-codebox` | 5768a0d1faa8 | 501 |
+| `jit-gen-codebox` | 48e850f27ab1 | 360 |
+| `max-advanced-object-methodology` | adfab867a61a | 139 |
+| `max-patch-notation` | 77c3f34931ae | 194 |
+| `maxpat-json-authoring` | fa52499aaf25 | 189 |
+| `module-preflight` | 9a9afa15b04e | 126 |
+| `pfft-spectral-processing` | cfa0e3cf529e | 266 |
+| `vsynth-bpatcher` | 1287c9eec875 | 284 |
