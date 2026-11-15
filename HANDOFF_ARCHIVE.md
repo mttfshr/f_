@@ -1,6 +1,14 @@
 # HANDOFF archive
 
-Entries moved out of `HANDOFF.md` on 2026-10-31, 2026-11-04, 2026-11-08, 2026-11-10, 2026-11-11, 2026-11-12, 2026-11-13 and 2026-11-14 (three times) (newest first, as they were). Not read at session start: grep it for history. The full pre-trim `HANDOFF.md` is also in git (commit 76c2ab8).
+Entries moved out of `HANDOFF.md` on 2026-10-31, 2026-11-04, 2026-11-08, 2026-11-10, 2026-11-11, 2026-11-12, 2026-11-13 and 2026-11-14 (three times) and 2026-11-15 (newest first, as they were). Not read at session start: grep it for history. The full pre-trim `HANDOFF.md` is also in git (commit 76c2ab8).
+
+## 2026-11-14 (late afternoon): sharing skills on Discord; `boundmode` resolved
+
+- **Goal (Matt):** share gen-tilde-codebox, jit-gen-codebox and maxpat-json-authoring with other developers, posted directly on Discord; no attribution needed; max-patch-notation and pfft-spectral-processing are not shared yet.
+- **Pattern:** each skill gets a project-neutral `SKILL.md` plus an f_-only `local.md` next to it (SKILL.md ends by telling the reader to load it). Share the folder without `local.md`; upload WITH it to claude.ai. `skills/check.sh` now hashes every file in a skill folder (SKILL.md-only hashes unchanged).
+- **Done:** maxpat-json-authoring split (`975de65`). `boundmode` probes B1/B2 (`tests/records/bench_boundmode_probes.py`, 2/2, `tests/logs/20261114-141112-bench.log`): the keyword works ("clamp"/"wrap" both axes, "mirror" x only, typos silent); jit-gen-codebox's three conflicting entries are one section (`e4197d3`); `G-edge-wrap` noted. gen-tilde-codebox split: provenance and the `prepend`/`trig` convention in local.md; duplicate testing section and stale "Carried over" section folded in. Then, per skill-creator's writing guide: a symptom-led description and a Quick rules list at the top; maxpat-json-authoring got the same pass. jit-gen-codebox split and regrouped: SKILL.md (360 lines: quick rules, language, operators, failures, inlets, checklist) plus `references/` (sampling, numerics-and-limits, pix-object, patterns); bench tooling and provenance in local.md; token check found nothing lost.
+- **Owed to Matt:** re-upload jit-gen-codebox (now with a `references/` folder), maxpat-json-authoring and gen-tilde-codebox, each with local.md, then `./skills/check.sh stamp`. Optional: matrix-fed `boundmode` (fix path A of `scratch/boundmode_probe.maxpat`, live look); whether gpu_sim's `nearest()` should wrap.
+- **Next:** post the three folders on Discord without local.md (Matt). Other skills' pointers into jit-gen-codebox (e.g. bench-test-authoring's "pin every Param") now land in its local.md.
 
 ## 2026-11-14 (afternoon): `f_halftone` gate sweep, T028 closed
 
