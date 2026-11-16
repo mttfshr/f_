@@ -52,7 +52,10 @@ sin_r = sin(angle);
 gx2 = gx * cos_r - gy * sin_r;
 gy2 = gx * sin_r + gy * cos_r;
 
-field   = vec(clamp(gx2 * 0.5 + 0.5, 0.0, 1.0), clamp(gy2 * 0.5 + 0.5, 0.0, 1.0), 0.5, 1.0);
+// Direction-preserving limit: when the larger component exceeds 1 the vector is scaled so it is exactly 1; a
+// per-channel clamp collapsed every direction to one of four diagonals at high gain. Output within +-1 is unchanged.
+kk = 1.0 / max(max(abs(gx2), abs(gy2)), 1.0);
+field   = vec(gx2 * kk * 0.5 + 0.5, gy2 * kk * 0.5 + 0.5, 0.5, 1.0);
 neutral = vec(0.5, 0.5, 0.5, 1.0);
 
 threshed = mix(field, neutral, step(L_center, thresh));

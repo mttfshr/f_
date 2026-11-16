@@ -60,7 +60,7 @@ gx' = gx*cos(angle) - gy*sin(angle)
 gy' = gx*sin(angle) + gy*cos(angle)
 ```
 
-Encoded to f_vecfield convention: `R = clamp(gx'*0.5+0.5, 0, 1)`, `G = clamp(gy'*0.5+0.5, 0, 1)`, `B = 0.5`, `A = 1.0` — then gated by `thresh`: pixels whose center luma is at or below `thresh` are replaced with the neutral field (0.5, 0.5, 0.5).
+Encoded to f_vecfield convention: `k = 1 / max(|gx'|, |gy'|, 1)`, `R = gx'*k*0.5+0.5`, `G = gy'*k*0.5+0.5` (the vector is scaled down so its larger component is at most 1; direction is kept, and output within ±1 is unchanged), `B = 0.5`, `A = 1.0` — then gated by `thresh`: pixels whose center luma is at or below `thresh` are replaced with the neutral field (0.5, 0.5, 0.5).
 
 Flat input regions produce exactly R = G = 0.5 (zero gradient, neutral field). Consumers decode via `(sample - 0.5) * 2.0`. See `docs/f-reference/f_vecfield_type.md` for full type contract.
 
