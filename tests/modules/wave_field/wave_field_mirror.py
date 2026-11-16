@@ -272,11 +272,15 @@ def encode_luma(u_tex, gain=1.0):
 
 
 def encode_vec(u_tex, gain=1.0):
-    """Gradient vecfield (G2: tanh): R,G = 0.5 + 0.5 tanh(gain GRAD_SCALE grad u), B = 0.5, A = 1."""
+    """Gradient vecfield (G2, revised 2026-11-15): tanh on the MAGNITUDE, direction kept.
+    c = gain GRAD_SCALE; R,G = 0.5 + 0.5 grad u tanh(c |grad u|) / |grad u| (-> c as |grad u| -> 0), B = 0.5, A = 1."""
     ux, uy = gradient(u_tex)
+    c = F32(gain) * GRAD_SCALE
+    m = np.sqrt(ux * ux + uy * uy)
+    k = np.where(m > F32(1e-6), np.tanh(c * m) / np.maximum(m, F32(1e-6)), c).astype(np.float32)
     e = texture(*u_tex.shape[:2])
-    e[..., 0] = F32(0.5) + F32(0.5) * np.tanh(F32(gain) * GRAD_SCALE * ux)
-    e[..., 1] = F32(0.5) + F32(0.5) * np.tanh(F32(gain) * GRAD_SCALE * uy)
+    e[..., 0] = F32(0.5) + F32(0.5) * k * ux
+    e[..., 1] = F32(0.5) + F32(0.5) * k * uy
     e[..., 2] = F32(0.5)
     e[..., 3] = F32(1.0)
     return store_float32(e)

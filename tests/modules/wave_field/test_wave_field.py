@@ -519,8 +519,21 @@ def test_output_mapping_is_tanh_and_gain_scales_the_argument():
     ramp = new_state(N, N)
     ramp[..., 0] = np.sin(2 * np.pi * (np.arange(N) + 0.5) / N)[None, :] * 3.0
     ux, _ = gradient(ramp)
-    want = 0.5 + 0.5 * np.tanh(2.0 * float(wfm.GRAD_SCALE) * ux.astype(np.float64))
-    check("vecfield R matches the tanh formula at gain 2", float(np.abs(encode_vec(ramp, 2.0)[..., 0] - want).max()), 1e-6)
+    ramp_uy = np.zeros_like(ux)
+    c = 2.0 * float(wfm.GRAD_SCALE)
+    mm = np.abs(ux.astype(np.float64))
+    want = 0.5 + 0.5 * np.where(mm > 1e-6, np.tanh(c * mm) / np.maximum(mm, 1e-6), c) * ux.astype(np.float64)
+    check("vecfield R matches the magnitude-tanh formula at gain 2 (uy = 0)", float(np.abs(encode_vec(ramp, 2.0)[..., 0] - want).max()), 1e-6)
+    # direction survives saturation: a diagonal ramp at huge gain keeps R-0.5 == G-0.5 ratio, not four corners
+    diag = new_state(N, N)
+    xs = (np.arange(N) + 0.5) / N
+    diag[..., 0] = (np.sin(2 * np.pi * xs)[None, :] * 3.0 + 0.5 * np.sin(2 * np.pi * xs)[:, None] * 3.0)
+    dx_, dy_ = gradient(diag)
+    vv = encode_vec(diag, 10.0)
+    r, g = vv[..., 0] - 0.5, vv[..., 1] - 0.5
+    sel = (np.abs(dx_) > 1.0) & (np.abs(dy_) > 1.0)
+    cross = np.abs(r * dy_ - g * dx_)[sel] / (np.hypot(r, g)[sel] * np.hypot(dx_, dy_)[sel])
+    check("saturated vecfield keeps the gradient direction (sin of angle error)", float(cross.max()), 1e-4)
     p = Params(speed=0.25, gain=4.0)
     _, luma, vec = wave_frame(struck_state(32, 32, p), p)
     check("wave_frame passes gain to both outputs (luma/vec unchanged is gain 1)",

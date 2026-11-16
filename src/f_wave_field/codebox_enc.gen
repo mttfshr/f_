@@ -6,7 +6,8 @@
 // size), second = the state (R = u, from the real stage; cold).
 // Outlets: the first is the luma map, the second is the gradient vecfield.
 //   - G2 (Matt, 2026-10-25): tanh compression, no clamp. luma = 0.5 + 0.5 tanh(gain * 0.5 * u) (LUMA_SCALE 0.5);
-//     vecfield R,G = 0.5 + 0.5 tanh(gain * 0.05 * grad u) (GRAD_SCALE 0.05), B = 0.5, A = 1 (f_vecfield_type)
+//     vecfield R,G = 0.5 + 0.5 * grad u * tanh(c |grad u|) / |grad u|, c = gain * 0.05 (GRAD_SCALE 0.05): tanh on the
+//     MAGNITUDE, direction kept (Matt, 2026-11-15; was per-channel tanh, which quadrantized at high gain), B = 0.5, A = 1
 //   - grad u = central difference over one texel either side with integer wrap, times N / 2 (L = 1 frame
 //     width); the mapped values at the four surrounding solver texels are blended bilinearly (a manual periodic
 //     4-tap on nearest(): hardware sample() would snap when the output is smaller than 256)
@@ -20,22 +21,25 @@ lum_at(xi, yi, g) {
     return 0.5 + 0.5 * tanh(g * 0.5 * uv);
 }
 
-vx_at(xi, yi, g) {
+// vec_at(xi, yi, g, ax): one component of the gradient vecfield at solver texel (xi, yi); ax 0 = x, 1 = y.
+// The tanh acts on the gradient's MAGNITUDE and keeps its direction: v = grad * tanh(c |grad|) / |grad|,
+// c = g * 0.05 (a per-channel tanh saturates each component alone and collapses every direction to one of four
+// diagonals at high gain, the "quadrant" look; Matt, 2026-11-15). As |grad| -> 0 the factor tends to c.
+vec_at(xi, yi, g, ax) {
     xp = (wrap(xi + 1, 0, 256) + 0.5) / 256;
     xm = (wrap(xi - 1, 0, 256) + 0.5) / 256;
-    yc = (yi + 0.5) / 256;
-    ga = (nearest(in2, vec(xp, yc)).x - nearest(in2, vec(xm, yc)).x) * 128;
-    ga = switch(abs(ga) < 1e30, ga, 0);
-    return 0.5 + 0.5 * tanh(g * 0.05 * ga);
-}
-
-vy_at(xi, yi, g) {
     yp = (wrap(yi + 1, 0, 256) + 0.5) / 256;
     ym = (wrap(yi - 1, 0, 256) + 0.5) / 256;
     xc = (xi + 0.5) / 256;
+    yc = (yi + 0.5) / 256;
+    ga = (nearest(in2, vec(xp, yc)).x - nearest(in2, vec(xm, yc)).x) * 128;
     gb = (nearest(in2, vec(xc, yp)).x - nearest(in2, vec(xc, ym)).x) * 128;
+    ga = switch(abs(ga) < 1e30, ga, 0);
     gb = switch(abs(gb) < 1e30, gb, 0);
-    return 0.5 + 0.5 * tanh(g * 0.05 * gb);
+    c = g * 0.05;
+    m = sqrt(ga * ga + gb * gb);
+    k = switch(m > 0.000001, tanh(c * m) / max(m, 0.000001), c);
+    return 0.5 + 0.5 * k * switch(ax < 0.5, ga, gb);
 }
 
 Param gain(1);
@@ -53,8 +57,8 @@ ya = wrap(y0, 0, 256);
 yb = wrap(y0 + 1, 0, 256);
 
 lum = mix(mix(lum_at(xa, ya, gain), lum_at(xb, ya, gain), tx), mix(lum_at(xa, yb, gain), lum_at(xb, yb, gain), tx), ty);
-vxo = mix(mix(vx_at(xa, ya, gain), vx_at(xb, ya, gain), tx), mix(vx_at(xa, yb, gain), vx_at(xb, yb, gain), tx), ty);
-vyo = mix(mix(vy_at(xa, ya, gain), vy_at(xb, ya, gain), tx), mix(vy_at(xa, yb, gain), vy_at(xb, yb, gain), tx), ty);
+vxo = mix(mix(vec_at(xa, ya, gain, 0), vec_at(xb, ya, gain, 0), tx), mix(vec_at(xa, yb, gain, 0), vec_at(xb, yb, gain, 0), tx), ty);
+vyo = mix(mix(vec_at(xa, ya, gain, 1), vec_at(xb, ya, gain, 1), tx), mix(vec_at(xa, yb, gain, 1), vec_at(xb, yb, gain, 1), tx), ty);
 
 keep = 1 - bypass_gate;
 out1 = vec(lum * keep, lum * keep, lum * keep, 1);

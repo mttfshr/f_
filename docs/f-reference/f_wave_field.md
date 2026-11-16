@@ -42,7 +42,7 @@ inlet 0 -> vs_inState -> real (in 2)      inlet 1 -> its own vs_inState -> real 
 | `fx` `fy` `iy` `ix` | Separable DFT, two complex fields per pass (`u` in R,G; `v` in B,A). Generated from the shared template (`src/f_wave_field/gen_dft.py`) |
 | `spec` | The exact per-bin step of `u_tt + 2β u_t + ω² u = 0` in all three damping regimes; the k = 0 bin is zeroed |
 | `real` | Force inlet, LFO, the strike pin, edge sponge, containment |
-| `enc` | Periodic bilinear upsample to render size, `tanh` luma map, `tanh` gradient vecfield, bypass gate |
+| `enc` | Periodic bilinear upsample to render size, `tanh` luma map, magnitude-`tanh` gradient vecfield (direction kept), bypass gate |
 
 The `r draw` bang goes to `pass` and `enc`; the feedback arrives on cold inlets, so the loop advances exactly once per rendered frame. The connected flags `src_force` and `src_lfo` (from each inlet's `vs_inState`) gate the two reads: an unconnected inlet is `vs_black` = 0, which would otherwise decode as a full -1 force.
 
@@ -84,7 +84,7 @@ Per frame, on `u` (position) and `v = du/dt`:
 3. **The pin (Strike).** While `strike_gate` is 1 and no reset is running: `u += pw (target − u)` and `v *= 1 − pw`, with `target = strength · amp · T`. With inlet 0 connected `pw` is the **outline mask** (`|I(x+1) − I(x−1), I(y+1) − I(y−1)|` of the R channel, one solver texel either side, clamped 0..1) and `amp` = 1; with nothing connected `pw` is a Gaussian at the frame centre (σ = 0.02) and `amp` = 4. So the envelope's attack and decay are the luma of `T` over the held frames, the sustain is how long the button is held, and the release is the solver ringing out at its own Speed and Damp. No gain constant: the amplitude is in field units.
 4. **Edge sponge.** `exp(−rate·dt)` on `u` and `v`, rate = `edge`·20 × a smoothstep profile over a 0.12-wide border band.
 5. **Containment.** Non-finite or huge values become 0, then ±100.
-6. **Encode.** Luma `0.5 + 0.5·tanh(gain · 0.5 · u)`; vecfield R,G `0.5 + 0.5·tanh(gain · 0.05 · ∂u)`, B = 0.5, A = 1 (gate G2; the scales are placeholders that Matt's look accepted: T030, T037).
+6. **Encode.** Luma `0.5 + 0.5·tanh(gain · 0.5 · u)`; vecfield R,G `0.5 + 0.5·∇u·tanh(c|∇u|)/|∇u|` with c = gain · 0.05 (tanh on the gradient's magnitude, so high gain keeps the direction instead of collapsing to four quadrant colors; changed 2026-11-15), B = 0.5, A = 1 (gate G2; the scales are placeholders that Matt's look accepted: T030, T037).
 
 ---
 
