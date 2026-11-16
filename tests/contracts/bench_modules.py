@@ -202,13 +202,14 @@ NEUTRAL_BYPASS_BY_DESIGN = {"f_tf_tensormap", "f_tf_axisflow", "f_vf_ch",
                             "f_wave_field"}   # a generator: the force inlet is optional, bypass = black / neutral vecfield
 
 # Modules whose output follows the render CONTEXT size, not the input texture's: feed them an input of
-# that size so the passthrough check is like for like.  f_vf_fluid follows the context (512).  The
+# that size so the passthrough check is like for like.  f_vf_fluid follows the same 640 context (a 512 here
+# failed its bypass frame as (640, 640, 4) in the live runs of 2026-11-15; fluid's module bench is 4/4 at 640).  The
 # render_dim modules follow the `dim W H` that the bench's real vs_render broadcasts, 640 x 640 as seen
 # 2026-10-31 (their bypass frame was (640, 640, 4) against the 64 x 64 input); inlets 2+ use the same n.
 # Only the modules with a passthrough bypass expectation need it: the const-expectation ones skip the
 # shape check.
 RENDER_DIM_SIZE = 640
-INPUT_SIZE = {"f_vf_fluid": 512,
+INPUT_SIZE = {"f_vf_fluid": RENDER_DIM_SIZE,
               "f_grain": RENDER_DIM_SIZE, "f_tf_aniso_blur": RENDER_DIM_SIZE,
               "f_tf_glyph": RENDER_DIM_SIZE, "f_vf_vorticity": RENDER_DIM_SIZE,
               # 2026-11-01: f_stipple took render_dim (T045); live run 08:48 failed its three passthrough outlets
