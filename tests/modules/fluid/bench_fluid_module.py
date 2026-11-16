@@ -32,11 +32,11 @@ import numpy as np
 import benchclient as bc
 import jxf
 import modulebench as mb
-from bench_modules import ENV_NOISE
+from bench_modules import ENV_NOISE, RENDER_DIM_SIZE
 from harness import check, note, run
 
 MODULE = "f_vf_fluid.maxpat"
-SIZE = 512                                       # the module bench's render-context size
+SIZE = RENDER_DIM_SIZE                           # the module bench's render-context size (640, from vs_render)
 F, MU, DT = 0.02, 0.5, 0.01                      # dial defaults (definition.py)
 
 

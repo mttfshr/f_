@@ -35,11 +35,11 @@ import numpy as np
 import benchclient as bc
 import jxf
 import modulebench as mb
-from bench_modules import ENV_NOISE
+from bench_modules import ENV_NOISE, RENDER_DIM_SIZE
 from harness import check, note, run
 
 MODULE = "f_vf_ch.maxpat"
-SIZE = 512                                       # the module bench's render-context size
+SIZE = RENDER_DIM_SIZE                           # the module bench's render-context size (640, from vs_render)
 INJECT, THRESH, PULL = 0.3, 0.5, 0.3             # dial defaults (definition.py)
 E = INJECT ** 3                                  # per-frame deposit rate at luma 1
 PULL_MAX = 0.05                                  # spec's per-frame mean pull rate at pull = 1
