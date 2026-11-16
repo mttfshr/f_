@@ -45,7 +45,7 @@ One inlet, one outlet. Unlike the two-inlet consumers, the force arrives on the 
 | 2–3 | `fx`, `fy` | forward DFT along x, then y | 256² |
 | 4 | `spec` | projection blend, then viscosity and drag decay, per Fourier bin | 256² |
 | 5–6 | `iy`, `ix` | inverse DFT along y, then x; `ix` keeps the real part and clears NaN/Inf | 256² |
-| 7 | `enc` | periodic 4-tap upsample, `gain`, clamp, encode, bypass gate | render res |
+| 7 | `enc` | periodic 4-tap upsample, `gain`, limit, encode, bypass gate | render res |
 
 Solver stages are `@adapt 0 @dim 256 256 @type float32`. The four DFT codeboxes are baked from one template (`gen_dft.py`).
 
@@ -60,7 +60,7 @@ Solver stages are `@adapt 0 @dim 256 256 @type float32`. The four DFT codeboxes 
 | `viscosity` | 0–1 | 0.085 | Smoothing dial, independent of `dt`. 0 = off, high = honey (only the biggest swirls survive). Per-frame ν·dt = 1.6e-3·v³, so most of the useful range is in the lower half. |
 | `project` | 0–1 | 1 | 0 = compressible (shock fronts), 1 = divergence-free swirl. |
 | `drag` | 0–5 | 0.5 | Linear damping. Keeps sustained or uniform force bounded. |
-| `gain` | 0–10 | 1.0 | Output scale on the velocity before encoding (clamped to the vecfield range). |
+| `gain` | 0–10 | 1.0 | Output scale on the velocity before encoding (limited to the vecfield range; past the limit the whole vector is scaled down so the direction is kept, not each channel clipped alone). |
 | `drift` | 0–1 | 1 | How much frame-wide drift (the uniform part of the flow) is allowed to build up. 1 = all of it (the original behavior); 0 = none, the average flow is zeroed every frame; in between it fades with a half-life of about 11 / −ln(drift) frames on top of `drag` (0.5 → 16 frames, 0.1 → 5, 0.9 → 105). Swirls are untouched. Added 2026-10-17. |
 | `taps` | 1–16 | 8 | Force filter: `taps × taps` samples per solver texel. Control message only — no panel slot. |
 | `src_vecfield` | internal | — | Driven by `vs_inState` (1 = force inlet connected). Not user-facing. |
@@ -86,7 +86,7 @@ u_adv     = sample_periodic(u, x - u * dt) + force * force_xy               // b
 û[k=0]    = û[k=0] * drift^(1/16)                                           // the frame-wide mean flow only; drift 1 = off
 u         = Re(IFFT(û))                                                     // NaN/Inf → 0
 
-out       = 0.5 + 0.5 * clamp(gain * u)                                     // encoded, B = 0.5, A = 1
+out       = 0.5 + 0.5 * (gain * u) / max(1, |gain * u|, |gain * v|)                                  // encoded, B = 0.5, A = 1
 ```
 
 Domain: periodic unit square, wavevector `k = 2π · signed_index`. Velocity is in decoded f_vecfield field units; displacement per frame is `u · dt`, the same meaning as `f_vf_advect`'s `dt`.

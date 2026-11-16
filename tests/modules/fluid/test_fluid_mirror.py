@@ -491,6 +491,8 @@ def test_encode_and_bypass_gate():
     check("B = 0.5, A = 1", max(np.max(np.abs(e[..., 2] - 0.5)), np.max(np.abs(e[..., 3] - 1))), 0)
     big = fm.enc(force, vel * 100, 10.0, 0.0, 1.0)
     check("clamped to [0, 1]", max(float(big.max()) - 1.0, -float(big.min())), 0)
+    check("saturated: larger component is exactly 1, direction kept (R 1, G 0.5 + 0.5 * -2/3)",
+          max(np.max(np.abs(big[..., 0] - 1.0)), np.max(np.abs(big[..., 1] - (0.5 - 0.5 * 2 / 3)))), 1e-6)
     byp = fm.enc(force, vel, 1.5, 1.0, 1.0)
     check("bypass, connected: force exactly", np.max(np.abs(byp - force)), 0)
     unc = fm.enc(None, vel, 1.5, 1.0, 0.0, size=(h, w))

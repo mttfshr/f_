@@ -1,5 +1,5 @@
 // codebox_enc.gen -- f_vf_fluid stage 7: upsample the 256x256 velocity to the
-// render size, apply gain, clamp, encode as an f_vecfield, and apply the
+// render size, apply gain, limit (direction kept), encode as an f_vecfield, and apply the
 // bypass gate. Runs at RENDER resolution. Mirror: tests/fluid_mirror.enc().
 //
 // Inputs: in1 = `r draw` bang (unused; triggers every frame and gives this
@@ -34,8 +34,14 @@ p11 = vec((xb + 0.5) / N, (yb + 0.5) / N);
 au = mix(mix(nearest(in3, p00).x, nearest(in3, p10).x, tx), mix(nearest(in3, p01).x, nearest(in3, p11).x, tx), ty);
 av = mix(mix(nearest(in3, p00).z, nearest(in3, p10).z, tx), mix(nearest(in3, p01).z, nearest(in3, p11).z, tx), ty);
 
-r = 0.5 + 0.5 * clamp(gain * au, -1, 1);
-g = 0.5 + 0.5 * clamp(gain * av, -1, 1);
+// Direction-preserving limit (Matt, 2026-11-15): when the larger gained component exceeds 1 the whole vector is
+// scaled down so that component is exactly 1; a per-channel clamp saturated each component alone and collapsed
+// every direction to one of four diagonals at high gain. Output within +-1 is unchanged.
+gu = gain * au;
+gv = gain * av;
+kk = 1 / max(max(abs(gu), abs(gv)), 1);
+r = 0.5 + 0.5 * gu * kk;
+g = 0.5 + 0.5 * gv * kk;
 
 // same content check as codebox_adv.gen: only a texture with B = 0.5 counts as a vecfield
 useforce = switch(src_vecfield >= 0.5, 1, 0) * switch(abs(sample(in2, norm).z - 0.5) < 0.25, 1, 0);
