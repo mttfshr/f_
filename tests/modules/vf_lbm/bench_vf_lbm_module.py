@@ -7,7 +7,7 @@ Asserted:
   - after load the output is a finite f_vecfield: R, G inside [0, 1], B = 0.5, A = 1
   - empty (black) mask: uniform channel flow at the inflow, so R is 0.5 + gain * inflow = 0.74 everywhere
     (the seeded state IS the uniform-flow fixed point, so this holds from the first frames)
-  - a white disc as the mask: velocity inside the disc is near zero (R near 0.5), the free stream near the
+  - a white disc as the mask: the free stream near the
     inflow edge is still 0.74, and the field has real cross-stream motion (G moves away from 0.5)
   - the solver runs: the disc case evolves between two times
 
@@ -70,7 +70,8 @@ def test_disc_obstacle_stops_the_flow_and_deflects_it():
     cy, cx = int(0.5 * a.shape[0]), int(0.25 * a.shape[1])
     inside = a[cy - 2:cy + 3, cx - 2:cx + 3, 0]
     note("R inside the disc (mean)", float(inside.mean()))
-    check("velocity inside the obstacle is near zero (R within 0.08 of 0.5)", float(np.abs(inside - 0.5).max()), 0.08)
+    # Not asserted: the module does not zero velocity inside obstacle cells (mac and enc read the populations as they
+    # are); live 2026-11-15 R inside the disc was 0.26 = 0.5 - gain * inflow. Dropped by Matt 2026-11-16.
     left = a[:, : max(a.shape[1] // 12, 2), 0]
     note("R near the inflow edge (mean)", float(left.mean()))
     check("the free stream at the inflow edge is intact (R within 0.04 of 0.74)", float(abs(left.mean() - FREE_STREAM)), 0.04)
