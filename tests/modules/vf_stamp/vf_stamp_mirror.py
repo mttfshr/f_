@@ -139,7 +139,8 @@ def stamp_stage(in0, in1=None, threshold=0.05, softness=0.1, invert=0.0, amount=
 
     half = np.full((h, w), F32(0.5))
     one = np.ones((h, w), F32)
-    out1 = np.dstack([np.clip(vx * F32(0.5) + F32(0.5), 0, 1), np.clip(vy * F32(0.5) + F32(0.5), 0, 1),
+    kk = (F32(1.0) / np.maximum(np.maximum(np.abs(vx), np.abs(vy)), F32(1.0))).astype(F32)   # direction-preserving limit
+    out1 = np.dstack([vx * kk * F32(0.5) + F32(0.5), vy * kk * F32(0.5) + F32(0.5),
                       half, one]).astype(F32)
 
     pass1 = np.dstack([_mix(half, vin[..., 0], conn), _mix(half, vin[..., 1], conn), half, one]).astype(F32)

@@ -69,7 +69,7 @@ Per pixel, once per draw:
 2. **Ink.** `(rgb * cov * amount * env, 1)`. RGB carries the mask and A stays 1, because `f_vf_advect` adds all four channels with no alpha gating.
 3. **Impulse, field connected.** `(field - 0.5) * 2 * cov * env * force`. The flag decides, never the value: an unconnected inlet is black, which would decode to a full -1 vector.
 4. **Impulse, nothing connected.** The plain wide central difference of `cov`, negated, no divide: `v = -(cov(x+s) - cov(x-s), cov(y+s) - cov(y-s))`, `s = max(1, round(rim * width))` texels on both axes, then `* env * force`. Swirl is `(-v.y, v.x)`. Neighbours are integer texel indices with a periodic wrap, read at texel centres.
-5. **Encode.** `v * 0.5 + 0.5` clamped to 0..1, B = 0.5, A = 1, so each component clips past the range at high `force`.
+5. **Encode.** `v * 0.5 + 0.5`, B = 0.5, A = 1. Past the range at high `force` the vector is scaled so its larger component is exactly 1 (direction kept, not a per-channel clamp).
 6. **Containment.** Non-finite texels are zapped on read (stamp to 0, field to 0.5), also under bypass.
 
 ---

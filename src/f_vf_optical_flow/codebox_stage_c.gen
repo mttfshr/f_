@@ -66,7 +66,11 @@ v = (-sxx*syt + sxy*sxt) / det_safe;
 // encode (u,v) as a standard f_vecfield -- 0.5 = zero vector, same
 // convention as f_vf_fieldmap -- loads into f_vf_warp/f_vf_fieldmap-
 // family consumers with no adapter (T015)
-field = vec(clamp(u*gain*0.5 + 0.5, 0.0, 1.0), clamp(v*gain*0.5 + 0.5, 0.0, 1.0), 0.5, 1.0);
+// Direction-preserving limit: the larger gained component is capped at 1 and the vector scaled with it.
+gu = u*gain;
+gv = v*gain;
+kk = 1.0 / max(max(abs(gu), abs(gv)), 1.0);
+field = vec(gu*kk*0.5 + 0.5, gv*kk*0.5 + 0.5, 0.5, 1.0);
 neutral = vec(0.5, 0.5, 0.5, 1.0);
 
 // Confidence-gated masking -- ADR-2 originally deferred this (raw

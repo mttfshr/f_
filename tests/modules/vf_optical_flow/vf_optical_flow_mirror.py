@@ -16,7 +16,8 @@ Mirror of the codebox, in its order:
     mag = sqrt((sxx-syy)^2 + (2*sxy)^2);  mag_safe = max(mag, 0.0001)
     cos2t = (sxx-syy)/mag_safe;  sin2t = (2*sxy)/mag_safe
     u = (-sxt*syy + sxy*syt)/det_safe;   v = (-sxx*syt + sxy*sxt)/det_safe
-    field = vec(clamp(u*gain*0.5 + 0.5, 0, 1), clamp(v*gain*0.5 + 0.5, 0, 1), 0.5, 1)
+    gu, gv = u*gain, v*gain;  kk = 1/max(|gu|, |gv|, 1)   # direction-preserving limit
+    field = vec(gu*kk*0.5 + 0.5, gv*kk*0.5 + 0.5, 0.5, 1)
     mask = smoothstep(mask_lo, mask_hi, det)
     field_masked = mix(neutral (0.5, 0.5, 0.5, 1), field, mask)
     out1 = mix(field_masked, neutral, bypass)
@@ -87,9 +88,11 @@ def stage_c(in1, in2, gain=1.0, mask_lo=0.0, mask_hi=1.0, bypass=0.0, bug=None):
         v = (-sxx * syt + sxy * sxt) / det_safe
         u, v = u.astype(F32), v.astype(F32)
 
+    gu, gv = (u * F32(gain)).astype(F32), (v * F32(gain)).astype(F32)
+    kk = (F32(1.0) / np.maximum(np.maximum(np.abs(gu), np.abs(gv)), F32(1.0))).astype(F32)
     field = np.stack([
-        np.clip(u * F32(gain) * F32(0.5) + F32(0.5), F32(0.0), F32(1.0)).astype(F32),
-        np.clip(v * F32(gain) * F32(0.5) + F32(0.5), F32(0.0), F32(1.0)).astype(F32),
+        (gu * kk * F32(0.5) + F32(0.5)).astype(F32),
+        (gv * kk * F32(0.5) + F32(0.5)).astype(F32),
         np.full((h, w), F32(0.5)),
         np.ones((h, w), F32),
         ], axis=-1).astype(F32)

@@ -89,8 +89,11 @@ fld_y = mix(rad_y, rad_x, swirl) * env * force;
 
 vx = mix(fld_x, pat_x, conn);
 vy = mix(fld_y, pat_y, conn);
-ox = clamp(vx * 0.5 + 0.5, 0, 1);
-oy = clamp(vy * 0.5 + 0.5, 0, 1);
+// Direction-preserving limit: the larger component is capped at 1 and the vector scaled with it (a per-channel clamp
+// collapsed directions to diagonals at high force). Output within +-1 is unchanged.
+kk = 1 / max(max(abs(vx), abs(vy)), 1);
+ox = vx * kk * 0.5 + 0.5;
+oy = vy * kk * 0.5 + 0.5;
 
 out1 = vec(mix(sr * ink, sr, bypass_gate), mix(sg * ink, sg, bypass_gate), mix(sb * ink, sb, bypass_gate), mix(1, sa, bypass_gate));
 out2 = vec(mix(ox, mix(0.5, fr, conn), bypass_gate), mix(oy, mix(0.5, fg, conn), bypass_gate), 0.5, 1);

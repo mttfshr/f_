@@ -26,7 +26,9 @@ accum_v = prev_v * decay + raw_v * injection;
 // encode back to standard f_vecfield (0.5-centered) -- this becomes
 // both the module's real (u,v) outlet and next frame's "previous"
 // via the pass_d feedback loop
-field = vec(clamp(accum_u*0.5 + 0.5, 0.0, 1.0), clamp(accum_v*0.5 + 0.5, 0.0, 1.0), 0.5, 1.0);
+// Direction-preserving limit (see stage_c).
+kk = 1.0 / max(max(abs(accum_u), abs(accum_v)), 1.0);
+field = vec(accum_u*kk*0.5 + 0.5, accum_v*kk*0.5 + 0.5, 0.5, 1.0);
 
 
 // Bypass (Matt, 2026-11-06): the module is a passthrough, so outlet 0 carries the source frame
