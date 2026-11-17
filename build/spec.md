@@ -681,6 +681,41 @@ BORDER_COLOR = [0.0, 0.03529411765, 0.2274509804, 1.0]
 
 ---
 
+## Audio archetypes (DESIGN DRAFT, 2026-11-16, not built)
+
+Decision of record: `G-audio` in `.specify/gates.md` (Matt, 2026-11-16: `f_a_*` is a sibling family in this repo, in the `f_modules` menu under an Audio category; the archetype is minimal: `definition.py` emits the patcher, hand-kept inner files are copied verbatim). Nothing below exists yet; it is a proposal for Matt to edit.
+
+**Why a separate path.** The builder is built around `jit.gl.pix`, `routepass`, `vs_inState` and a gen subpatcher with texture inlets. An audio module has none of that: `inlet~` / `outlet~`, a `gen~` or `pfft~` core, and params that reach it as `prepend <name>` messages. Hand-built today: `f_a_ripple` (gen~, flonum UI), `f_a_decorrelate` (pfft~ + a control subgraph), `f_a_purr` (codebox only, no patcher).
+
+**Two archetypes** (`"archetype"` key; the builder branches early in `build()` into `build_audio()` so the texture code is untouched):
+
+| Archetype | Core | Inlets / outlets |
+|---|---|---|
+| `audio_gen` | `gen~` holding `codebox` (from `codebox.gen`), params arrive as `prepend <name>` to gen~ inlet 0 | optional `inlet~` (processor) or none (generator); `outlet~` |
+| `audio_pfft` | `pfft~ <inner> <size> <overlap>`; the inner patcher is a hand-kept file | `inlet~`, `outlet~` |
+
+`audio_pfft` also takes a hand-kept **control fragment**: a JSON file of boxes and lines (the `coll`, `buffer~`, `metro`, `uzi`, `expr` machinery of `f_a_decorrelate`) with named attachment points (`param:<name>` inputs, `core` in/out). The builder places it as a block and wires params to it; it does not interpret it. Inner file and fragment live in `src/<module>/` and are copied (inner) or spliced (fragment) verbatim.
+
+**Shared shell (generated, both archetypes):** the same panel, title comment, `autopattr`, `parameters` block and `live.dial` / `live.numbox` UI grid as the texture archetypes (reuse the param schema, `route_name`, `modmode`, Styling Constants, Edit-View Layout). Audio-specific: gain and mix stage (`*~` / `!-~` / `+~`), optional `tanh~` ceiling, and bypass as a `bypass_gate` Param or a `*~` gate (see Q3). Param ranges are enforced in the dial, as the v1 ranges of `f_a_decorrelate` are today.
+
+**Definition additions:** `core` ("gen" | "pfft"), `inner` (file name, pfft only), `fft` (`[2048, 4]`), `fragment` (file name, optional), `audio_in` (bool), `safety_tanh` (bool), `latency_samples` (int, documentation only). `codebox` stays required for `audio_gen`.
+
+**Not in scope:** generating inner files or the control fragment; a texture outlet; chaining into Vsynth's jit.gl.pix graph (`G-audio` Q: audio cables and texture cables do not mix); a helpfile shape (separate item, the `f-helpfile` skill has no audio form).
+
+**Ids:** `obj-1` inlet~, `obj-2` outlet~, `obj-3` core, then the shell ids of "Object ID Scheme" from obj-6 up (autopattr, panel, title), so `test_layout` and the drift tools see familiar numbers. Fragment boxes are prefixed `frag-`.
+
+**Verification:** `tests/build/test_drift.py` (the `out_of_scope` entries for `f_a_ripple` and `f_a_decorrelate` come out, and the modules join the ratchet), a new offline test that every `audio_*` definition builds, wires each param to the core, and loads as valid JSON; the existing Max null rig for `f_a_decorrelate` (T002) re-run on the generated patch; a listen at defaults. Max owns the file afterwards, as for every module.
+
+**Open questions (Matt; Q1 decided):**
+1. ~~Standalone patch or bpatcher?~~ **Decided 2026-11-16 (Matt): bpatcher.** Every `f_a_*` module is a bpatcher with a presentation rect, in the `f_modules` menu and the `f_addmod` size table. Consequences: (a) buffer names and any other global names inside the module and its pfft~ inner file are per-instance (bpatcher-safe `---` prefix), because a menu makes a second instance likely (`f_a_decorrelate` uses global `fad_gain` / `fad_phase` today; inferred from the patch listing, inner file not read); (b) the hand-built test rigs (`scope~`, `snapshot~`, `dac~` in `f_a_ripple`) are not part of the module; a standalone test patch lives in `package/examples/` or `tests/`; (c) output channel count of `f_a_ripple` is settled in Phase A; (d) each panel gets a deliberate size.
+2. Fragment as a spliced JSON file, or should `f_a_decorrelate`'s control chain be regenerated from a small definition vocabulary (more work, only worth it if a second pfft~ module is coming)?
+3. Bypass: `bypass_gate` Param (convention for texture modules) or a `*~` gate? A gate must not click; pfft~ latency (1536 samples wet path, per its reference doc) means bypass should be latency-matched or accepted as a jump.
+4. Order: start with `audio_gen` on `f_a_ripple` (no fragment, simplest, proves the shell), then `f_a_purr` (needs its first patcher), then `audio_pfft`.
+
+**Proposed phases:** A) shell + `audio_gen`, rebuild `f_a_ripple` from a new `definition.py`; B) `f_a_purr` as the first new module through it; C) `audio_pfft` + fragment, rebuild `f_a_decorrelate`; D) menu category and launcher. Each phase ends with a commit; Max listens are Matt's.
+
+---
+
 ## Helpfile Generation Pipeline
 
 _Added 2026-07-19._ This section governs `extract_params.py` +
