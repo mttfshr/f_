@@ -1,0 +1,75 @@
+# f_a_purr patcher definition (audio_gen archetype; build/spec.md "Audio archetypes", Phase B)
+# Input to build/build_patcher.py.  Created 2026-11-16.
+# The gen~ codebox is src/f_a_purr/codebox.gen (master copy; see its README.md).
+# Defaults are the by-ear preset of .specify/f_a_purr/tasks.md T011; dial ranges follow the spec table
+# except decay_jit (0-0.9) and res_hz (20-400), where the preset sits outside it.
+from pathlib import Path
+
+CODEBOX = (Path(__file__).parent / "codebox.gen").read_text()
+
+patcher = {
+    "name": "f_a_purr",
+    "prefix": "fap",
+    "title": "f_a_purr",
+    "archetype": "audio_gen",
+    "core": "gen",
+    "audio_in": True,                   # an external 0-1 breath phase (a control signal), used when breath_src = 1
+    "audio_in_comment": "breath phase in (0-1)",
+    "audio_outputs": ["purr", "breath phase (0-1)"],
+    "presentation_width": 330.0,
+    "presentation_height": 276.0,       # title strip + 4 rows of dials
+    "columns": 7,
+    "codebox": CODEBOX,
+    "params": [
+        {"name": "rate_hz", "type": "float", "min": 1, "max": 200, "default": 25, "label": "Rate Hz",
+         "hint": "Click (purr) rate, Hz", "exponent": 2.0},
+        {"name": "rate_jit", "type": "float", "min": 0, "max": 0.2, "default": 0.05, "label": "Rate Jit",
+         "hint": "Per-cycle jitter of the click rate"},
+        {"name": "amp_jit", "type": "float", "min": 0, "max": 0.2, "default": 0.05, "label": "Amp Jit",
+         "hint": "Per-cycle jitter of the click amplitude"},
+        {"name": "jit_tau", "type": "float", "min": 0, "max": 10, "default": 0, "label": "Jit Tau",
+         "hint": "Correlation time (s) of the three click jitters; 0 = independent each cycle"},
+        {"name": "decay_ms", "type": "float", "min": 0.2, "max": 200, "default": 3.7, "label": "Decay ms",
+         "hint": "Click decay time, ms", "exponent": 3.0},
+        {"name": "decay_jit", "type": "float", "min": 0, "max": 0.9, "default": 0.6, "label": "Decay Jit",
+         "hint": "Per-cycle jitter of the click decay"},
+        {"name": "tilt", "type": "float", "min": 0.02, "max": 1, "default": 0.5, "label": "Tilt",
+         "hint": "Click spectral tilt (low = duller)"},
+        {"name": "res_hz", "type": "float", "min": 20, "max": 400, "default": 215.5, "label": "Res Hz",
+         "hint": "Resonator frequency, Hz", "exponent": 2.0},
+        {"name": "res_q", "type": "float", "min": 0.5, "max": 0.999, "default": 0.9919, "label": "Res Q",
+         "hint": "Resonator pole radius (higher rings longer)"},
+        {"name": "breath_hz", "type": "float", "min": 0.05, "max": 2, "default": 0.32, "label": "Breath Hz",
+         "hint": "Breath rate, Hz"},
+        {"name": "breath_skew", "type": "float", "min": -1, "max": 1, "default": 0.79, "label": "Skew",
+         "hint": "Inhale/exhale split; negative makes inhale the longer phase"},
+        {"name": "breath_depth", "type": "float", "min": 0, "max": 1, "default": 0.3, "label": "Depth",
+         "hint": "How far the breath modulates the level"},
+        {"name": "breath_rate_mod", "type": "float", "min": -0.5, "max": 0.5, "default": 0.464, "label": "Rate Mod",
+         "hint": "How far the breath modulates the click rate"},
+        {"name": "breath_shape", "type": "float", "min": 0, "max": 1, "default": 0, "label": "Shape",
+         "hint": "0 = one level hump per breath, 1 = two (dips at both flow reversals)"},
+        {"name": "breath_jit", "type": "float", "min": 0, "max": 0.3, "default": 0, "label": "Breath Jit",
+         "hint": "Per-breath rate variation (standard deviation)"},
+        {"name": "run_prob", "type": "float", "min": 0, "max": 1, "default": 0, "label": "Run Prob",
+         "hint": "Chance per breath of starting a run of 2-4 breaths at another tempo"},
+        {"name": "run_oct", "type": "float", "min": 0, "max": 1.5, "default": 0.6, "label": "Run Oct",
+         "hint": "Size of a run's tempo change, in octaves"},
+        {"name": "breath_noise", "type": "float", "min": 0, "max": 1, "default": 0.15, "label": "Noise",
+         "hint": "Breath noise, gated by the breath"},
+        {"name": "breath_src", "type": "float", "min": 0, "max": 1, "default": 0, "label": "Src",
+         "hint": "0 = internal breath oscillator, 1 = the external phase on the inlet"},
+        {"name": "breath_src_ms", "type": "float", "min": 1, "max": 2000, "default": 50, "label": "Src ms",
+         "hint": "Crossfade time between the two breath sources, ms", "exponent": 3.0},
+        {"name": "ph_gain", "type": "float", "min": -1, "max": 1, "default": 0, "label": "Ph Gain",
+         "hint": "Inhale/exhale level balance (positive = inhale louder, +-6 dB)"},
+        {"name": "ph_tilt", "type": "float", "min": -1, "max": 1, "default": 0, "label": "Ph Tilt",
+         "hint": "Inhale/exhale brightness (positive = inhale brighter)"},
+        {"name": "ph_res", "type": "float", "min": -1, "max": 1, "default": 0, "label": "Ph Res",
+         "hint": "Inhale/exhale resonator offset (+-6 semitones)"},
+        {"name": "ph_rate", "type": "float", "min": -1, "max": 1, "default": 0, "label": "Ph Rate",
+         "hint": "Inhale/exhale click-rate offset (+-15%)"},
+        {"name": "gain", "type": "float", "min": 0, "max": 1, "default": 0.3, "label": "Gain",
+         "hint": "Output level before the tanh safety ceiling"},
+    ],
+}

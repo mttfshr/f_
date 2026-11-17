@@ -2556,9 +2556,18 @@ def build_audio(defn, debug=None, side_files=None):
     params = defn["params"]
     code = defn["codebox"]
     audio_in = bool(defn.get("audio_in", False))
+    in_comment = defn.get("audio_in_comment", "audio in")
+    out_comments = defn.get("audio_outputs", ["audio out"])      # one outlet~ per entry (a comment each)
+    if not (isinstance(out_comments, list) and out_comments and all(isinstance(c_, str) for c_ in out_comments)):
+        raise ValueError(f"audio_outputs must be a non-empty list of comment strings, not {out_comments!r}")
+    n_outs = len(out_comments)
     columns = int(defn.get("columns", AUDIO_COLUMNS))
     core_name = "core"
 
+    used_outs = {int(m) for m in re.findall(r"\bout(\d+)\s*=", code)}
+    if used_outs != set(range(1, n_outs + 1)):
+        raise ValueError(f"{arch}: the codebox assigns out{sorted(used_outs)} but audio_outputs has {n_outs} entries "
+                         f"(out1..out{n_outs} must each be assigned)")
     declared = set(re.findall(r"\bParam\s+(\w+)\s*\(", code))
     if "bypass_gate" not in declared:
         raise ValueError(f"{arch}: the codebox must declare `Param bypass_gate(...)` (bypass convention, G-audio Q3)")
@@ -2574,18 +2583,20 @@ def build_audio(defn, debug=None, side_files=None):
             raise ValueError("bypass_gate is the shell's bypass; do not list it in params")
 
     boxes, lines = [], []
-    in_ports = []
     if audio_in:
         boxes.append(box(OBJ_INLET, maxclass="newobj", text="inlet~", numinlets=0, numoutlets=1, outlettype=["signal"],
-                         fontname=FONT, fontsize=12.0, patching_rect=[20.0, 240.0, 50.0, 22.0]))
-        in_ports.append(OBJ_INLET)
-    boxes.append(box(OBJ_OUTLET, maxclass="newobj", text="outlet~", numinlets=1, numoutlets=0,
-                     fontname=FONT, fontsize=12.0, patching_rect=[20.0, 420.0, 55.0, 22.0]))
+                         fontname=FONT, fontsize=12.0, comment=in_comment, patching_rect=[20.0, 240.0, 50.0, 22.0]))
+    out_ids = [outlet_obj_id(i) for i in range(n_outs)]
+    for i, oid in enumerate(out_ids):
+        boxes.append(box(oid, maxclass="newobj", text="outlet~", numinlets=1, numoutlets=0,
+                         fontname=FONT, fontsize=12.0, comment=out_comments[i],
+                         patching_rect=[20.0 + i * 70.0, 420.0, 55.0, 22.0]))
     boxes.append(box("obj-3", maxclass="newobj", text="gen~", varname=core_name,
-                     numinlets=1, numoutlets=1, outlettype=["signal"],
+                     numinlets=1, numoutlets=n_outs, outlettype=["signal"] * n_outs,
                      patching_rect=[20.0, 330.0, 60.0, 22.0],
-                     patcher=audio_gen_subpatcher(code)))
-    lines.append(wire("obj-3", 0, OBJ_OUTLET, 0))
+                     patcher=audio_gen_subpatcher(code, n_outs)))
+    for i, oid in enumerate(out_ids):
+        lines.append(wire("obj-3", i, oid, 0))
     if audio_in:
         lines.append(wire(OBJ_INLET, 0, "obj-3", 0))
     boxes.append(autopattr_box(prefix))
@@ -2643,7 +2654,11 @@ def build_audio(defn, debug=None, side_files=None):
     params_block["parameterbanks"] = {"0": {"index": 0, "name": "", "parameters": ["-"] * 8, "buttons": ["-"] * 8}}
     params_block["inherited_shortname"] = 1
 
-    seen = set()     # (the ports are `inlet~` / `outlet~` newobjs, at most one each: nothing to order)
+    # The ports are `inlet~` / `outlet~` newobjs, which check_port_order() does not see; Max orders ports by x on save.
+    xs = [b_["box"]["patching_rect"][0] for b_ in boxes if b_["box"].get("text") == "outlet~"]
+    if xs != sorted(xs) or len(set(xs)) != len(xs):
+        raise ValueError(f"outlet~ boxes must have strictly increasing patching_rect x, in port order: {xs}")
+    seen = set()
     for b_ in boxes:
         if b_["box"]["id"] in seen:
             raise ValueError(f"duplicate box id {b_['box']['id']}")

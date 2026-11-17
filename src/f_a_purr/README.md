@@ -1,31 +1,22 @@
 # src/f_a_purr
 
-`codebox.gen` is the gen~ codebox of `f_a_purr`, extracted verbatim on 2026-11-03
-from `/Users/matt/Vsynth/patterns/f_a_purr_scratch.maxpat` (box `obj-100`, key `code`,
-file last modified 2026-07-29). 2706 chars, sha256 prefix `4a5121062755f6a7`.
+`codebox.gen` is the gen~ codebox of `f_a_purr` and a build input of `definition.py`
+(`archetype: "audio_gen"`, audio archetype Phase B, 2026-11-16). **`src/` is now the master:**
+edit here, rebuild with `build/py.sh build/build_patcher.py src/f_a_purr/definition.py`. Before 2026-11-16 the
+scratch patch `/Users/matt/Vsynth/patterns/f_a_purr_scratch.maxpat` was the master; it and the copies in
+`scratch/experiments/f_a_purr_*` are now older than this file.
 
-2026-11-03, later: T025 (`breath_src`, `breath_src_ms`, external phase on `in1`) was
-applied here and to a copy of the patch, `scratch/experiments/f_a_purr_breath_src/f_a_purr_scratch_t025.maxpat`,
-so this file is currently AHEAD of the master scratch patch until that copy is
-heard in Max and promoted.
+History: extracted verbatim 2026-11-03 from the scratch patch (box `obj-100`, 2706 chars, sha256 prefix
+`4a5121062755f6a7`), then extended here with T025 (`breath_src`, `breath_src_ms`, external phase on `in1`),
+the realism pass (T035-T038) and T039 / T040 (`ph_*`, `run_*`). Before the Phase B edits: 6419 chars, 176 lines,
+sha256 prefix `c8d11f24bc19135d` (git `HEAD` before the Phase B commit). None of the 2026-11-03/04 code had been
+compiled or heard in Max when the module was built from it.
 
-2026-11-03, later still: the realism pass (`breath_shape`, `breath_jit`, `jit_tau`, bipolar
-`breath_skew`; tasks.md T035-T038) was added here too (144 lines). Test copy:
-`scratch/experiments/f_a_purr_realism/f_a_purr_scratch_realism.maxpat` (supersedes the
-`..._breath_src/` copy). Not compiled or heard in Max.
-
-2026-11-04: T039 (`ph_gain`, `ph_tilt`, `ph_res`, `ph_rate`) and T040 (`run_prob`, `run_oct`)
-were added here too (177 lines). Newest test copy:
-`scratch/experiments/f_a_purr_realism/f_a_purr_scratch_realism_t039.maxpat`, built from the
-realism patch as it was on disk, so any layout changes are kept. Not compiled or heard.
-
-Status: a source of record, not yet a build input. There is no `definition.py`, and
-`build/build_patcher.py` cannot generate `f_a_` modules (`G-audio`, tasks.md T026).
-The scratch patch is still hand-built. Until a build path exists, the scratch patch is
-the master (Matt, 2026-11-03): a codebox change is made and heard in Max, then copied
-here, and the commit message says so. Nothing checks that the two agree.
-
-The only `.gen` file here; no test reads it except `tests/build/test_render_dim.py`,
-which scans `src/*/*.gen` for the word `dim` (this codebox has none).
+Phase B edits (2026-11-16, `.specify/f_a_purr/tasks.md` T041), and only these:
+1. Defaults set to the T011 by-ear preset: `rate_jit` 0.05, `amp_jit` 0.05, `decay_ms` 3.7, `decay_jit` 0.6,
+   `res_hz` 215.5, `res_q` 0.9919, `breath_hz` 0.32, `breath_skew` 0.79, `breath_rate_mod` 0.464, `breath_noise` 0.15.
+2. `Param gain(0.3)` and a `tanh` ceiling on `out1`; `Param bypass_gate(0.0)` as a ~5 ms slewed mute of `out1`.
+   `out2` (breath phase) is not gained or muted. `gain` is a guess, not measured; not heard.
+The DSP is untouched. The dial ranges are in `definition.py` (spec table, except `decay_jit` 0-0.9 and `res_hz` 20-400).
 
 Spec and tasks: `.specify/f_a_purr/`. Idea file: `ideas/f_a_purr.md`.

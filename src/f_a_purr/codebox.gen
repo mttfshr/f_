@@ -1,16 +1,16 @@
 Param rate_hz(25);
-Param rate_jit(0);
-Param amp_jit(0);
-Param decay_ms(5);
-Param decay_jit(0);
+Param rate_jit(0.05);
+Param amp_jit(0.05);
+Param decay_ms(3.7);
+Param decay_jit(0.6);
 Param tilt(0.5);
-Param res_hz(90);
-Param res_q(0.98);
-Param breath_hz(0.4);
-Param breath_skew(0.3);
+Param res_hz(215.5);
+Param res_q(0.9919);
+Param breath_hz(0.32);
+Param breath_skew(0.79);
 Param breath_depth(0.3);
-Param breath_rate_mod(0.2);
-Param breath_noise(0);
+Param breath_rate_mod(0.464);
+Param breath_noise(0.15);
 Param breath_src(0);
 Param breath_src_ms(50);
 Param breath_shape(0);
@@ -22,6 +22,8 @@ Param ph_res(0);
 Param ph_rate(0);
 Param run_prob(0);
 Param run_oct(0.6);
+Param gain(0.3);
+Param bypass_gate(0.0);
 
 History ph_prev(0);
 History rate_h(25);
@@ -39,6 +41,7 @@ History ja_h(0);
 History jd_h(0);
 History rl_h(0);
 History rm_h(1);
+History byp_s(0);
 
 // ---- clamp all params: message path is unprotected by dial ranges ----
 c_rate = min(200, max(1, rate_hz));
@@ -173,5 +176,8 @@ bn_lp = bn_prev + 0.05 * (bn_raw - bn_prev);
 bn_prev = bn_lp;
 breath_noise_out = bn_lp * c_bnoise * b_curve;
 
-out1 = (y * b_gain + breath_noise_out) * gph;
+// Module edits (audio archetype Phase B, 2026-11-16): gain, a tanh ceiling, and a ~5 ms slewed mute.
+// out2 (breath phase) is not gained or muted.
+byp_s = byp_s + (bypass_gate - byp_s) * (1 - exp(-1 / (0.005 * samplerate)));
+out1 = tanh((y * b_gain + breath_noise_out) * gph * gain) * (1 - byp_s);
 out2 = b_phase;

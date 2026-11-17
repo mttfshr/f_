@@ -26,6 +26,7 @@
 					"numoutlets": 0,
 					"fontname": "Ableton Sans Light",
 					"fontsize": 12.0,
+					"comment": "audio out",
 					"patching_rect": [
 						20.0,
 						420.0,

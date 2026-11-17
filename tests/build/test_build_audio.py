@@ -69,8 +69,24 @@ def problems(patcher, defn):
     for t in TEXTURE_ONLY:
         if re.search(rf"(^|\s){re.escape(t)}(\s|$)", texts):
             bad.append(f"texture-only object {t} present")
-    if not any(b.get("text") == "outlet~" for b in boxes.values()):
-        bad.append("no outlet~")
+    outs = sorted((b for b in boxes.values() if b.get("text") == "outlet~"), key=lambda b: b["id"])
+    want = defn.get("audio_outputs", ["audio out"])
+    if len(outs) != len(want):
+        bad.append(f"{len(outs)} outlet~ for {len(want)} audio_outputs")
+    else:
+        xs = [b["patching_rect"][0] for b in outs]
+        if xs != sorted(xs) or len(set(xs)) != len(xs):
+            bad.append("outlet~ x order is not strictly increasing")
+        for i, b in enumerate(outs):
+            if b.get("comment") != want[i]:
+                bad.append(f"outlet~ {i} comment {b.get('comment')!r} != {want[i]!r}")
+            if not any(l["patchline"]["source"] == [core, i] and l["patchline"]["destination"] == [b["id"], 0] for l in p["lines"]):
+                bad.append(f"gen~ outlet {i} is not wired to {b['id']}")
+    if boxes[core].get("numoutlets") != len(want):
+        bad.append("gen~ numoutlets does not match audio_outputs")
+    n_assigned = {int(m) for m in re.findall(r"\bout(\d+)\s*=", code)}
+    if n_assigned != set(range(1, len(want) + 1)):
+        bad.append(f"codebox assigns out{sorted(n_assigned)}, expected 1..{len(want)}")
     has_in = any(b.get("text") == "inlet~" for b in boxes.values())
     if has_in != bool(defn.get("audio_in", False)):
         bad.append("inlet~ does not match audio_in")
@@ -112,6 +128,38 @@ def test_every_audio_definition_builds_and_wires():
         _eq(f"{name}: JSON round-trips", again, built)
         _eq(f"{name}: sound", problems(built, d), [])
         _eq(f"{name}: openinpresentation", built["patcher"]["openinpresentation"], 1)
+
+
+def test_purr_ports_and_mutants():
+    """f_a_purr: an inlet~ (breath phase) and two outlet~ (purr, breath phase); the port checks catch mutants."""
+    d = audio_definitions().get("f_a_purr")
+    check("f_a_purr has an audio definition", 0 if d else 1, 0)
+    good = json.loads(json.dumps(bp.build(d)))
+    _eq("f_a_purr: two outlet~, one inlet~", sorted(b["box"]["text"] for b in good["patcher"]["boxes"]
+                                                    if b["box"].get("text", "").endswith("~") and b["box"]["text"] != "gen~"),
+        ["inlet~", "outlet~", "outlet~"])
+
+    def mutant(fn):
+        m = copy.deepcopy(good)
+        fn(m["patcher"])
+        return problems(m, d)
+
+    def swap_x(p):
+        o = [b["box"] for b in p["boxes"] if b["box"].get("text") == "outlet~"]
+        o[0]["patching_rect"][0], o[1]["patching_rect"][0] = o[1]["patching_rect"][0], o[0]["patching_rect"][0]
+    check("mutant: reversed outlet~ order is caught", 0 if mutant(swap_x) else 1, 0)
+    check("mutant: a missing second outlet~ is caught",
+          0 if mutant(lambda p: p["boxes"].remove(next(b for b in p["boxes"] if b["box"]["id"] == "obj-201"))) else 1, 0)
+    check("mutant: the breath phase outlet unwired is caught",
+          0 if mutant(lambda p: p["lines"].remove(next(l for l in p["lines"] if l["patchline"]["destination"] == ["obj-201", 0]))) else 1, 0)
+    dd = copy.deepcopy(d)
+    dd["audio_outputs"] = ["purr"]
+    try:
+        bp.build(dd)
+        raised = False
+    except ValueError as e:
+        raised = "audio_outputs has 1 entries" in str(e)
+    check("loud: out2 assigned but one audio output declared", 0 if raised else 1, 0)
 
 
 def test_shipped_patcher_matches_the_build():
