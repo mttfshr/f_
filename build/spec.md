@@ -681,9 +681,9 @@ BORDER_COLOR = [0.0, 0.03529411765, 0.2274509804, 1.0]
 
 ---
 
-## Audio archetypes (DESIGN, signed off 2026-11-16, not built)
+## Audio archetypes (DESIGN, signed off 2026-11-16; Phase A built 2026-11-16: `audio_gen` + `f_a_ripple`, record in `.specify/f_a_ripple/tasks.md`)
 
-Decision of record: `G-audio` in `.specify/gates.md` (Matt, 2026-11-16: `f_a_*` is a sibling family in this repo, in the `f_modules` menu under an Audio category; the archetype is minimal: `definition.py` emits the patcher, hand-kept inner files are copied verbatim). Nothing below exists yet; it is a proposal for Matt to edit.
+Decision of record: `G-audio` in `.specify/gates.md` (Matt, 2026-11-16: `f_a_*` is a sibling family in this repo, in the `f_modules` menu under an Audio category; the archetype is minimal: `definition.py` emits the patcher, hand-kept inner files are copied verbatim). Phase A exists (`build_audio()`, `audio_gen` only); the rest below is not built.
 
 **Why a separate path.** The builder is built around `jit.gl.pix`, `routepass`, `vs_inState` and a gen subpatcher with texture inlets. An audio module has none of that: `inlet~` / `outlet~`, a `gen~` or `pfft~` core, and params that reach it as `prepend <name>` messages. Hand-built today: `f_a_ripple` (gen~, flonum UI), `f_a_decorrelate` (pfft~ + a control subgraph), `f_a_purr` (codebox only, no patcher).
 
@@ -706,7 +706,7 @@ Decision of record: `G-audio` in `.specify/gates.md` (Matt, 2026-11-16: `f_a_*` 
 
 **Verification:** `tests/build/test_drift.py` (the `out_of_scope` entries for `f_a_ripple` and `f_a_decorrelate` come out, and the modules join the ratchet), a new offline test that every `audio_*` definition builds, wires each param to the core, and loads as valid JSON; the existing Max null rig for `f_a_decorrelate` (T002) re-run on the generated patch; a listen at defaults. Max owns the file afterwards, as for every module.
 
-**Open questions: all four decided 2026-11-16 (Matt). Design SIGNED OFF 2026-11-16 (Matt, chat).** Phase A is next.
+**Open questions: all four decided 2026-11-16 (Matt). Design SIGNED OFF 2026-11-16 (Matt, chat).** Phase A built (Max checks owed); Phase B (`f_a_purr`) is next.
 1. ~~Standalone patch or bpatcher?~~ **Decided 2026-11-16 (Matt): bpatcher.** Every `f_a_*` module is a bpatcher with a presentation rect, in the `f_modules` menu and the `f_addmod` size table. Consequences: (a) buffer names and any other global names inside the module and its pfft~ inner file are per-instance (bpatcher-safe `---` prefix), because a menu makes a second instance likely (`f_a_decorrelate` uses global `fad_gain` / `fad_phase` today; inferred from the patch listing, inner file not read); (b) the hand-built test rigs (`scope~`, `snapshot~`, `dac~` in `f_a_ripple`) are not part of the module; a standalone test patch lives in `package/examples/` or `tests/`; (c) output channel count of `f_a_ripple` is settled in Phase A; (d) each panel gets a deliberate size.
 2. ~~Fragment~~ **Decided 2026-11-16 (Matt): spliced JSON fragment**, hand-kept in `src/<module>/`; no definition vocabulary for the control chain. Reopen only if a second `pfft~` module is built.
 3. ~~Bypass~~ **Decided 2026-11-16 (Matt): `bypass_gate` Param**, the texture-module convention. In `audio_gen` it is a Param in the codebox. In `audio_pfft` the dry path is delayed to match the wet latency (1536 samples for `f_a_decorrelate`) so bypass does not jump; the delay is part of the shell, set by `latency_samples`, which therefore becomes functional, not documentation only. Click behavior on toggle is checked by ear in Phase A (not verified).

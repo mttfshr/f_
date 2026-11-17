@@ -1685,6 +1685,8 @@ def build(defn, debug=None, side_files=None):
     only wants the patcher can never overwrite a shipped file."""
     if side_files is None:
         side_files = {}
+    if str(defn.get("archetype", "")).startswith("audio_"):
+        return build_audio(defn, debug=debug, side_files=side_files)   # audio branch: build/spec.md "Audio archetypes"
     name        = defn["name"]
     prefix      = defn["prefix"]
     title       = defn["title"]
@@ -2501,6 +2503,158 @@ def build(defn, debug=None, side_files=None):
     }
 
     return {"patcher": patcher}
+
+
+# ---------------------------------------------------------------------------
+# Audio archetypes (build/spec.md "Audio archetypes", signed off 2026-11-16)
+# ---------------------------------------------------------------------------
+# A separate branch from build(): none of the texture machinery (routepass, route, vs_inState,
+# jit.gl.pix, moduleSize chain) applies.  Phase A: `audio_gen` only.
+
+AUDIO_ARCHETYPES = ("audio_gen",)
+AUDIO_COL_PITCH = 46.0     # presentation column pitch: wider than the texture grid (37) so a live.menu (45 wide) fits
+AUDIO_COLUMNS   = 7        # default dial columns
+AUDIO_ROW_PITCH = 62.0
+AUDIO_BYPASS_W  = 40.0
+
+def audio_gen_subpatcher(codebox, n_outlets=1):
+    """The dsp.gen patcher inside gen~: `in 1` -> codebox -> `out 1`.  `in 1` is the (optional) audio input
+    and also what gives gen~ its message inlet, as in the shipped f_a_ripple prototype."""
+    boxes = [
+        {"box": {"id": "obj-1", "maxclass": "newobj", "numinlets": 0, "numoutlets": 1, "outlettype": [""],
+                 "patching_rect": [40.0, 1.0, 28.0, 22.0], "text": "in 1"}},
+        {"box": {"code": codebox, "fontface": 0, "fontname": "<Monospaced>", "fontsize": 11.0,
+                 "id": "obj-2", "maxclass": "codebox", "numinlets": 1, "numoutlets": n_outlets,
+                 "outlettype": [""] * n_outlets, "patching_rect": [40.0, 40.0, 760.0, 560.0]}},
+    ]
+    lines = [{"patchline": {"destination": ["obj-2", 0], "source": ["obj-1", 0]}}]
+    for k in range(n_outlets):
+        boxes.append({"box": {"id": f"obj-{3 + k}", "maxclass": "newobj", "numinlets": 1, "numoutlets": 0,
+                              "patching_rect": [40.0 + k * 160.0, 610.0, 40.0, 22.0], "text": f"out {k + 1}"}})
+        lines.append({"patchline": {"destination": [f"obj-{3 + k}", 0], "source": ["obj-2", k]}})
+    return {"fileversion": 1,
+            "appversion": {"major": 9, "minor": 1, "revision": 4, "architecture": "x64", "modernui": 1},
+            "classnamespace": "dsp.gen", "rect": [900.0, 300.0, 820.0, 620.0],
+            "boxes": boxes, "lines": lines}
+
+
+def build_audio(defn, debug=None, side_files=None):
+    """Build an audio module's patcher dict.  Pure, like build().  `audio_gen`: optional `inlet~`, one
+    `outlet~`, a `gen~` holding the codebox, one `prepend <name>` per control into gen~ inlet 0, a live.*
+    control grid (presentation), panel, title, `autopattr`, and a Bypass toggle into the `bypass_gate`
+    Param.  No test rigs: those live in a standalone patch outside the module."""
+    arch = defn["archetype"]
+    if arch not in AUDIO_ARCHETYPES:
+        raise ValueError(f"archetype {arch!r} is not built yet (audio archetypes built: {AUDIO_ARCHETYPES})")
+    if defn.get("core", "gen") != "gen":
+        raise ValueError(f"{arch}: core must be 'gen', not {defn.get('core')!r}")
+    for k in ("overrides", "legacy", "mod_inlets", "pix_chain", "raw_boxes", "panel_toggle"):
+        if defn.get(k):
+            raise ValueError(f"{arch}: {k!r} is not supported by the audio branch")
+    name, prefix, title = defn["name"], defn["prefix"], defn["title"]
+    pw, ph = float(defn["presentation_width"]), float(defn["presentation_height"])
+    params = defn["params"]
+    code = defn["codebox"]
+    audio_in = bool(defn.get("audio_in", False))
+    columns = int(defn.get("columns", AUDIO_COLUMNS))
+    core_name = "core"
+
+    declared = set(re.findall(r"\bParam\s+(\w+)\s*\(", code))
+    if "bypass_gate" not in declared:
+        raise ValueError(f"{arch}: the codebox must declare `Param bypass_gate(...)` (bypass convention, G-audio Q3)")
+    names = [p["name"] for p in params]
+    if len(set(names)) != len(names):
+        raise ValueError(f"{arch}: duplicate param names")
+    for p in params:
+        if p["type"] not in ("float", "int", "menu"):
+            raise ValueError(f"param '{p['name']}': the audio branch builds float, int and menu controls, not {p['type']!r}")
+        if p["name"] not in declared:
+            raise ValueError(f"param '{p['name']}': the codebox has no `Param {p['name']}(...)`, so the control would do nothing")
+        if p["name"] == "bypass_gate":
+            raise ValueError("bypass_gate is the shell's bypass; do not list it in params")
+
+    boxes, lines = [], []
+    in_ports = []
+    if audio_in:
+        boxes.append(box(OBJ_INLET, maxclass="newobj", text="inlet~", numinlets=0, numoutlets=1, outlettype=["signal"],
+                         fontname=FONT, fontsize=12.0, patching_rect=[20.0, 240.0, 50.0, 22.0]))
+        in_ports.append(OBJ_INLET)
+    boxes.append(box(OBJ_OUTLET, maxclass="newobj", text="outlet~", numinlets=1, numoutlets=0,
+                     fontname=FONT, fontsize=12.0, patching_rect=[20.0, 420.0, 55.0, 22.0]))
+    boxes.append(box("obj-3", maxclass="newobj", text="gen~", varname=core_name,
+                     numinlets=1, numoutlets=1, outlettype=["signal"],
+                     patching_rect=[20.0, 330.0, 60.0, 22.0],
+                     patcher=audio_gen_subpatcher(code)))
+    lines.append(wire("obj-3", 0, OBJ_OUTLET, 0))
+    if audio_in:
+        lines.append(wire(OBJ_INLET, 0, "obj-3", 0))
+    boxes.append(autopattr_box(prefix))
+    boxes.append(panel_box(pw, ph))
+    boxes.append(title_box(title))
+
+    params_block = {}
+    for n, p in enumerate(params):
+        if p["type"] == "float":
+            b = dial_box(n, p, core_name)
+        elif p["type"] == "int":
+            b = numbox_box(n, p, core_name)
+            vo = b["box"]["saved_attribute_attributes"]["valueof"]
+            vo["parameter_type"], vo["parameter_unitstyle"] = 1, 0     # an Int numbox: band 4.5 is not a band
+        else:
+            b = menu_box(n, p, core_name)
+        bx = b["box"]
+        bx.pop("param_connect")                    # that names a jit.gl.pix Param; here the value goes by `prepend`
+        col, row = n % columns, n // columns
+        dx = col * AUDIO_COL_PITCH - (n % 5) * 37.0
+        dy = (row - n // 5) * AUDIO_ROW_PITCH
+        r = bx["presentation_rect"]; bx["presentation_rect"] = [r[0] + dx, r[1] + dy, r[2], r[3]]
+        bx["patching_rect"] = [20.0 + n * 90.0, 60.0, bx["patching_rect"][2], bx["patching_rect"][3]]
+        boxes.append(b)
+        lb = label_box(n, p)
+        r = lb["box"]["presentation_rect"]; lb["box"]["presentation_rect"] = [r[0] + dx, r[1] + dy, r[2], r[3]]
+        lb["box"]["patching_rect"] = [20.0 + n * 90.0, 30.0, 70.0, 18.0]
+        boxes.append(lb)
+        pre = f"prepend {p['name']}"
+        boxes.append(box(param_pre_id(n), maxclass="newobj", text=pre, numinlets=1, numoutlets=1, outlettype=[""],
+                         patching_rect=[20.0 + n * 90.0, 110.0 + (n % 2) * 40.0, 8.0 * len(pre) + 8.0, 22.0]))
+        lines.append(wire(param_obj_id(n), 0, param_pre_id(n), 0))
+        lines.append(wire(param_pre_id(n), 0, "obj-3", 0))
+        params_block[param_obj_id(n)] = [p["name"], p["name"], 0]
+
+    # Bypass: a toggle in the title bar -> `prepend bypass_gate` -> the core
+    k = len(params)
+    byp, byp_pre = bypass_jsui_id(k), bypass_pre_id(k)
+    boxes.append(box(byp, maxclass="live.text", fontname=FONT, fontsize=FONT_LABEL, mode=1,
+        hint="Bypass: mutes the output (a generator's neutral is silence), slewed over about 5 ms",
+        numinlets=1, numoutlets=2, outlettype=["", ""], parameter_enable=1,
+        patching_rect=[20.0 + k * 90.0, 60.0, AUDIO_BYPASS_W, 15.0],
+        presentation=1, presentation_rect=[pw - AUDIO_BYPASS_W - 4.0, 2.0, AUDIO_BYPASS_W, 15.0],
+        text="Bypass", texton="Bypass",
+        saved_attribute_attributes={"valueof": {
+            "parameter_enum": ["Off", "On"], "parameter_initial": [0.0], "parameter_initial_enable": 1,
+            "parameter_linknames": 1, "parameter_longname": "bypass", "parameter_mmax": 1.0, "parameter_mmin": 0.0,
+            "parameter_modmode": 0, "parameter_shortname": "bypass", "parameter_type": 1, "parameter_unitstyle": 0}},
+        varname="bypass"))
+    boxes.append(box(byp_pre, maxclass="newobj", text="prepend bypass_gate", numinlets=1, numoutlets=1, outlettype=[""],
+                     patching_rect=[20.0 + k * 90.0, 110.0 + (k % 2) * 40.0, 150.0, 22.0]))
+    lines.append(wire(byp, 0, byp_pre, 0))
+    lines.append(wire(byp_pre, 0, "obj-3", 0))
+    params_block[byp] = ["bypass", "bypass", 0]
+    params_block["parameterbanks"] = {"0": {"index": 0, "name": "", "parameters": ["-"] * 8, "buttons": ["-"] * 8}}
+    params_block["inherited_shortname"] = 1
+
+    seen = set()     # (the ports are `inlet~` / `outlet~` newobjs, at most one each: nothing to order)
+    for b_ in boxes:
+        if b_["box"]["id"] in seen:
+            raise ValueError(f"duplicate box id {b_['box']['id']}")
+        seen.add(b_["box"]["id"])
+    if debug is not None:
+        debug["archetype"] = arch
+    return {"patcher": {
+        "fileversion": 1,
+        "appversion": {"major": 9, "minor": 1, "revision": 4, "architecture": "x64", "modernui": 1},
+        "classnamespace": "box", "rect": [100.0, 100.0, 800.0, 600.0], "openinpresentation": 1,
+        "boxes": boxes, "lines": lines, "parameters": params_block, "autosave": 0}}
 
 
 # ---------------------------------------------------------------------------

@@ -1,0 +1,147 @@
+// f_a_ripple v1 -- production DSP. Self-timed: t>=stim_dur triggers a
+// new stimulus internally (noise()-drawn f0/q/p), no external button.
+// History t's initial value (1000.0) forces an immediate first render on
+// load, so this self-starts with no loadbang wiring needed for that part.
+// Hearing-correction staircase (ADR-5) applied per-harmonic in both the
+// wavetable render and the modulated loop. band (1-7) maps to
+// flo_mod/fhi_mod internally (ADR-4). pm_turns is a real Param (T6 had
+// this hardcoded). Final tanh() ceiling guarantees output in [-1,1] by
+// construction regardless of profile/depth/band (ADR-6).
+
+Param band(6);
+Param mod_type(0);
+Param depth(1.0);
+Param tmr(1.0);
+Param smr_mean(4.5);
+Param smr_range(3.0);
+Param smr_cycle(8.0);
+Param pm_turns(0.5);
+Param f0_lo(96.0);
+Param f0_hi(256.0);
+Param stim_dur(4.0);
+Param ramp_pct(25.0);
+Param hearing_profile(0);
+Param gain(0.1);
+Param bypass_gate(0.0);
+
+Data wtab(2048);
+History t(1000.0);
+History ph_prev(0.0);
+History f0_h(150.0);
+History q_h(0.0);
+History p_h(0.0);
+History geomean_mod(1000.0);
+History render_count(0);
+History byp_s(0.0);
+
+flo = 1000.0;
+fhi = 16000.0;
+flo_mod = 1000.0 * pow(2.0, (band - 1.0) * 0.5);
+fhi_mod = 1000.0 * pow(2.0, (band + 1.0) * 0.5);
+
+profile_db = (hearing_profile == 0) ? 0.0
+           : (hearing_profile == 1) ? 15.0
+           : (hearing_profile == 2) ? 30.0
+           : 45.0;
+
+if (t >= stim_dur) {
+    f0_h = f0_lo + (noise() * 0.5 + 0.5) * (f0_hi - f0_lo);
+    q_h = (noise() * 0.5 + 0.5) * twopi;
+    p_h = (noise() * 0.5 + 0.5) * twopi;
+
+    for (i = 0; i < 2048; i += 1) {
+        phase_i = i / 2048;
+        s = 0.0;
+        c = 0.0;
+        for (n = 1; n <= 200; n += 1) {
+            freq = n * f0_h;
+            inband = (freq >= flo) && (freq < fhi);
+            modband = (freq >= flo_mod) && (freq < fhi_mod);
+            unmod = inband && (modband == 0);
+            half_oct = floor(log(max(freq, 1000.0) / 1000.0) / log(2.0) / 0.5);
+            half_oct = min(max(half_oct, 0.0), 7.0);
+            stair = (half_oct < 2.0) ? 0.0
+                  : (half_oct < 3.0) ? 0.125
+                  : (half_oct < 4.0) ? 0.375
+                  : (half_oct < 5.0) ? 0.625
+                  : (half_oct < 6.0) ? 0.875
+                  : 1.0;
+            corr = pow(10.0, (stair * profile_db) / 20.0);
+            s += unmod ? sin(twopi * n * phase_i) * corr : 0.0;
+            c += unmod ? 1.0 : 0.0;
+        }
+        wnorm = 1.0 / sqrt(max(c, 1.0));
+        poke(wtab, s * wnorm, i);
+    }
+
+    sumlog = 0.0;
+    cnt2 = 0.0;
+    for (n = 1; n <= 200; n += 1) {
+        freq = n * f0_h;
+        modband = (freq >= flo_mod) && (freq < fhi_mod);
+        sumlog += modband ? log(max(freq, 1.0)) : 0.0;
+        cnt2 += modband ? 1.0 : 0.0;
+    }
+    geomean_mod = exp(sumlog / max(cnt2, 1.0));
+
+    t = 0.0;
+    render_count = render_count + 1;
+}
+
+inc = f0_h / samplerate;
+ph_acc = ph_prev + inc;
+wrapped = ph_acc >= 1.0;
+ph_prev = ph_acc - wrapped;
+
+idx = ph_prev * 2048;
+idx_i0 = floor(idx);
+idx_i1 = mod(idx_i0 + 1, 2048);
+idx_frac = idx - idx_i0;
+tab_v0 = peek(wtab, idx_i0, 0);
+tab_v1 = peek(wtab, idx_i1, 0);
+wtab_out = tab_v0 + idx_frac * (tab_v1 - tab_v0);
+
+s_env = smr_mean + smr_range * sin(p_h + twopi * t / smr_cycle);
+pm_depth_rad = pm_turns * pi;
+
+modsum = 0.0;
+modcnt = 0.0;
+for (n = 1; n <= 200; n += 1) {
+    freq = n * f0_h;
+    modband = (freq >= flo_mod) && (freq < fhi_mod);
+    fn_i = log(max(freq, 1.0) / geomean_mod) / log(2.0);
+    m_i = sin(twopi * (q_h + tmr * t + fn_i * s_env));
+    half_oct2 = floor(log(max(freq, 1000.0) / 1000.0) / log(2.0) / 0.5);
+    half_oct2 = min(max(half_oct2, 0.0), 7.0);
+    stair2 = (half_oct2 < 2.0) ? 0.0
+           : (half_oct2 < 3.0) ? 0.125
+           : (half_oct2 < 4.0) ? 0.375
+           : (half_oct2 < 5.0) ? 0.625
+           : (half_oct2 < 6.0) ? 0.875
+           : 1.0;
+    corr2 = pow(10.0, (stair2 * profile_db) / 20.0);
+    base_phase = twopi * n * ph_prev;
+    am_val = (1.0 + depth * m_i) * sin(base_phase);
+    pm_val = sin(base_phase + pm_depth_rad * (1.0 + depth * m_i));
+    contrib = (mod_type != 0) ? pm_val : am_val;
+    modsum += modband ? contrib * corr2 : 0.0;
+    modcnt += modband ? 1.0 : 0.0;
+}
+modnorm = 1.0 / sqrt(max(modcnt, 1.0));
+
+raw = wtab_out * 0.3 + modsum * modnorm * 0.3;
+
+ramp_dur = stim_dur * (ramp_pct / 100.0);
+ramp_dur_safe = max(ramp_dur, 0.0001);
+rise = 0.5 * (1.0 - cos(pi * min(t / ramp_dur_safe, 1.0)));
+t_from_end = stim_dur - t;
+fall = 0.5 * (1.0 - cos(pi * min(t_from_end / ramp_dur_safe, 1.0)));
+env = min(rise, fall);
+env = min(max(env, 0.0), 1.0);
+
+t = t + 1.0 / samplerate;
+
+// Module edits (audio archetype Phase A, 2026-11-16): bypass is a ~5 ms slewed mute
+// (the generator's neutral is silence), gain replaces output_level, no diagnostic outlets.
+byp_s = byp_s + (bypass_gate - byp_s) * (1.0 - exp(-1.0 / (0.005 * samplerate)));
+out1 = tanh(raw * env * gain) * (1.0 - byp_s);

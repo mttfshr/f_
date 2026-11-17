@@ -11,10 +11,6 @@
   "f_util_vary_row": {
    "status": "no_definition"
   },
-  "f_a_ripple": {
-   "reason": "gen~ audio generator (no jit.gl.pix, no presentation UI); the schema has no audio archetype. Spec in .specify/f_a_ripple/. Revisit if an audio archetype is added.",
-   "status": "out_of_scope"
-  },
   "f_chladni_audio": {
    "reason": "MSP audio-analysis patch (meter~/number~, hand-laid UI, no pix codebox); the schema has no audio archetype.",
    "status": "out_of_scope"
