@@ -48,8 +48,73 @@ def codebox_of(patcher):
     return next(x["box"]["code"] for x in core["patcher"]["boxes"] if "code" in x["box"])
 
 
+def pfft_problems(patcher, defn):
+    """Everything wrong with a built audio_pfft patcher; [] when it is sound."""
+    p = patcher["patcher"] if "patcher" in patcher else patcher
+    bad = []
+    boxes = {b["box"]["id"]: b["box"] for b in p["boxes"]}
+    if len(boxes) != len(p["boxes"]):
+        bad.append("duplicate box ids")
+    cords = {(l["patchline"]["source"][0], l["patchline"]["source"][1], l["patchline"]["destination"][0], l["patchline"]["destination"][1])
+             for l in p["lines"]}
+    for (s_, _o, d_, _i) in cords:
+        if s_ not in boxes or d_ not in boxes:
+            bad.append(f"cord names a missing box {s_} -> {d_}")
+    texts = [b.get("text", "") for b in boxes.values()]
+    for t in TEXTURE_ONLY:
+        if t in texts:
+            bad.append(f"texture-only object {t} present")
+    size, overlap = defn["fft"]
+    inner = f"{defn['name']}_inner"
+    if boxes.get("obj-3", {}).get("text") != f"pfft~ {inner} {size} {overlap} 0 0 args ---":
+        bad.append(f"obj-3 is not the expected pfft~ (got {boxes.get('obj-3', {}).get('text')!r})")
+    if boxes.get("obj-100", {}).get("text") != f"delay~ {defn['latency_samples']} {defn['latency_samples']}":
+        bad.append("the dry delay~ does not equal latency_samples")
+    if not any(b.get("text") == "inlet~" for b in boxes.values()):
+        bad.append("no inlet~")
+    for c in [("obj-1", 0, "obj-3", 0), ("obj-1", 0, "obj-100", 0), ("obj-110", 0, "obj-2", 0), ("obj-3", 0, "obj-101", 0)]:
+        if c not in cords:
+            bad.append(f"missing shell cord {c}")
+    inner_src = (Path(defn["_def_path"]).parent / defn["inner"]).read_bytes()
+    shipped_inner = REPO / "package" / "patchers" / f"{inner}.maxpat"
+    if not shipped_inner.is_file() or shipped_inner.read_bytes() != inner_src:
+        bad.append("shipped inner file is not a byte-for-byte copy of the source")
+    if b"#1" not in inner_src:
+        bad.append("the inner file has no #1 (its buffer names are global)")
+    for t in texts:
+        if re.match(r"(buffer~|peek~) ", t) and not t.split()[1].startswith("---"):
+            bad.append(f"global buffer name in {t!r}")
+    frag = json.loads((Path(defn["_def_path"]).parent / defn["fragment"]).read_text())
+    frag_ids = {b["box"]["id"] for b in frag["boxes"]}
+    if not frag_ids <= set(boxes):
+        bad.append("fragment boxes missing from the patcher")
+    by_var = {b.get("varname"): i for i, b in boxes.items() if b.get("varname")}
+    staged = {"mix": "obj-112", "gain": "obj-114"}
+    names = [q["name"] for q in defn["params"]]
+    for q in defn["params"]:
+        cid = by_var.get(q["name"])
+        if cid is None:
+            bad.append(f"no control named {q['name']}")
+            continue
+        if "stage" in q:
+            if (cid, 0, staged[q["stage"]], 0) not in cords:
+                bad.append(f"{q['name']}: not wired to its shell stage")
+        else:
+            targets = frag["attach"].get(f"param:{q['name']}", [])
+            if not targets:
+                bad.append(f"{q['name']}: no attach")
+            for tgt, inl in targets:
+                if (cid, 0, tgt, inl) not in cords:
+                    bad.append(f"{q['name']}: not wired to {tgt} inlet {inl}")
+    if (by_var.get("bypass"), 0, "obj-116", 0) not in cords:
+        bad.append("bypass is not wired to its shell stage")
+    return bad
+
+
 def problems(patcher, defn):
     """Everything wrong with a built audio patcher; [] when it is sound."""
+    if defn.get("archetype") == "audio_pfft":
+        return pfft_problems(patcher, defn)
     p = patcher["patcher"] if "patcher" in patcher else patcher
     bad = []
     boxes = {b["box"]["id"]: b["box"] for b in p["boxes"]}
@@ -162,6 +227,44 @@ def test_purr_ports_and_mutants():
     check("loud: out2 assigned but one audio output declared", 0 if raised else 1, 0)
 
 
+def test_pfft_shell_fragment_and_mutants():
+    """f_a_decorrelate (audio_pfft): shell, spliced fragment, per-instance buffers, copied inner file; mutants caught."""
+    d = audio_definitions().get("f_a_decorrelate")
+    check("f_a_decorrelate has an audio definition", 0 if d else 1, 0)
+    good = json.loads(json.dumps(bp.build(d)))
+    _eq("f_a_decorrelate: sound", pfft_problems(good, d), [])
+
+    def mutant(fn):
+        m = copy.deepcopy(good)
+        fn(m["patcher"])
+        return pfft_problems(m, d)
+
+    check("mutant: a dropped attach cord is caught",
+          0 if mutant(lambda p: p["lines"].remove(next(l for l in p["lines"] if l["patchline"]["destination"] == ["frag-expr-g", 4]))) else 1, 0)
+    check("mutant: a wrong dry delay is caught",
+          0 if mutant(lambda p: next(b["box"] for b in p["boxes"] if b["box"]["id"] == "obj-100").__setitem__("text", "delay~ 1024 1024")) else 1, 0)
+    check("mutant: a global buffer name is caught",
+          0 if mutant(lambda p: next(b["box"] for b in p["boxes"] if b["box"]["id"] == "frag-buf-g").__setitem__("text", "buffer~ fad_gain 100")) else 1, 0)
+    check("mutant: an unwired bypass stage is caught",
+          0 if mutant(lambda p: p["lines"].remove(next(l for l in p["lines"] if l["patchline"]["destination"] == ["obj-116", 0]))) else 1, 0)
+    check("mutant: a changed pfft~ size is caught",
+          0 if mutant(lambda p: next(b["box"] for b in p["boxes"] if b["box"]["id"] == "obj-3").__setitem__("text", "pfft~ f_a_decorrelate_inner 1024 4 0 0 args ---")) else 1, 0)
+
+    def raises(over, needle):
+        dd = copy.deepcopy(d)
+        dd.update(over)
+        try:
+            bp.build(dd)
+        except ValueError as e:
+            return needle in str(e)
+        return False
+
+    _eq("loud: a param without attach or stage", raises({"params": d["params"] + [{"name": "extra", "type": "float", "min": 0, "max": 1, "default": 0}]}, "no attach"), True)
+    _eq("loud: a missing inner file", raises({"inner": "nope.maxpat"}, "file not found"), True)
+    _eq("loud: latency_samples missing", raises({"latency_samples": 0}, "latency_samples"), True)
+    _eq("loud: a missing mix stage", raises({"params": [q for q in d["params"] if q["name"] != "mix"]}, "stage 'mix'"), True)
+
+
 def test_shipped_patcher_matches_the_build():
     """The shipped patcher of each audio module is its build (Max owns it afterwards; this catches a stale build)."""
     for name, d in audio_definitions().items():
@@ -214,7 +317,8 @@ def test_build_is_loud_on_misuse():
 
     _eq("loud: a codebox without bypass_gate", raises({"codebox": d["codebox"].replace("Param bypass_gate(0.0);", "")}, "bypass_gate"), True)
     _eq("loud: a param the codebox lacks", raises({"params": d["params"] + [{"name": "nope", "type": "float", "min": 0, "max": 1, "default": 0}]}, "no `Param nope"), True)
-    _eq("loud: audio_pfft is not built yet", raises({"archetype": "audio_pfft"}, "not built yet"), True)
+    _eq("loud: an unknown audio archetype", raises({"archetype": "audio_foo"}, "not built yet"), True)
+    _eq("loud: the core must match the archetype", raises({"core": "pfft"}, "core must be 'gen'"), True)
     _eq("loud: overrides are unsupported", raises({"overrides": {"panel": {"x": 1}}}, "not supported"), True)
     _eq("loud: bypass_gate listed as a param", raises({"params": d["params"] + [{"name": "bypass_gate", "type": "float", "min": 0, "max": 1, "default": 0}]}, "shell's bypass"), True)
 

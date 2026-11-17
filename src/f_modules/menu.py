@@ -145,6 +145,7 @@ NOT_IN_MENU = {
     "f_modules":       "the menu itself",
     "f_a_ripple":      "audio (gen~) module, not a Vsynth bpatcher; unfinished (README marks it)",
     "f_a_decorrelate": "audio (pfft~) module, not a Vsynth bpatcher; DSP built, packaging pending (README marks it)",
+    "f_a_purr":        "audio (gen~) bpatcher built 2026-11-16 (audio archetype Phase B); menu registration is Phase D (README marks it)",
     "f_chladni_audio": "audio companion of f_chladni, not a Vsynth bpatcher (README marks it)",
     "f_cmap":          "Phase 1 built (codeboxes + patcher, 2026-10-27); menu placement, helpfile and reference doc are Phase 3",
 }

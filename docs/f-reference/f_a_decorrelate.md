@@ -21,9 +21,19 @@ mirror of this exact chain).
 ```
 inlet~ ──┬── pfft~ f_a_decorrelate_inner 2048 4 ── wet * mix ──┐
          │        (per-bin gain + phase from named            │
-         │         buffer~s swept every 50 ms)                 ├─ + ─ tanh~ ─ * gain ─ outlet~
-         └──────────────── dry * (1 - mix) ────────────────────┘
+         │         buffer~s swept every 50 ms)                 ├─ + ─ tanh~ ─ * gain ─┬─ * (1 - bypass) ─ + ─ outlet~
+         └── delay~ 1536 ── dry_delayed * (1 - mix) ───────────┘                      │                    │
+                      └──────────────────────────────── dry_delayed * bypass ─────────┴────────────────────┘
 ```
+
+**Rebuilt 2026-11-16 from `src/f_a_decorrelate/definition.py`** (audio archetype `audio_pfft`, `build/spec.md`
+"Audio archetypes"; offline only, not yet opened or heard in Max). Changes from the hand-built v1 described below: the
+dry path is delayed by 1536 samples to match the wet path, so `mix` blends without a comb and Bypass (a 5 ms slewed
+crossfade to the delayed dry) does not jump; `mix`, `gain` and Bypass are `line~` signals; the two buffers are per
+instance (`---fad_gain`, `---fad_phase`, and `index~ #1fad_gain` in the inner file, fed by `pfft~ ... args ---`; whether
+Max substitutes that per instance is unverified, `.specify/f_a_decorrelate/tasks.md` T016); the `metro` starts itself;
+the v1 patch's `coll` lookup wiring and message-box texts were defective and are fixed (`src/f_a_decorrelate/README.md`).
+The control chain is the hand-kept `fragment.json`, the `pfft~` subpatch the hand-kept `inner.maxpat`.
 
 Inside the external `pfft~` subpatch: `fftin~` → `index~ fad_gain`
 (AM gain per bin) and `index~ fad_phase` (PM offset per bin) →
@@ -86,9 +96,10 @@ them per 4 s block; a live processor holds them).
   real-world music carriers — varying-SMR cross-segment matrix drift
   0.569/0.375 vs fixed 0.459/0.264 (both in the claimed direction; margin
   modest on music because music is already nonstationary).
-- **Latency**: `pfft~` adds win−hop = 1536 samples (35 ms) on the wet path
-  only. For comb-free live blending keep `mix` extreme (0 or 1) or accept
-  the wet/dry offset.
+- **Latency**: `pfft~` adds win−hop = 1536 samples (35 ms). Since 2026-11-16 (rebuild) the
+  dry path and the bypassed signal are delayed by the same 1536 samples, so the whole module has
+  35 ms latency and `mix` blends comb-free (not yet heard). v1 delayed the wet path only.
+- **44.1 kHz only**: the sweep `expr`s and the band geomeans bake in 44100 Hz and 2048 (known limit).
 - **Bands**: one FFT size (2048/4) serves all seven bands — band 1 measures
   *better* than band 6 (−22.7 dB, corr 0.997).
 - **PM**: tracks additive PM at −11.2 dB, corr 0.962; graceful at extreme

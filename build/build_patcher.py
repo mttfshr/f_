@@ -2511,7 +2511,8 @@ def build(defn, debug=None, side_files=None):
 # A separate branch from build(): none of the texture machinery (routepass, route, vs_inState,
 # jit.gl.pix, moduleSize chain) applies.  Phase A: `audio_gen` only.
 
-AUDIO_ARCHETYPES = ("audio_gen",)
+AUDIO_ARCHETYPES = ("audio_gen", "audio_pfft")
+AUDIO_CORE = {"audio_gen": "gen", "audio_pfft": "pfft"}
 AUDIO_COL_PITCH = 46.0     # presentation column pitch: wider than the texture grid (37) so a live.menu (45 wide) fits
 AUDIO_COLUMNS   = 7        # default dial columns
 AUDIO_ROW_PITCH = 62.0
@@ -2538,23 +2539,129 @@ def audio_gen_subpatcher(codebox, n_outlets=1):
             "boxes": boxes, "lines": lines}
 
 
+AUDIO_PFFT_STAGE_MSG = {"mix": "obj-112", "gain": "obj-114", "bypass": "obj-116"}   # the `$1 <ms>` message boxes of the shell's line~ stages
+
+
+def _audio_pfft_inputs(defn, n_outs, audio_in):
+    """Validate and load the hand-kept files of an audio_pfft definition: (fragment dict, inner text, inner name, latency)."""
+    if n_outs != 1:
+        raise ValueError("audio_pfft: one outlet~ (audio_outputs has one entry)")
+    if not audio_in:
+        raise ValueError("audio_pfft: audio_in must be True (a spectral processor has an input)")
+    for k in ("inner", "fragment", "latency_samples", "fft"):
+        if k not in defn:
+            raise ValueError(f"audio_pfft: {k!r} is required")
+    lat = defn["latency_samples"]
+    if isinstance(lat, bool) or not isinstance(lat, int) or lat < 1:
+        raise ValueError(f"audio_pfft: latency_samples must be a positive whole number, not {lat!r}")
+    fft = defn["fft"]
+    if not (isinstance(fft, list) and len(fft) == 2 and all(isinstance(v, int) and v > 0 for v in fft)):
+        raise ValueError(f"audio_pfft: fft must be [size, overlap], not {fft!r}")
+    base = Path(defn["_def_path"]).parent if "_def_path" in defn else None
+    if base is None:
+        raise ValueError("audio_pfft: the definition must come from load_definition() (the inner file and fragment are read relative to it)")
+    inner_path, frag_path = base / defn["inner"], base / defn["fragment"]
+    for pth in (inner_path, frag_path):
+        if not pth.is_file():
+            raise ValueError(f"audio_pfft: file not found: {pth}")
+    frag = json.loads(frag_path.read_text())
+    ids = [b["box"]["id"] for b in frag["boxes"]]
+    if len(set(ids)) != len(ids) or any(not i.startswith("frag-") for i in ids):
+        raise ValueError("audio_pfft: fragment box ids must be unique and prefixed 'frag-'")
+    idset = set(ids)
+    for l in frag["lines"]:
+        for end in (l["patchline"]["source"][0], l["patchline"]["destination"][0]):
+            if end not in idset:
+                raise ValueError(f"audio_pfft: fragment cord names a missing box {end}")
+    for key, targets in frag["attach"].items():
+        for tgt, _inl in targets:
+            if tgt not in idset:
+                raise ValueError(f"audio_pfft: fragment attach {key} names a missing box {tgt}")
+    return frag, inner_path.read_text(), f"{defn['name']}_inner", lat    # the shipped copy is <name>_inner.maxpat
+
+
+def _audio_pfft_shell(defn, inner_name, latency, audio_in, out_id):
+    """The audio path around the pfft~: pfft~ (obj-3), a latency-matched dry delay, the mix stage, an optional tanh~,
+    the gain, and the bypass crossfade to the delayed dry.  mix, gain and bypass are signals (`$1 <ms>` -> line~)."""
+    size, overlap = defn["fft"]
+    def nb(id, text, ni, no, ot, x, y, w=60.0):
+        return box(id, maxclass="newobj", text=text, numinlets=ni, numoutlets=no, outlettype=ot,
+                   fontname=FONT, fontsize=12.0, patching_rect=[x, y, w, 22.0])
+    def msg(id, text, x, y):
+        return box(id, maxclass="message", text=text, numinlets=1, numoutlets=1, outlettype=[""],
+                   fontname=FONT, fontsize=12.0, patching_rect=[x, y, 50.0, 22.0])
+    sig = ["signal"]
+    boxes = [
+        nb("obj-3", f"pfft~ {inner_name} {size} {overlap} 0 0 args ---", 1, 1, sig, 20.0, 290.0, 230.0),
+        nb("obj-100", f"delay~ {latency} {latency}", 2, 1, sig, 280.0, 290.0, 110.0),
+        nb("obj-101", "*~", 2, 1, sig, 20.0, 330.0, 40.0),
+        nb("obj-102", "!-~ 1.", 2, 1, sig, 100.0, 330.0, 50.0),
+        nb("obj-103", "*~", 2, 1, sig, 280.0, 330.0, 40.0),
+        nb("obj-104", "+~", 2, 1, sig, 20.0, 360.0, 40.0),
+    ]
+    prev = "obj-104"
+    if defn.get("safety_tanh", True):
+        boxes.append(nb("obj-105", "tanh~", 1, 1, sig, 20.0, 390.0, 50.0))
+        prev = "obj-105"
+    boxes += [
+        nb("obj-106", "*~", 2, 1, sig, 20.0, 420.0, 40.0),
+        nb("obj-107", "!-~ 1.", 2, 1, sig, 100.0, 420.0, 50.0),
+        nb("obj-108", "*~", 2, 1, sig, 20.0, 450.0, 40.0),
+        nb("obj-109", "*~", 2, 1, sig, 280.0, 450.0, 40.0),
+        nb("obj-110", "+~", 2, 1, sig, 20.0, 480.0, 40.0),
+        nb("obj-111", "line~", 2, 1, sig, 100.0, 380.0, 50.0), msg("obj-112", "$1 20", 100.0, 360.0),
+        nb("obj-113", "line~", 2, 1, sig, 160.0, 380.0, 50.0), msg("obj-114", "$1 20", 160.0, 360.0),
+        nb("obj-115", "line~", 2, 1, sig, 220.0, 380.0, 50.0), msg("obj-116", "$1 5", 220.0, 360.0),
+    ]
+    w = wire
+    lines = [
+        w("obj-1", 0, "obj-3", 0), w("obj-1", 0, "obj-100", 0),
+        w("obj-3", 0, "obj-101", 0), w("obj-111", 0, "obj-101", 1),                  # wet * mix
+        w("obj-111", 0, "obj-102", 0), w("obj-100", 0, "obj-103", 0), w("obj-102", 0, "obj-103", 1),   # dry_delayed * (1 - mix)
+        w("obj-101", 0, "obj-104", 0), w("obj-103", 0, "obj-104", 1),
+        w("obj-112", 0, "obj-111", 0), w("obj-114", 0, "obj-113", 0), w("obj-116", 0, "obj-115", 0),
+        w(prev, 0, "obj-106", 0), w("obj-113", 0, "obj-106", 1),                        # gain
+    ]
+    if prev == "obj-105":
+        lines.append(w("obj-104", 0, "obj-105", 0))
+    lines += [
+        w("obj-115", 0, "obj-107", 0), w("obj-106", 0, "obj-108", 0), w("obj-107", 0, "obj-108", 1),     # processed * (1 - bypass)
+        w("obj-100", 0, "obj-109", 0), w("obj-115", 0, "obj-109", 1),                                   # dry_delayed * bypass
+        w("obj-108", 0, "obj-110", 0), w("obj-109", 0, "obj-110", 1),
+        w("obj-110", 0, out_id, 0),
+    ]
+    return boxes, lines
+
+
+def _audio_pfft_fragment(frag, dx=0.0, dy=420.0):
+    """The hand-kept control fragment, spliced verbatim below the shell (patching_rect shifted only)."""
+    boxes = copy.deepcopy(frag["boxes"])
+    for b in boxes:
+        r = b["box"]["patching_rect"]
+        b["box"]["patching_rect"] = [r[0] + dx, r[1] + dy, r[2], r[3]]
+    return boxes, copy.deepcopy(frag["lines"])
+
+
 def build_audio(defn, debug=None, side_files=None):
     """Build an audio module's patcher dict.  Pure, like build().  `audio_gen`: optional `inlet~`, one
     `outlet~`, a `gen~` holding the codebox, one `prepend <name>` per control into gen~ inlet 0, a live.*
     control grid (presentation), panel, title, `autopattr`, and a Bypass toggle into the `bypass_gate`
     Param.  No test rigs: those live in a standalone patch outside the module."""
+    if side_files is None:
+        side_files = {}
     arch = defn["archetype"]
     if arch not in AUDIO_ARCHETYPES:
         raise ValueError(f"archetype {arch!r} is not built yet (audio archetypes built: {AUDIO_ARCHETYPES})")
-    if defn.get("core", "gen") != "gen":
-        raise ValueError(f"{arch}: core must be 'gen', not {defn.get('core')!r}")
+    if defn.get("core", AUDIO_CORE[arch]) != AUDIO_CORE[arch]:
+        raise ValueError(f"{arch}: core must be {AUDIO_CORE[arch]!r}, not {defn.get('core')!r}")
+    pfft = arch == "audio_pfft"
     for k in ("overrides", "legacy", "mod_inlets", "pix_chain", "raw_boxes", "panel_toggle"):
         if defn.get(k):
             raise ValueError(f"{arch}: {k!r} is not supported by the audio branch")
     name, prefix, title = defn["name"], defn["prefix"], defn["title"]
     pw, ph = float(defn["presentation_width"]), float(defn["presentation_height"])
     params = defn["params"]
-    code = defn["codebox"]
+    code = defn.get("codebox", "")
     audio_in = bool(defn.get("audio_in", False))
     in_comment = defn.get("audio_in_comment", "audio in")
     out_comments = defn.get("audio_outputs", ["audio out"])      # one outlet~ per entry (a comment each)
@@ -2564,20 +2671,37 @@ def build_audio(defn, debug=None, side_files=None):
     columns = int(defn.get("columns", AUDIO_COLUMNS))
     core_name = "core"
 
-    used_outs = {int(m) for m in re.findall(r"\bout(\d+)\s*=", code)}
-    if used_outs != set(range(1, n_outs + 1)):
-        raise ValueError(f"{arch}: the codebox assigns out{sorted(used_outs)} but audio_outputs has {n_outs} entries "
-                         f"(out1..out{n_outs} must each be assigned)")
     declared = set(re.findall(r"\bParam\s+(\w+)\s*\(", code))
-    if "bypass_gate" not in declared:
-        raise ValueError(f"{arch}: the codebox must declare `Param bypass_gate(...)` (bypass convention, G-audio Q3)")
+    if not pfft:
+        used_outs = {int(m) for m in re.findall(r"\bout(\d+)\s*=", code)}
+        if used_outs != set(range(1, n_outs + 1)):
+            raise ValueError(f"{arch}: the codebox assigns out{sorted(used_outs)} but audio_outputs has {n_outs} entries "
+                             f"(out1..out{n_outs} must each be assigned)")
+        if "bypass_gate" not in declared:
+            raise ValueError(f"{arch}: the codebox must declare `Param bypass_gate(...)` (bypass convention, G-audio Q3)")
+    else:
+        frag, inner_text, inner_name, latency = _audio_pfft_inputs(defn, n_outs, audio_in)
+        attach = frag["attach"]
+        stages = {p["stage"]: p["name"] for p in params if "stage" in p}
+        if set(stages) != {"mix", "gain"}:
+            raise ValueError(f"{arch}: params must include one with stage 'mix' and one with stage 'gain', found {sorted(stages)}")
+        for p in params:
+            key = f"param:{p['name']}"
+            if "stage" in p and key in attach:
+                raise ValueError(f"param '{p['name']}': a shell stage ({p['stage']}) cannot also have an attach")
+            if "stage" not in p and key not in attach:
+                raise ValueError(f"param '{p['name']}': no attach {key!r} in the fragment and no stage, so the control would do nothing")
+        known = {f"param:{p['name']}" for p in params}
+        for key in attach:
+            if key not in known:
+                raise ValueError(f"fragment attach {key!r} names no param")
     names = [p["name"] for p in params]
     if len(set(names)) != len(names):
         raise ValueError(f"{arch}: duplicate param names")
     for p in params:
         if p["type"] not in ("float", "int", "menu"):
             raise ValueError(f"param '{p['name']}': the audio branch builds float, int and menu controls, not {p['type']!r}")
-        if p["name"] not in declared:
+        if not pfft and p["name"] not in declared:
             raise ValueError(f"param '{p['name']}': the codebox has no `Param {p['name']}(...)`, so the control would do nothing")
         if p["name"] == "bypass_gate":
             raise ValueError("bypass_gate is the shell's bypass; do not list it in params")
@@ -2591,14 +2715,15 @@ def build_audio(defn, debug=None, side_files=None):
         boxes.append(box(oid, maxclass="newobj", text="outlet~", numinlets=1, numoutlets=0,
                          fontname=FONT, fontsize=12.0, comment=out_comments[i],
                          patching_rect=[20.0 + i * 70.0, 420.0, 55.0, 22.0]))
-    boxes.append(box("obj-3", maxclass="newobj", text="gen~", varname=core_name,
-                     numinlets=1, numoutlets=n_outs, outlettype=["signal"] * n_outs,
-                     patching_rect=[20.0, 330.0, 60.0, 22.0],
-                     patcher=audio_gen_subpatcher(code, n_outs)))
-    for i, oid in enumerate(out_ids):
-        lines.append(wire("obj-3", i, oid, 0))
-    if audio_in:
-        lines.append(wire(OBJ_INLET, 0, "obj-3", 0))
+    if not pfft:
+        boxes.append(box("obj-3", maxclass="newobj", text="gen~", varname=core_name,
+                         numinlets=1, numoutlets=n_outs, outlettype=["signal"] * n_outs,
+                         patching_rect=[20.0, 330.0, 60.0, 22.0],
+                         patcher=audio_gen_subpatcher(code, n_outs)))
+        for i, oid in enumerate(out_ids):
+            lines.append(wire("obj-3", i, oid, 0))
+        if audio_in:
+            lines.append(wire(OBJ_INLET, 0, "obj-3", 0))
     boxes.append(autopattr_box(prefix))
     boxes.append(panel_box(pw, ph))
     boxes.append(title_box(title))
@@ -2625,11 +2750,17 @@ def build_audio(defn, debug=None, side_files=None):
         r = lb["box"]["presentation_rect"]; lb["box"]["presentation_rect"] = [r[0] + dx, r[1] + dy, r[2], r[3]]
         lb["box"]["patching_rect"] = [20.0 + n * 90.0, 30.0, 70.0, 18.0]
         boxes.append(lb)
-        pre = f"prepend {p['name']}"
-        boxes.append(box(param_pre_id(n), maxclass="newobj", text=pre, numinlets=1, numoutlets=1, outlettype=[""],
-                         patching_rect=[20.0 + n * 90.0, 110.0 + (n % 2) * 40.0, 8.0 * len(pre) + 8.0, 22.0]))
-        lines.append(wire(param_obj_id(n), 0, param_pre_id(n), 0))
-        lines.append(wire(param_pre_id(n), 0, "obj-3", 0))
+        if not pfft:
+            pre = f"prepend {p['name']}"
+            boxes.append(box(param_pre_id(n), maxclass="newobj", text=pre, numinlets=1, numoutlets=1, outlettype=[""],
+                             patching_rect=[20.0 + n * 90.0, 110.0 + (n % 2) * 40.0, 8.0 * len(pre) + 8.0, 22.0]))
+            lines.append(wire(param_obj_id(n), 0, param_pre_id(n), 0))
+            lines.append(wire(param_pre_id(n), 0, "obj-3", 0))
+        elif "stage" in p:
+            lines.append(wire(param_obj_id(n), 0, AUDIO_PFFT_STAGE_MSG[p["stage"]], 0))
+        else:
+            for tgt, inl in attach[f"param:{p['name']}"]:
+                lines.append(wire(param_obj_id(n), 0, tgt, inl))
         params_block[param_obj_id(n)] = [p["name"], p["name"], 0]
 
     # Bypass: a toggle in the title bar -> `prepend bypass_gate` -> the core
@@ -2646,10 +2777,21 @@ def build_audio(defn, debug=None, side_files=None):
             "parameter_linknames": 1, "parameter_longname": "bypass", "parameter_mmax": 1.0, "parameter_mmin": 0.0,
             "parameter_modmode": 0, "parameter_shortname": "bypass", "parameter_type": 1, "parameter_unitstyle": 0}},
         varname="bypass"))
-    boxes.append(box(byp_pre, maxclass="newobj", text="prepend bypass_gate", numinlets=1, numoutlets=1, outlettype=[""],
-                     patching_rect=[20.0 + k * 90.0, 110.0 + (k % 2) * 40.0, 150.0, 22.0]))
-    lines.append(wire(byp, 0, byp_pre, 0))
-    lines.append(wire(byp_pre, 0, "obj-3", 0))
+    if not pfft:
+        boxes.append(box(byp_pre, maxclass="newobj", text="prepend bypass_gate", numinlets=1, numoutlets=1, outlettype=[""],
+                         patching_rect=[20.0 + k * 90.0, 110.0 + (k % 2) * 40.0, 150.0, 22.0]))
+        lines.append(wire(byp, 0, byp_pre, 0))
+        lines.append(wire(byp_pre, 0, "obj-3", 0))
+    else:
+        lines.append(wire(byp, 0, AUDIO_PFFT_STAGE_MSG["bypass"], 0))
+        inner_name_file = f"{inner_name}.maxpat"
+        sb, sl = _audio_pfft_shell(defn, inner_name, latency, audio_in, out_ids[0])
+        boxes.extend(sb)
+        lines.extend(sl)
+        fb, fl = _audio_pfft_fragment(frag)
+        boxes.extend(fb)
+        lines.extend(fl)
+        side_files[Path(__file__).parent.parent / "package" / "patchers" / inner_name_file] = inner_text
     params_block[byp] = ["bypass", "bypass", 0]
     params_block["parameterbanks"] = {"0": {"index": 0, "name": "", "parameters": ["-"] * 8, "buttons": ["-"] * 8}}
     params_block["inherited_shortname"] = 1

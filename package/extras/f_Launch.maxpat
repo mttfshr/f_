@@ -5849,7 +5849,7 @@
 										150.0,
 										20.0
 									],
-									"text": "f_chladni_audio",
+									"text": "f_a_purr",
 									"textcolor": [
 										0.55,
 										0.55,
@@ -5877,11 +5877,67 @@
 										150.0,
 										20.0
 									],
-									"text": "⚠ Unverified. Eight-band audio analyzer sending m0amp-m7amp; f_chladni now takes note/amp instead",
+									"text": "⚠ Cat-purr generator with a breath phase out (audio, gen~); built 2026-11-16, not yet heard",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
 										70.0,
+										720.0,
+										20.0
+									],
+									"textcolor": [
+										0.55,
+										0.55,
+										0.55,
+										1.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "obj-8",
+									"maxclass": "comment",
+									"numinlets": 1,
+									"numoutlets": 0,
+									"patching_rect": [
+										20.0,
+										200.0,
+										150.0,
+										20.0
+									],
+									"text": "f_chladni_audio",
+									"textcolor": [
+										0.55,
+										0.55,
+										0.55,
+										1.0
+									],
+									"presentation": 1,
+									"presentation_rect": [
+										10.0,
+										98.0,
+										210.0,
+										20.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "obj-9",
+									"maxclass": "comment",
+									"numinlets": 1,
+									"numoutlets": 0,
+									"patching_rect": [
+										260.0,
+										200.0,
+										150.0,
+										20.0
+									],
+									"text": "⚠ Unverified. Eight-band audio analyzer sending m0amp-m7amp; f_chladni now takes note/amp instead",
+									"presentation": 1,
+									"presentation_rect": [
+										230.0,
+										98.0,
 										720.0,
 										20.0
 									],
