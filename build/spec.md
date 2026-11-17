@@ -698,7 +698,7 @@ Decision of record: `G-audio` in `.specify/gates.md` (Matt, 2026-11-16: `f_a_*` 
 
 **Shared shell (generated, both archetypes):** the same panel, title comment, `autopattr`, `parameters` block and `live.dial` / `live.numbox` UI grid as the texture archetypes (reuse the param schema, `route_name`, `modmode`, Styling Constants, Edit-View Layout). Audio-specific: gain and mix stage (`*~` / `!-~` / `+~`), optional `tanh~` ceiling, and bypass as a `bypass_gate` Param or a `*~` gate (see Q3). Param ranges are enforced in the dial, as the v1 ranges of `f_a_decorrelate` are today.
 
-**Definition additions:** `core` ("gen" | "pfft"), `inner` (file name, pfft only), `fft` (`[2048, 4]`), `fragment` (file name, optional), `audio_in` (bool), `safety_tanh` (bool), `latency_samples` (int, documentation only). `codebox` stays required for `audio_gen`.
+**Definition additions:** `core` ("gen" | "pfft"), `inner` (file name, pfft only), `fft` (`[2048, 4]`), `fragment` (file name, optional), `audio_in` (bool), `safety_tanh` (bool), `latency_samples` (int; sets the dry-path delay for bypass in `audio_pfft`). `codebox` stays required for `audio_gen`.
 
 **Not in scope:** generating inner files or the control fragment; a texture outlet; chaining into Vsynth's jit.gl.pix graph (`G-audio` Q: audio cables and texture cables do not mix); a helpfile shape (separate item, the `f-helpfile` skill has no audio form).
 
@@ -706,11 +706,11 @@ Decision of record: `G-audio` in `.specify/gates.md` (Matt, 2026-11-16: `f_a_*` 
 
 **Verification:** `tests/build/test_drift.py` (the `out_of_scope` entries for `f_a_ripple` and `f_a_decorrelate` come out, and the modules join the ratchet), a new offline test that every `audio_*` definition builds, wires each param to the core, and loads as valid JSON; the existing Max null rig for `f_a_decorrelate` (T002) re-run on the generated patch; a listen at defaults. Max owns the file afterwards, as for every module.
 
-**Open questions (Matt; Q1 decided):**
+**Open questions: all four decided 2026-11-16 (Matt). The design as a whole is not signed off.**
 1. ~~Standalone patch or bpatcher?~~ **Decided 2026-11-16 (Matt): bpatcher.** Every `f_a_*` module is a bpatcher with a presentation rect, in the `f_modules` menu and the `f_addmod` size table. Consequences: (a) buffer names and any other global names inside the module and its pfft~ inner file are per-instance (bpatcher-safe `---` prefix), because a menu makes a second instance likely (`f_a_decorrelate` uses global `fad_gain` / `fad_phase` today; inferred from the patch listing, inner file not read); (b) the hand-built test rigs (`scope~`, `snapshot~`, `dac~` in `f_a_ripple`) are not part of the module; a standalone test patch lives in `package/examples/` or `tests/`; (c) output channel count of `f_a_ripple` is settled in Phase A; (d) each panel gets a deliberate size.
-2. Fragment as a spliced JSON file, or should `f_a_decorrelate`'s control chain be regenerated from a small definition vocabulary (more work, only worth it if a second pfft~ module is coming)?
-3. Bypass: `bypass_gate` Param (convention for texture modules) or a `*~` gate? A gate must not click; pfft~ latency (1536 samples wet path, per its reference doc) means bypass should be latency-matched or accepted as a jump.
-4. Order: start with `audio_gen` on `f_a_ripple` (no fragment, simplest, proves the shell), then `f_a_purr` (needs its first patcher), then `audio_pfft`.
+2. ~~Fragment~~ **Decided 2026-11-16 (Matt): spliced JSON fragment**, hand-kept in `src/<module>/`; no definition vocabulary for the control chain. Reopen only if a second `pfft~` module is built.
+3. ~~Bypass~~ **Decided 2026-11-16 (Matt): `bypass_gate` Param**, the texture-module convention. In `audio_gen` it is a Param in the codebox. In `audio_pfft` the dry path is delayed to match the wet latency (1536 samples for `f_a_decorrelate`) so bypass does not jump; the delay is part of the shell, set by `latency_samples`, which therefore becomes functional, not documentation only. Click behavior on toggle is checked by ear in Phase A (not verified).
+4. ~~Order~~ **Decided 2026-11-16 (Matt):** A, then B, then C, as below.
 
 **Proposed phases:** A) shell + `audio_gen`, rebuild `f_a_ripple` from a new `definition.py`; B) `f_a_purr` as the first new module through it; C) `audio_pfft` + fragment, rebuild `f_a_decorrelate`; D) menu category and launcher. Each phase ends with a commit; Max listens are Matt's.
 
