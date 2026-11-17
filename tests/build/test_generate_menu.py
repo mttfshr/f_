@@ -375,7 +375,8 @@ def test_validate_catches_each_kind_of_mistake():
     _eq("NOT_IN_MENU naming a patcher that does not exist", "not a shipped patcher" in problem_text(fresh_menu(NOT_IN_MENU=skip)), True)
 
     skip = dict(m.NOT_IN_MENU); del skip["f_chladni_audio"]
-    t = problem_text(fresh_menu(NOT_IN_MENU=skip))
+    no_audio = [c_ for c_ in cats() if c_[0] != "Audio"]      # the Audio group is shown since 2026-11-16: hide it for this case
+    t = problem_text(fresh_menu(NOT_IN_MENU=skip, CATEGORIES=no_audio))
     _eq("a README group the menu does not show whose module is not exempted",
         "f_chladni_audio" in t and "which the menu does not show" in t, True)
 

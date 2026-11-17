@@ -82,7 +82,7 @@
 					"maxclass": "bpatcher",
 					"name": "f_a_decorrelate.maxpat",
 					"embed": 0,
-					"numinlets": 1,
+					"numinlets": 2,
 					"numoutlets": 1,
 					"outlettype": [
 						"signal"

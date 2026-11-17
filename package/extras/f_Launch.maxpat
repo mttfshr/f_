@@ -5765,7 +5765,7 @@
 										150.0,
 										20.0
 									],
-									"text": "⚠ Unfinished. De-correlating ripple stimulus (Yukhnovich et al. 2025); DSP done, UI and docs pending",
+									"text": "⚠ De-correlating ripple stimulus generator (audio, gen~); rebuilt 2026-11-16, not yet heard in Max",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
@@ -5821,7 +5821,7 @@
 										150.0,
 										20.0
 									],
-									"text": "⚠ De-correlating modulation processor (audio in → out, pfft~); shipped and documented 2026-10-12",
+									"text": "⚠ De-correlating modulation processor (audio in → out, pfft~); rebuilt 2026-11-16, not yet heard",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,

@@ -125,12 +125,12 @@ This table is also the source for the package's launcher patcher (`package/extra
 | `f_util_profile` | CPU-side dual-axis luminance profiler -- outputs row/column profile textures for modulation |
 | `f_util_vary` | Control utility -- varies named control values per destination (amount, chance, groups, wobble) |
 
-### Audio (`gen~`)
+### Audio
 
 | Patch | Description |
 |---|---|
-| `f_a_ripple` | ⚠ Unfinished. De-correlating ripple stimulus (Yukhnovich et al. 2025); DSP done, UI and docs pending |
-| `f_a_decorrelate` | ⚠ De-correlating modulation processor (audio in → out, pfft~); shipped and documented 2026-10-12 |
+| `f_a_ripple` | ⚠ De-correlating ripple stimulus generator (audio, gen~); rebuilt 2026-11-16, not yet heard in Max |
+| `f_a_decorrelate` | ⚠ De-correlating modulation processor (audio in → out, pfft~); rebuilt 2026-11-16, not yet heard |
 | `f_a_purr` | ⚠ Cat-purr generator with a breath phase out (audio, gen~); built 2026-11-16, not yet heard |
 | `f_chladni_audio` | ⚠ Unverified. Eight-band audio analyzer sending m0amp-m7amp; `f_chladni` now takes note/amp instead |
 

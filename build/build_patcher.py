@@ -2643,8 +2643,8 @@ def _audio_pfft_fragment(frag, dx=0.0, dy=420.0):
 
 
 def build_audio(defn, debug=None, side_files=None):
-    """Build an audio module's patcher dict.  Pure, like build().  `audio_gen`: optional `inlet~`, one
-    `outlet~`, a `gen~` holding the codebox, one `prepend <name>` per control into gen~ inlet 0, a live.*
+    """Build an audio module's patcher dict.  Pure, like build().  `audio_gen`: one `inlet` (audio in when `audio_in`,
+    control messages always), one `outlet` per `audio_outputs` entry, a `gen~` holding the codebox, one `prepend <name>` per control into gen~ inlet 0, a live.*
     control grid (presentation), panel, title, `autopattr`, and a Bypass toggle into the `bypass_gate`
     Param.  No test rigs: those live in a standalone patch outside the module."""
     if side_files is None:
@@ -2707,14 +2707,20 @@ def build_audio(defn, debug=None, side_files=None):
             raise ValueError("bypass_gate is the shell's bypass; do not list it in params")
 
     boxes, lines = [], []
+    # Ports are `inlet` / `outlet` objects (they carry signals too; Max has no inlet~ / outlet~ objects).  A generator
+    # has one inlet, for control messages (`<param> <value>`, `bypass 0/1`).  A processor has two: the audio input
+    # (obj-1, left, so a signal is never fanned out to a route) and the control messages (obj-5, right).
+    ctl_in = OBJ_INLET
+    boxes.append(inlet_box(in_comment if audio_in else "control messages (<param> <value>, bypass 0/1)"))
+    boxes[-1]["box"]["patching_rect"] = [20.0, 20.0, 30.0, 30.0]
     if audio_in:
-        boxes.append(box(OBJ_INLET, maxclass="newobj", text="inlet~", numinlets=0, numoutlets=1, outlettype=["signal"],
-                         fontname=FONT, fontsize=12.0, comment=in_comment, patching_rect=[20.0, 240.0, 50.0, 22.0]))
+        ctl_in = "obj-5"
+        boxes.append(box(ctl_in, maxclass="inlet", comment="control messages (<param> <value>, bypass 0/1)", index=0,
+                         numinlets=0, numoutlets=1, outlettype=[""], patching_rect=[90.0, 20.0, 30.0, 30.0]))
     out_ids = [outlet_obj_id(i) for i in range(n_outs)]
     for i, oid in enumerate(out_ids):
-        boxes.append(box(oid, maxclass="newobj", text="outlet~", numinlets=1, numoutlets=0,
-                         fontname=FONT, fontsize=12.0, comment=out_comments[i],
-                         patching_rect=[20.0 + i * 70.0, 420.0, 55.0, 22.0]))
+        boxes.append(box(oid, maxclass="outlet", comment=out_comments[i], index=0, numinlets=1, numoutlets=0,
+                         patching_rect=[20.0 + i * 70.0, 480.0, 30.0, 30.0]))
     if not pfft:
         boxes.append(box("obj-3", maxclass="newobj", text="gen~", varname=core_name,
                          numinlets=1, numoutlets=n_outs, outlettype=["signal"] * n_outs,
@@ -2724,9 +2730,19 @@ def build_audio(defn, debug=None, side_files=None):
             lines.append(wire("obj-3", i, oid, 0))
         if audio_in:
             lines.append(wire(OBJ_INLET, 0, "obj-3", 0))
+    # control messages: inlet -> route bypass <params> -> each control's inlet (the control then drives the core)
+    route_names = ["bypass"] + [route_token(q) for q in params]
+    if len(set(route_names)) != len(route_names):
+        raise ValueError(f"{arch}: param names collide as route tokens (and `bypass` is reserved)")
+    boxes.append(box(OBJ_ROUTE, maxclass="newobj", text="route " + " ".join(route_names), numinlets=1,
+                     numoutlets=len(route_names), outlettype=[""] * len(route_names), fontname=FONT, fontsize=12.0,
+                     patching_rect=[20.0, 70.0, max(150.0, len(route_names) * 7.0), 22.0]))
+    lines.append(wire(ctl_in, 0, OBJ_ROUTE, 0))
     boxes.append(autopattr_box(prefix))
     boxes.append(panel_box(pw, ph))
     boxes.append(title_box(title))
+    boxes.append(dot_box(OBJ_DOT_IN, None, "in", 0.0))       # the type dots: audio takes and outputs neither a vecfield nor a tensor
+    boxes.append(dot_box(OBJ_DOT_OUT, None, "out", 0.0))
 
     params_block = {}
     for n, p in enumerate(params):
@@ -2746,6 +2762,7 @@ def build_audio(defn, debug=None, side_files=None):
         r = bx["presentation_rect"]; bx["presentation_rect"] = [r[0] + dx, r[1] + dy, r[2], r[3]]
         bx["patching_rect"] = [20.0 + n * 90.0, 60.0, bx["patching_rect"][2], bx["patching_rect"][3]]
         boxes.append(b)
+        lines.append(wire(OBJ_ROUTE, n + 1, param_obj_id(n), 0))
         lb = label_box(n, p)
         r = lb["box"]["presentation_rect"]; lb["box"]["presentation_rect"] = [r[0] + dx, r[1] + dy, r[2], r[3]]
         lb["box"]["patching_rect"] = [20.0 + n * 90.0, 30.0, 70.0, 18.0]
@@ -2792,14 +2809,12 @@ def build_audio(defn, debug=None, side_files=None):
         boxes.extend(fb)
         lines.extend(fl)
         side_files[Path(__file__).parent.parent / "package" / "patchers" / inner_name_file] = inner_text
+    lines.append(wire(OBJ_ROUTE, 0, byp, 0))
     params_block[byp] = ["bypass", "bypass", 0]
     params_block["parameterbanks"] = {"0": {"index": 0, "name": "", "parameters": ["-"] * 8, "buttons": ["-"] * 8}}
     params_block["inherited_shortname"] = 1
 
-    # The ports are `inlet~` / `outlet~` newobjs, which check_port_order() does not see; Max orders ports by x on save.
-    xs = [b_["box"]["patching_rect"][0] for b_ in boxes if b_["box"].get("text") == "outlet~"]
-    if xs != sorted(xs) or len(set(xs)) != len(xs):
-        raise ValueError(f"outlet~ boxes must have strictly increasing patching_rect x, in port order: {xs}")
+    check_port_order(boxes)
     seen = set()
     for b_ in boxes:
         if b_["box"]["id"] in seen:

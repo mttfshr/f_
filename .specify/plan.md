@@ -33,6 +33,7 @@ Closed 2026-10-30/31: the `render_dim` migration (all tensor modules, vorticity,
 
 ## Owed to Matt
 
+- **Audio modules, Max (2026-11-16; offline build by Claude, nothing heard):** `f_a_ripple` (`.specify/f_a_ripple/tasks.md` T013), `f_a_purr` (`.specify/f_a_purr/tasks.md` T047: also the first compile of its realism code), `f_a_decorrelate` (`.specify/f_a_decorrelate/tasks.md` T016 spike and T024), and the menu (`.specify/f_modules_menu/tasks.md` T076). Until then the README keeps the warning marks. Audio helpfile shape is an unstarted item.
 - **Runs and looks:** the `f_separate` revision of 2026-11-14 (HSL ink table with clickable swatches, composite on outlet 0, three inks): benched green 2026-11-14 (T054); owed: a live look at the panel, helpfile and four demos (T055), record `.specify/stable/f_separate/tasks.md` Phase 4; the new `f_vf_stamp` helpfile; the regenerated `f_modules` dropdowns; the corrected helpfile (Caustic notes); `f_caustic` demo-patch chain-cost check (untouched since 2026-10-08).
 - **Decisions (print-styles):** the PRELIMINARY gates in the `f_vf_erode` and `f_engrave` `tasks.md` files (`f_halftone`'s all confirmed 2026-11-14) and the remaining ones in `f_separate` (`G-print-prelim`); which `f_separate` mode to keep or default to (Unmix, Nearest, Project); then `f_engrave`'s method, once its spike report exists (`G-engrave-method`).
 - **Decisions:** Batch 4: the remaining calls are the optical_flow / seeds passthrough details and the vortex mod-inlet gating (Matt: later).

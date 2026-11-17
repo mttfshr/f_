@@ -9,7 +9,7 @@ Every src/*/definition.py with an `audio_*` archetype is built through build_aud
     the codebox is left without a control (an orphan)
   - each control's initial value equals the codebox Param's default
   - box ids are unique; every line names real boxes; no texture-archetype objects (route, routepass,
-    jit.gl.pix, vs_inState) are present; `outlet~` is present, `inlet~` only when audio_in
+    jit.gl.pix, vs_inState) are present; ports are `inlet` / `outlet` objects (Max has no inlet~ / outlet~): one control inlet, plus an audio inlet when audio_in, one outlet per audio output; every control is reachable by a `route` from the control inlet
   - the checker itself catches mutants: a dropped cord, a renamed prepend, a renamed codebox Param, a duplicate id
 
 Offline only: sound, bypass clicks and the panel's look are for Max (Matt).
@@ -27,7 +27,7 @@ import build_patcher as bp          # noqa: E402
 from harness import check, run      # noqa: E402
 
 REPO = Path(__file__).resolve().parents[2]
-TEXTURE_ONLY = ("route", "routepass", "jit.gl.pix", "vs_inState")
+TEXTURE_ONLY = ("routepass", "jit.gl.pix", "vs_inState")
 
 
 def _eq(label, got, want):
@@ -46,6 +46,37 @@ def audio_definitions():
 def codebox_of(patcher):
     core = next(b["box"] for b in patcher["boxes"] if b["box"].get("text") == "gen~")
     return next(x["box"]["code"] for x in core["patcher"]["boxes"] if "code" in x["box"])
+
+
+def port_and_route_problems(boxes, plines, defn):
+    """Ports are `inlet` / `outlet` objects (Max has no inlet~ / outlet~); control messages reach every control through a route."""
+    bad = []
+    ins = sorted((b for b in boxes.values() if b.get("maxclass") == "inlet"), key=lambda b: b["patching_rect"][0])
+    want_in = 2 if defn.get("audio_in", False) else 1
+    if len(ins) != want_in:
+        bad.append(f"{len(ins)} inlet objects, expected {want_in}")
+    if any(b.get("maxclass") == "newobj" and str(b.get("text", "")).strip() in ("inlet~", "outlet~") for b in boxes.values()):
+        bad.append("an inlet~ / outlet~ newobj: Max has no such object, the port would not exist")
+    xs = [b["patching_rect"][0] for b in ins]
+    if xs != sorted(xs) or len(set(xs)) != len(xs):
+        bad.append("inlet x order is not strictly increasing")
+    ctl = "obj-5" if defn.get("audio_in", False) else "obj-1"
+    cords = {(l["patchline"]["source"][0], l["patchline"]["source"][1], l["patchline"]["destination"][0], l["patchline"]["destination"][1])
+             for l in plines}
+    by_var = {b.get("varname"): i for i, b in boxes.items() if b.get("varname")}
+    route = boxes.get("obj-4", {})
+    tokens = ["bypass"] + [q.get("route_name", q["name"]) for q in defn["params"]]
+    if route.get("text") != "route " + " ".join(tokens):
+        bad.append(f"obj-4 is not the expected route (got {route.get('text')!r})")
+    if (ctl, 0, "obj-4", 0) not in cords:
+        bad.append("the control inlet is not wired to the route")
+    names = ["bypass"] + [q["name"] for q in defn["params"]]
+    for i, n in enumerate(names):
+        if (("obj-4", i, by_var.get(n), 0)) not in cords:
+            bad.append(f"route outlet {i} is not wired to the {n} control")
+    if defn.get("audio_in", False) and ("obj-1", 0, "obj-4", 0) in cords:
+        bad.append("the audio inlet is wired to the route (a signal must not fan out to it)")
+    return bad
 
 
 def pfft_problems(patcher, defn):
@@ -70,8 +101,7 @@ def pfft_problems(patcher, defn):
         bad.append(f"obj-3 is not the expected pfft~ (got {boxes.get('obj-3', {}).get('text')!r})")
     if boxes.get("obj-100", {}).get("text") != f"delay~ {defn['latency_samples']} {defn['latency_samples']}":
         bad.append("the dry delay~ does not equal latency_samples")
-    if not any(b.get("text") == "inlet~" for b in boxes.values()):
-        bad.append("no inlet~")
+    bad += port_and_route_problems(boxes, p["lines"], defn)
     for c in [("obj-1", 0, "obj-3", 0), ("obj-1", 0, "obj-100", 0), ("obj-110", 0, "obj-2", 0), ("obj-3", 0, "obj-101", 0)]:
         if c not in cords:
             bad.append(f"missing shell cord {c}")
@@ -134,17 +164,17 @@ def problems(patcher, defn):
     for t in TEXTURE_ONLY:
         if re.search(rf"(^|\s){re.escape(t)}(\s|$)", texts):
             bad.append(f"texture-only object {t} present")
-    outs = sorted((b for b in boxes.values() if b.get("text") == "outlet~"), key=lambda b: b["id"])
+    outs = sorted((b for b in boxes.values() if b.get("maxclass") == "outlet"), key=lambda b: b["id"])
     want = defn.get("audio_outputs", ["audio out"])
     if len(outs) != len(want):
-        bad.append(f"{len(outs)} outlet~ for {len(want)} audio_outputs")
+        bad.append(f"{len(outs)} outlet for {len(want)} audio_outputs")
     else:
         xs = [b["patching_rect"][0] for b in outs]
         if xs != sorted(xs) or len(set(xs)) != len(xs):
-            bad.append("outlet~ x order is not strictly increasing")
+            bad.append("outlet x order is not strictly increasing")
         for i, b in enumerate(outs):
             if b.get("comment") != want[i]:
-                bad.append(f"outlet~ {i} comment {b.get('comment')!r} != {want[i]!r}")
+                bad.append(f"outlet {i} comment {b.get('comment')!r} != {want[i]!r}")
             if not any(l["patchline"]["source"] == [core, i] and l["patchline"]["destination"] == [b["id"], 0] for l in p["lines"]):
                 bad.append(f"gen~ outlet {i} is not wired to {b['id']}")
     if boxes[core].get("numoutlets") != len(want):
@@ -152,9 +182,7 @@ def problems(patcher, defn):
     n_assigned = {int(m) for m in re.findall(r"\bout(\d+)\s*=", code)}
     if n_assigned != set(range(1, len(want) + 1)):
         bad.append(f"codebox assigns out{sorted(n_assigned)}, expected 1..{len(want)}")
-    has_in = any(b.get("text") == "inlet~" for b in boxes.values())
-    if has_in != bool(defn.get("audio_in", False)):
-        bad.append("inlet~ does not match audio_in")
+    bad += port_and_route_problems(boxes, p["lines"], defn)
     by_var = {b.get("varname"): (i, b) for i, b in boxes.items() if b.get("varname")}
     wired = set()
     names = [q["name"] for q in defn["params"]] + ["bypass"]
@@ -196,13 +224,13 @@ def test_every_audio_definition_builds_and_wires():
 
 
 def test_purr_ports_and_mutants():
-    """f_a_purr: an inlet~ (breath phase) and two outlet~ (purr, breath phase); the port checks catch mutants."""
+    """f_a_purr: an audio inlet (breath phase), a control inlet and two outlets (purr, breath phase); the port checks catch mutants."""
     d = audio_definitions().get("f_a_purr")
     check("f_a_purr has an audio definition", 0 if d else 1, 0)
     good = json.loads(json.dumps(bp.build(d)))
-    _eq("f_a_purr: two outlet~, one inlet~", sorted(b["box"]["text"] for b in good["patcher"]["boxes"]
-                                                    if b["box"].get("text", "").endswith("~") and b["box"]["text"] != "gen~"),
-        ["inlet~", "outlet~", "outlet~"])
+    _eq("f_a_purr: two inlet objects (audio, control), two outlet objects (purr, breath phase)",
+        sorted(b["box"]["maxclass"] for b in good["patcher"]["boxes"] if b["box"]["maxclass"] in ("inlet", "outlet")),
+        ["inlet", "inlet", "outlet", "outlet"])
 
     def mutant(fn):
         m = copy.deepcopy(good)
@@ -210,7 +238,7 @@ def test_purr_ports_and_mutants():
         return problems(m, d)
 
     def swap_x(p):
-        o = [b["box"] for b in p["boxes"] if b["box"].get("text") == "outlet~"]
+        o = [b["box"] for b in p["boxes"] if b["box"].get("maxclass") == "outlet"]
         o[0]["patching_rect"][0], o[1]["patching_rect"][0] = o[1]["patching_rect"][0], o[0]["patching_rect"][0]
     check("mutant: reversed outlet~ order is caught", 0 if mutant(swap_x) else 1, 0)
     check("mutant: a missing second outlet~ is caught",
@@ -265,6 +293,25 @@ def test_pfft_shell_fragment_and_mutants():
     _eq("loud: a missing mix stage", raises({"params": [q for q in d["params"] if q["name"] != "mix"]}, "stage 'mix'"), True)
 
 
+def test_audio_modules_are_in_the_menu_with_their_panel_size():
+    """Phase D: every audio_* module is in an f_modules category (not NOT_IN_MENU) and its f_addmod size is its panel."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("menu_data", REPO / "src" / "f_modules" / "menu.py")
+    menu = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(menu)
+    in_menu = {m: label for label, items in menu.CATEGORIES for _d, m, _k in items}
+    js = (REPO / "package" / "javascript" / "f_addmod.js").read_text()
+    for name, d in audio_definitions().items():
+        mod = name.removeprefix("f_")
+        _eq(f"{name}: in the Audio category", in_menu.get(mod), "Audio")
+        _eq(f"{name}: not in NOT_IN_MENU", name in menu.NOT_IN_MENU, False)
+        want = [round(d["presentation_width"]), round(d["presentation_height"])]
+        m = re.search(rf'"{mod}":\s*\[\s*(\d+),\s*(\d+)\]', js)
+        _eq(f"{name}: f_addmod size is the panel", [int(m.group(1)), int(m.group(2))] if m else None, want)
+    # the checker itself: a module moved to NOT_IN_MENU would fail the first assertion
+    _eq("mutant: a module absent from the menu is seen", in_menu.get("a_nope"), None)
+
+
 def test_shipped_patcher_matches_the_build():
     """The shipped patcher of each audio module is its build (Max owns it afterwards; this catches a stale build)."""
     for name, d in audio_definitions().items():
@@ -295,6 +342,12 @@ def test_checker_catches_mutants():
         cb = next(x["box"] for x in core["patcher"]["boxes"] if "code" in x["box"])
         cb["code"] = cb["code"].replace("Param tmr(", "Param tmrx(")
     check("mutant: a renamed codebox Param is caught", 0 if mutant(rename_param) else 1, 0)
+    check("mutant: a dropped route cord (control message path) is caught",
+          0 if mutant(lambda p: p["lines"].remove(next(l for l in p["lines"] if l["patchline"]["source"] == ["obj-4", 3]))) else 1, 0)
+    check("mutant: a port written as an inlet~ newobj is caught",
+          0 if mutant(lambda p: next(b["box"] for b in p["boxes"] if b["box"]["id"] == "obj-2").update(maxclass="newobj", text="outlet~")) else 1, 0)
+    check("mutant: the control inlet unwired from the route is caught",
+          0 if mutant(lambda p: p["lines"].remove(next(l for l in p["lines"] if l["patchline"]["destination"] == ["obj-4", 0]))) else 1, 0)
     check("mutant: a duplicate id is caught", 0 if mutant(lambda p: p["boxes"].append(copy.deepcopy(p["boxes"][0]))) else 1, 0)
     check("mutant: a texture object is caught",
           0 if mutant(lambda p: p["boxes"].append({"box": {"id": "obj-999", "maxclass": "newobj", "text": "routepass"}})) else 1, 0)

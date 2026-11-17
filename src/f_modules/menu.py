@@ -113,6 +113,11 @@ CATEGORIES = [
         ("Vary", "util_vary", N),
         ("Tex Router", "texrouter", N),
     ]),
+    ("Audio", [
+        ("Decorrelate", "a_decorrelate", N),   # placed by Claude 2026-11-16 (audio archetype Phase D, G-audio decision of Matt's); G-menu is Matt's to move
+        ("Purr", "a_purr", N),
+        ("Ripple", "a_ripple", N),
+    ]),
 ]
 
 # Recipes: a tenth dropdown that places a row of modules, left to right in signal order (nothing is wired;
@@ -143,9 +148,6 @@ SIZE_OVERRIDES = {
 
 NOT_IN_MENU = {
     "f_modules":       "the menu itself",
-    "f_a_ripple":      "audio (gen~) module, not a Vsynth bpatcher; unfinished (README marks it)",
-    "f_a_decorrelate": "audio (pfft~) module, not a Vsynth bpatcher; DSP built, packaging pending (README marks it)",
-    "f_a_purr":        "audio (gen~) bpatcher built 2026-11-16 (audio archetype Phase B); menu registration is Phase D (README marks it)",
     "f_chladni_audio": "audio companion of f_chladni, not a Vsynth bpatcher (README marks it)",
     "f_cmap":          "Phase 1 built (codeboxes + patcher, 2026-10-27); menu placement, helpfile and reference doc are Phase 3",
 }

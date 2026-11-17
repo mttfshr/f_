@@ -60,7 +60,10 @@ var SIZES = {
     "util_matrix_2":  [230, 120],
     "util_profile":   [200, 120],
     "util_vary":      [372, 488],
-    "texrouter":      [213, 130]
+    "texrouter":      [213, 130],
+    "a_decorrelate":  [330, 152],
+    "a_purr":         [330, 276],
+    "a_ripple":       [330, 152]
 };
 // END SIZES
 

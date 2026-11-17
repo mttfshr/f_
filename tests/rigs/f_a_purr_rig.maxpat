@@ -62,7 +62,7 @@
 					"maxclass": "bpatcher",
 					"name": "f_a_purr.maxpat",
 					"embed": 0,
-					"numinlets": 1,
+					"numinlets": 2,
 					"numoutlets": 2,
 					"outlettype": [
 						"signal",

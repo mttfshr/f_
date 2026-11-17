@@ -113,12 +113,13 @@ No visual effect of their own — plumbing between other modules.
 
 ## Audio (`f_a_`) and Control Bridges
 
-Hand-built MSP / `gen~` modules with no texture path and no GL context. Audio runs on MSP cables, so these sit beside the video modules but never plug into them. All three are `NOT_IN_MENU` and outside the drift check; the integration decision is tabled (`.specify/plan.md` Still open 1). `I/O` here uses `audio` for signal-rate connections.
+MSP / `gen~` / `pfft~` modules with no texture path and no GL context. Audio runs on MSP cables, so these sit beside the video modules but never plug into them. Since 2026-11-16 `f_a_ripple`, `f_a_purr` and `f_a_decorrelate` are built from `src/<module>/definition.py` by the audio archetypes (`build/spec.md` "Audio archetypes"), are bpatchers in the `f_modules` Audio category and are on the drift ratchet; offline only, not yet heard in Max. `f_chladni_audio` is still hand-built and `NOT_IN_MENU`. `I/O` here uses `audio` for signal-rate connections.
 
 | Module | I/O | What it does |
 |---|---|---|
 | `f_a_decorrelate` | audio → audio | Applies the Yukhnovich et al. (2025) cross-frequency de-correlating modulation to arbitrary input audio via `pfft~` (per-bin AM gain or PM phase), with dry/wet and a `tanh` ceiling. The processor version of `f_a_ripple` |
-| `f_a_ripple` | (params) → audio | Generator of the same stimulus: a harmonic carrier with a dynamic spectral ripple on one octave band, a new random f0 every `stim_dur` seconds, forever, self-timed. AM or PM, hearing-correction profiles. ⚠ Unfinished: a standalone prototype (own `dac~` and scopes, no outlet object, plain flonums, no helpfile). **Silent until `output_level` is raised** |
+| `f_a_purr` | audio (breath phase, optional) → audio; breath phase | Cat-purr generator: a jittered click train through a resonator, with a breath layer (rate, level, noise, inhale/exhale contrast, tempo runs) whose 0-1 phase is the second outlet; an external breath phase can drive it (`breath_src`). Built 2026-11-16 from the 2026-07 to 2026-11 scratch codebox; ⚠ the realism code has never been compiled or heard in Max; no helpfile |
+| `f_a_ripple` | (params) → audio | Generator of the same stimulus: a harmonic carrier with a dynamic spectral ripple on one octave band, a new random f0 every `stim_dur` seconds, forever, self-timed. AM or PM, hearing-correction profiles. Rebuilt 2026-11-16 as a bpatcher (live controls, Bypass, `gain` default 0.1); ⚠ not yet heard in Max; no helpfile |
 | `f_chladni_audio` | audio → 8 messages | Eight resonant band-pass bands with envelope followers, emitting `m0amp`…`m7amp` every 20 ms (Log or Bessel tuning). ⚠ Unverified, and out of step with `f_chladni`: that module now takes `note` / `amp`, not the eight amplitudes, so this patch cannot drive it. The planned `sigmund~` / `peakamp~` `note` / `amp` patch is unbuilt. The Log/Bessel switch looks inert from its wiring (untested in Max) |
 
 ---
@@ -213,8 +214,9 @@ Added 2026-10-22 from the per-module docs in this folder. This is a wiring cheat
 | `f_util_profile` | 1: tex + ctrl | 2: tex (row profile 128×1); tex (column profile 1×128) | Required | **Freeze:** holds last computed profile on both outlets |
 | `f_vf_split` | 1: vecfield | 2: scalar (X); scalar (Y), unipolar or bipolar | Required | Both outlets pass the source vecfield through unsplit |
 | `f_vf_stamp` | 2: stamp tex (+ctrl); vecfield | 2: tex (ink); vecfield (impulse) | Optional (empty = black ink, neutral impulse) | Outlet 1 passes inlet 0, outlet 2 passes inlet 1 or neutral |
-| `f_a_decorrelate` (audio) | 1: audio signal (`inlet~`) | 1: audio signal (`outlet~`) | Required (audio in) | Not stated in doc |
-| `f_a_ripple` (audio) | None at the patch level (standalone prototype); `gen~` has one inlet taking `prepend <param>` messages | None at the patch level; `gen~` out 1 = audio (to its own `dac~`, scopes), out 2 = `render_count`, out 3 = `f0_h` | None (self-timed generator, new stimulus every `stim_dur`) | No bypass control. Silent while `output_level` = 0 (its default) |
+| `f_a_decorrelate` (audio) | 2: audio signal; control messages (`<param> <value>`, `bypass 0/1`) | 1: audio signal (35 ms latency) | Required (audio in) | Bypass crossfades (about 5 ms) to the input delayed by the wet latency |
+| `f_a_purr` (audio) | 2: breath phase 0-1 (signal, used when `breath_src` = 1); control messages | 2: purr; breath phase 0-1 | Optional | Bypass mutes outlet 1 only (about 5 ms slew); the breath phase keeps running |
+| `f_a_ripple` (audio) | 1: control messages (`<param> <value>`, `bypass 0/1`) | 1: audio (`outlet~`, mono) | None (self-timed generator, new stimulus every `stim_dur`) | Bypass mutes the output (about 5 ms slew), a generator's neutral being silence |
 | `f_chladni_audio` (audio to control) | 1: audio signal | 1 wired: messages `m0amp` … `m7amp` every 20 ms (a second outlet object exists, unwired) | Required (audio in) | No bypass control |
 
 ---

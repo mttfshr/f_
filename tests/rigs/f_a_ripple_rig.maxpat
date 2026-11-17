@@ -42,7 +42,7 @@
 					"maxclass": "bpatcher",
 					"name": "f_a_ripple.maxpat",
 					"embed": 0,
-					"numinlets": 0,
+					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
 						"signal"
