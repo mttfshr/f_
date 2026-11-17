@@ -46,6 +46,12 @@ TOL_STAGE = 3e-6        # one frame, one stage vs the mirror (measured 2026-10-2
 TOL_EXACT = 0.0         # pure gathers and copies
 
 
+def enc_ref(gu, gv):
+    """The encode's direction-preserving limit (cap 0.5, the encode range is +-0.5): R, G from the gained velocity."""
+    kk = 0.5 / np.maximum(np.maximum(np.abs(gu), np.abs(gv)), 0.5)
+    return 0.5 + gu * kk, 0.5 + gv * kk
+
+
 def tol_enc(gain):      # the encode error scales with gain (measured 1.8e-6 at gain 1, 5.4e-6 at 3, 1.8e-5 at 10)
     return max(1e-5, 3e-6 * gain)
 
@@ -402,8 +408,7 @@ def test_enc_upsample_at_other_sizes():
     tex, ux, uy = macro_tex(pl)
     for (h, w) in ((90, 160), (216, 384), (720, 1280)):
         out = gpu("enc", [BANG, tex], dim=(w, h))
-        r = np.clip(0.5 + 3.0 * up_bilinear(ux.astype(np.float64), h, w), 0.0, 1.0)
-        g = np.clip(0.5 + 3.0 * up_bilinear(uy.astype(np.float64), h, w), 0.0, 1.0)
+        r, g = enc_ref(3.0 * up_bilinear(ux.astype(np.float64), h, w), 3.0 * up_bilinear(uy.astype(np.float64), h, w))
         check(f"enc {w}x{h}: R vs y-periodic, x-clamped bilinear", mx(out[..., 0], r), tol_enc(3.0))
         check(f"enc {w}x{h}: G vs the same", mx(out[..., 1], g), tol_enc(3.0))
     wide = np.zeros((H, W, 4), F32)
@@ -436,13 +441,12 @@ def test_enc_speed_blend():
         out = gpu("enc", [BANG, cur, prev], dim=(W, H), phase=float(ph), nsteps=float(ns))
         ux = ux_p.astype(np.float64) + (ux_c.astype(np.float64) - ux_p) * w
         uy = uy_p.astype(np.float64) + (uy_c.astype(np.float64) - uy_p) * w
-        want_r = np.clip(0.5 + 3.0 * ux, 0, 1)
-        want_g = np.clip(0.5 + 3.0 * uy, 0, 1)
+        want_r, want_g = enc_ref(3.0 * ux, 3.0 * uy)
         check(f"enc blend phase {ph} of {ns} (weight {w:.2f}): R", mx(out[..., 0], want_r), tol_enc(3.0))
         check(f"enc blend phase {ph} of {ns}: G", mx(out[..., 1], want_g), tol_enc(3.0))
     full = gpu("enc", [BANG, cur, prev], dim=(W, H), phase=4.0, nsteps=4.0)
     check("phase = nsteps shows the current velocity exactly (no smoothing lag at the end of a step)",
-          mx(full[..., 0], np.clip(0.5 + 3.0 * ux_c.astype(np.float64), 0, 1)), tol_enc(3.0))
+          mx(full[..., 0], enc_ref(3.0 * ux_c.astype(np.float64), 3.0 * uy_c.astype(np.float64))[0]), tol_enc(3.0))
 
 
 # ----------------------------------------------------------------- chain

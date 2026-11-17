@@ -84,7 +84,7 @@ def test_gain_clamp():
     t = packed(64, 64, seed=3)
     out, ref = run_case(t, gain=10.0, gate=0)
     check("gain 10 vs mirror (clamped)", float(np.abs(out - ref).max()), TOL)
-    check("range within [0,1]", float(max(out.max() - 1.0, -out.min(), 0.0)), 0.0)
+    check("range within [0,1] (to float rounding: 0.5 + 0.5 * g * k can land 4e-8 over 1)", float(max(out.max() - 1.0, -out.min(), 0.0)), 1e-6)
 
 
 def test_aspect_16_9():
