@@ -175,8 +175,10 @@ def encode(planes, gain, bug=None):
     if bug == "swap_rg":
         ux, uy = uy, ux
     enc = g.texture(*planes[0].shape[:2])
-    enc[..., 0] = np.clip(F32(0.5) + F32(gain) * ux, F32(0.0), F32(1.0))
-    enc[..., 1] = np.clip(F32(0.5) + F32(gain) * uy, F32(0.0), F32(1.0))
+    gu, gv = F32(gain) * ux, F32(gain) * uy
+    kk = F32(0.5) / np.maximum(np.maximum(np.abs(gu), np.abs(gv)), F32(0.5))   # direction-preserving limit, cap 0.5
+    enc[..., 0] = F32(0.5) + gu * kk
+    enc[..., 1] = F32(0.5) + gv * kk
     enc[..., 2] = F32(0.5)
     enc[..., 3] = F32(1.0)
     return g.store_float32(enc)

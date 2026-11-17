@@ -49,6 +49,11 @@ av = mix(mix(vym(xa, ya, bw), vym(xb, ya, bw), tx), mix(vym(xa, yb, bw), vym(xb,
 au = switch(abs(au) < 1e30, au, 0);
 av = switch(abs(av) < 1e30, av, 0);
 
-r = clamp(0.5 + gain * au, 0, 1);
-g = clamp(0.5 + gain * av, 0, 1);
+// Direction-preserving limit: the encode range is +-0.5, so the larger gained component is capped at 0.5 and the vector
+// scaled with it (a per-channel clamp collapsed directions to diagonals). Output within +-0.5 is unchanged.
+gu = gain * au;
+gv = gain * av;
+kk = 0.5 / max(max(abs(gu), abs(gv)), 0.5);
+r = 0.5 + gu * kk;
+g = 0.5 + gv * kk;
 out1 = vec(mix(r, 0.5, bypass_gate), mix(g, 0.5, bypass_gate), 0.5, 1);

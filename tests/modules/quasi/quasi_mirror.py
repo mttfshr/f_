@@ -153,9 +153,12 @@ def banded(P, bands=5.0, dtype=np.float32):
 
 
 def encode_vec(vx, vy, gain=1.0, dtype=np.float32):
-    """f_vecfield encoding: v*gain*0.5 + 0.5, B = 0.5, A = 1 (clamped to [0, 1])."""
-    r = np.clip(np.asarray(vx, dtype) * dtype(gain) * dtype(0.5) + dtype(0.5), 0, 1)
-    gch = np.clip(np.asarray(vy, dtype) * dtype(gain) * dtype(0.5) + dtype(0.5), 0, 1)
+    """f_vecfield encoding: v*gain*0.5 + 0.5, B = 0.5, A = 1 (larger component limited to 1, direction kept)."""
+    gu = np.asarray(vx, dtype) * dtype(gain)
+    gv = np.asarray(vy, dtype) * dtype(gain)
+    kk = dtype(1) / np.maximum(np.maximum(np.abs(gu), np.abs(gv)), dtype(1))   # direction-preserving limit
+    r = gu * kk * dtype(0.5) + dtype(0.5)
+    gch = gv * kk * dtype(0.5) + dtype(0.5)
     return np.stack([r, gch, np.full_like(r, 0.5), np.ones_like(r)], axis=-1).astype(dtype)
 
 

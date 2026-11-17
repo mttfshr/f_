@@ -69,7 +69,7 @@ One pass, no loops, no state.
 |---|---|---|---|
 | `mode` | Along / Across | Along | Along: flow follows the edges. Across: flow crosses them (gradient direction). |
 | `angle` | -180-180 deg | 0 | Reference direction. Where the fade-to-zero lands. With a reference vecfield connected it rotates that field instead. |
-| `gain` | -4-4 | 1 | Signed output amplitude: negative reverses the flow. Units are the short side of the frame, so consumers usually want small values. The output is clamped per axis to the encodable range, so a large vector at high gain loses length and can bend. |
+| `gain` | -4-4 | 1 | Signed output amplitude: negative reverses the flow. Units are the short side of the frame, so consumers usually want small values. Past the encodable range the vector is scaled so its larger axis is at the limit: a large vector at high gain loses length but keeps its direction. |
 | `gate` | 0-1 | 1 | 0 = ignore coherence; 1 = scale flow by the tensormap's coherence, so only confident structure moves. |
 | `bypass` | 0/1 | 0 | Neutral vecfield. |
 

@@ -86,8 +86,13 @@ tri = abs(fr * 2 - 1);
 lk = pow(tri, 1.1);
 vxn = (0 - gxa) / (5 * wssum);
 vyn = (0 - gya) / (5 * wssum);
-vr = clamp(0.5 + 0.5 * gain * vxn, 0, 1);
-vg = clamp(0.5 + 0.5 * gain * vyn, 0, 1);
+// Direction-preserving limit: when the larger component exceeds the cap the whole vector is scaled so it equals the cap
+// (a per-channel clamp collapsed directions to diagonals). Output within the range is unchanged.
+gu = gain * vxn;
+gv = gain * vyn;
+kk = 1 / max(max(abs(gu), abs(gv)), 1);
+vr = 0.5 + 0.5 * gu * kk;
+vg = 0.5 + 0.5 * gv * kk;
 sp = pf * 0.5 + 0.5;
 keep = 1 - bypass_gate;
 out1 = vec(lk * keep, lk * keep, lk * keep, 1);

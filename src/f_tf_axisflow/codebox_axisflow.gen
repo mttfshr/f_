@@ -50,7 +50,12 @@ vy = mix(ry - ay, ay, mode);
 
 mag = ok * gain * mix(1.0, t.w, gate);
 
-fx = clamp(vx * mag * sh / width * 0.5 + 0.5, 0.0, 1.0);
-fy = clamp(vy * mag * sh / height * 0.5 + 0.5, 0.0, 1.0);
+// Direction-preserving limit: when the larger component exceeds the cap the whole vector is scaled so it equals the cap
+// (a per-channel clamp collapsed directions to diagonals). Output within the range is unchanged.
+gx = vx * mag * sh / width;
+gy = vy * mag * sh / height;
+kk = 1.0 / max(max(abs(gx), abs(gy)), 1.0);
+fx = gx * kk * 0.5 + 0.5;
+fy = gy * kk * 0.5 + 0.5;
 
 out1 = mix(vec(fx, fy, 0.5, 1.0), vec(0.5, 0.5, 0.5, 1.0), bypass_gate);

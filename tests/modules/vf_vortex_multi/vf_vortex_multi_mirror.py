@@ -102,8 +102,9 @@ def vortex_multi(in2=None, in3=None, in4=None, in5=None, h=32, w=32,
         fx = sfx if fx is None else (fx + sfx).astype(F32)
         fy = sfy if fy is None else (fy + sfy).astype(F32)
 
-    e1 = np.clip(fx * F32(0.5) + F32(0.5), F32(0), F32(1)).astype(F32)
-    e2 = np.clip(fy * F32(0.5) + F32(0.5), F32(0), F32(1)).astype(F32)
+    kk = (F32(1) / np.maximum(np.maximum(np.abs(fx), np.abs(fy)), F32(1))).astype(F32)   # direction-preserving limit
+    e1 = (fx * kk * F32(0.5) + F32(0.5)).astype(F32)
+    e2 = (fy * kk * F32(0.5) + F32(0.5)).astype(F32)
     if bug == "swap_rg":
         er, eg = e2, e1                 # channels swapped at the encode
     else:

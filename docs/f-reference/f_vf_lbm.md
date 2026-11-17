@@ -40,7 +40,7 @@ The solver state is **one 192 × 324 float32 texture**: the three RGBA state pla
 | `stream` | Gather: `new[x] = old[x − e_i]`, explicit periodic indices |
 | `mac` | `ux`, `uy`, `rho` from the streamed state, one texel per cell (192 × 108) |
 | `mprev` | One-step delay of the `mac` texture |
-| `enc` | Render-size bilinear upsample, gain, clamp, f_vecfield encode, Speed blend, bypass gate |
+| `enc` | Render-size bilinear upsample, gain, limit (direction kept), f_vecfield encode, Speed blend, bypass gate |
 
 **Frame gate (raw boxes).** `r draw` goes through `[t b b]`: first to a counter that passes every Nth bang to `hold` (N from the Speed menu), last to `enc`. A skipped frame leaves the whole solver idle and `enc` re-renders, so Speed 1/N slows the flow to 1/N. `mprev` copies the current velocity just *before* each step, and `enc` shows `mix(previous, current, phase / N)` with `phase` = 1..N, so the output moves continuously, about N frames behind.
 
@@ -53,7 +53,7 @@ The solver state is **one 192 × 324 float32 texture**: the three RGBA state pla
 | `omega` | float | 1.0–1.98 | 1.97 | BGK relaxation rate. Low = thick and smooth, high = thin and turbulent. The top of the range is the stability limit; the codebox clamps to [0.5, 1.98] |
 | `inflow` (label **Wind**) | float | 0.0–0.1 | 0.08 | Inflow speed in lattice units; the codebox clamps to [0, 0.1] |
 | `tilt` | float | −30–30 | 0.0 | Wind direction in degrees: 0 = straight left to right, positive = toward the top. The speed stays Wind (split into x and y parts). The flow still enters through the left edge and wraps top to bottom. Large angles are less accurate. The codebox clamps to ±30 too |
-| `gain` | float | 0.0–10.0 | 3.0 | Scale applied to velocity before encoding (clamped to the vecfield range) |
+| `gain` | float | 0.0–10.0 | 3.0 | Scale applied to velocity before encoding (past the vecfield range the vector is scaled so its larger component is at the limit; direction kept) |
 | `speed` | menu | Full, 1/2, 1/3, 1/4 | Full | The solver advances every 1st, 2nd, 3rd or 4th rendered frame. Slower = the same wake in slow motion. No pix attribute: the menu feeds the frame gate's counter |
 | `bypass` | toggle | 0/1 | 0 | Outputs an exactly neutral vecfield (0.5, 0.5, 0.5, 1). The solver keeps running underneath |
 
@@ -73,7 +73,7 @@ The `Wind` label is the user-facing name of the `inflow` param; the routed messa
 - **y is periodic** (decided 2026-10-21): the top and bottom rows are ordinary rows.
 - **Mask.** Luma `0.299 R + 0.587 G + 0.114 B` averaged over a 4 × 4 grid of nearest taps across the cell's footprint (exact at 1:1, a box filter when the mask is larger). Obstacle where above 0.5; no soft weight (a fractional value is a full obstacle). The **first and last columns are never obstacle** (a covered outflow column drained mass and drove a jet ten times the inflow). An unconnected mask reads black = no obstacle.
 - **Seed and self-heal.** A cell whose populations are non-finite, whose density is outside (0.2, 5) or whose rest population is not above 0.05 restarts at equilibrium with `rho = 1`, `u = inflow`, plus a tiny sideways ripple `0.02·inflow·sin(0.3x)`. Selection uses `switch()`, never `mix()` (`mix(NaN, x, 1)` is still NaN).
-- **Encode.** `R = clamp(0.5 + gain·ux, 0, 1)`, `G` likewise with `uy`, `B = 0.5`, `A = 1`. The upsample is a manual 4-tap bilinear: y periodic, x clamped to the end columns. A non-finite sample encodes as zero velocity.
+- **Encode.** `R = 0.5 + gain·ux·k`, `G = 0.5 + gain·uy·k`, with `k = 0.5 / max(|gain·ux|, |gain·uy|, 0.5)` (the larger gained component is capped at 0.5 and the vector scaled with it; direction kept), `B = 0.5`, `A = 1`. The upsample is a manual 4-tap bilinear: y periodic, x clamped to the end columns. A non-finite sample encodes as zero velocity.
 
 ---
 

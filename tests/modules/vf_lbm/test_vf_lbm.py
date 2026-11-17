@@ -592,8 +592,8 @@ def test_mutations_are_caught():
 
     def encode_err(bug=None):
         """A generic (non-symmetric) velocity field makes a swapped RG visible:
-        the encoded R must equal 0.5 + gain * ux from the float64 macro of the
-        same planes, and G must equal 0.5 + gain * uy."""
+        the encoded R must equal 0.5 + gain * ux * k from the float64 macro of the
+        same planes (k = 0.5 / max(|gain*ux|, |gain*uy|, 0.5)), and G likewise with uy."""
         rng = np.random.default_rng(12)
         f = [(0.05 + rng.random((NY, NX))).astype(F32) for _ in range(9)]
         rho, ux, uy = macro(f)
@@ -601,8 +601,10 @@ def test_mutations_are_caught():
         planes = pack(f)
         e = encode(planes, gain=1.7, bug=bug)
         r0, x0, y0 = macro(f)
-        wr = float(np.abs(e[..., 0] - np.clip(F32(0.5) + F32(1.7) * x0, F32(0), F32(1))).max())
-        wg = float(np.abs(e[..., 1] - np.clip(F32(0.5) + F32(1.7) * y0, F32(0), F32(1))).max())
+        gx, gy = 1.7 * x0.astype(np.float64), 1.7 * y0.astype(np.float64)
+        kk = 0.5 / np.maximum(np.maximum(np.abs(gx), np.abs(gy)), 0.5)   # direction-preserving limit, cap 0.5
+        wr = float(np.abs(e[..., 0] - (0.5 + gx * kk)).max())
+        wg = float(np.abs(e[..., 1] - (0.5 + gy * kk)).max())
         return max(wr, wg)
 
     def eq_err(bug=None):

@@ -61,7 +61,7 @@ f_vecfield convention: `R = fx * 0.5 + 0.5`, `G = fy * 0.5 + 0.5`, `B = 0.5`, `A
 
 ## Algorithm
 
-Each site independently computes a standard vortex field (radial + tangential components weighted by convergence/curl) about its own center, scaled by `exp(-r * falloff)`. All three sites' `(fx, fy)` contributions sum additively before clamping and encoding:
+Each site independently computes a standard vortex field (radial + tangential components weighted by convergence/curl) about its own center, scaled by `exp(-r * falloff)`. All three sites' `(fx, fy)` contributions sum additively before the limit and encoding:
 
 ```
 for each site N in {1,2,3}:
@@ -71,10 +71,10 @@ for each site N in {1,2,3}:
     fN *= exp(-r * falloff)
 
 fx, fy = f1 + f2 + f3
-R, G = clamp(fx*0.5+0.5, 0, 1), clamp(fy*0.5+0.5, 0, 1)
+k = 1 / max(|fx|, |fy|, 1);  R, G = fx*k*0.5+0.5, fy*k*0.5+0.5
 ```
 
-Sites at identical positions sum to roughly 3x single-site magnitude (clamped, not renormalized) — produces a single very bright zone rather than a capped-equal one.
+Sites at identical positions sum to roughly 3x single-site magnitude (limited so the larger component is at most 1, direction kept) — produces a single very bright zone rather than a capped-equal one.
 
 ---
 

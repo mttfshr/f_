@@ -39,8 +39,11 @@ def axisflow(t, angle=0.0, mode=0, gain=1.0, gate=1.0, width=64.0, height=64.0,
     vy = (ry - ay) * (F32(1) - m) + ay * m
     mag = ok * F32(gain) * ((F32(1) - F32(gate)) + F32(gate) * t[..., 3])
     o = g.texture(*c2.shape)
-    o[..., 0] = np.clip(vx * mag * sh / F32(width) * F32(0.5) + F32(0.5), 0, 1)
-    o[..., 1] = np.clip(vy * mag * sh / F32(height) * F32(0.5) + F32(0.5), 0, 1)
+    gx = vx * mag * sh / F32(width)
+    gy = vy * mag * sh / F32(height)
+    kk = F32(1) / np.maximum(np.maximum(np.abs(gx), np.abs(gy)), F32(1))   # direction-preserving limit
+    o[..., 0] = gx * kk * F32(0.5) + F32(0.5)
+    o[..., 1] = gy * kk * F32(0.5) + F32(0.5)
     o[..., 2] = F32(0.5)
     o[..., 3] = F32(1.0)
     neutral = np.array([0.5, 0.5, 0.5, 1.0], F32)

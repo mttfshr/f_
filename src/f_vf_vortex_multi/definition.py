@@ -177,8 +177,11 @@ s3_fy = s3_fy * s3_strength;
 fx = s1_fx + s2_fx + s3_fx;
 fy = s1_fy + s2_fy + s3_fy;
 
-R = clamp(fx * 0.5 + 0.5, 0.0, 1.0);
-G = clamp(fy * 0.5 + 0.5, 0.0, 1.0);
+// Direction-preserving limit: when the larger component exceeds the cap the whole vector is scaled so it equals the cap
+// (a per-channel clamp collapsed directions to diagonals). Output within the range is unchanged.
+kk = 1.0 / max(max(abs(fx), abs(fy)), 1.0);
+R = fx * kk * 0.5 + 0.5;
+G = fy * kk * 0.5 + 0.5;
 
 field_out = vec(R, G, 0.5, 1.0);
 out1 = mix(field_out, vec(0.5, 0.5, 0.5, 1.0), bypass);
