@@ -6,7 +6,7 @@ Ground truth is independent of the mirror:
 
   - Doc: Rec. 601 luma (`0.299R + 0.587G + 0.114B`) of 16 ring samples, thresholded by
     max(luma - threshold, 0), accumulated as -dir * w into (fx, fy), encoded by
-    clamp(f*gain*0.5 + 0.5, 0, 1); bypass is a mix to a neutral vecfield; negative gain
+    the limited encoding (larger gained component at most 1; *0.5 + 0.5); bypass is a mix to a neutral vecfield; negative gain
     attracts; mode 1 is "strongest single ring sample wins"; mode 2 "normalizes to the
     direction of the (mode-0-style) cancel vector"; mode 3 adds "curl (perpendicular to
     the cancel vector)".
@@ -340,7 +340,7 @@ def test_bypass_partial_mix_is_linear():
 
 
 def test_outputs_clamped_with_fixed_z_and_alpha():
-    """Doc: the encoded field is clamp(f*gain*0.5 + 0.5, 0, 1), so the output stays in
+    """Doc: the encoded field is the gained vector scaled so its larger component is at most 1, then *0.5 + 0.5, so the output stays in
     [0, 1] even at gain 10, reach +-0.5, threshold -1, all four modes; the codebox packs
     (field_x, field_y, 0.5, 1.0), so channels z and w are exactly 0.5 and 1."""
     src = rand_tex(7)
@@ -410,7 +410,7 @@ def _cerr_px(a, b):
 def test_generic_parameters_match_doc_algorithm():
     """Generic point (mode 1, gain 2.7, reach 0.17, threshold 0.11, random source): the
     expected value is rebuilt in float64 from the doc's Algorithm block (Rec. 601 luma,
-    thresholded weights, strongest-sample scan, the encoding clamp) at the ring
+    thresholded weights, strongest-sample scan, the encoding limit) at the ring
     positions the definition's own comment prescribes ("Remap norm into [reach,
     1-reach] so ring samples never go OOB"). This is the mobius-style generic check: it
     re-derives the branch, but in float64, in NumPy's own order, which the special-value
@@ -441,9 +441,11 @@ def test_generic_parameters_match_doc_algorithm():
                 bx = bx * (1 - t) + (-dx[k]) * t
                 by = by * (1 - t) + (-dy[k]) * t
                 bw = bw * (1 - t) + ws[k] * t
+            gu, gv = bx * bw * gain, by * bw * gain
+            kk = 1.0 / max(abs(gu), abs(gv), 1.0)            # direction-preserving limit
             worst = max(worst,
-                        _cerr_px(out[j, i, 0], np.clip(bx * bw * gain * 0.5 + 0.5, 0.0, 1.0)),
-                        _cerr_px(out[j, i, 1], np.clip(by * bw * gain * 0.5 + 0.5, 0.0, 1.0)))
+                        _cerr_px(out[j, i, 0], gu * kk * 0.5 + 0.5),
+                        _cerr_px(out[j, i, 1], gv * kk * 0.5 + 0.5))
     check("generic mode 1 vs the doc's algorithm in float64, interior texels", worst, 5e-3)
 
 

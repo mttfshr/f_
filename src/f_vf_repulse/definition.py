@@ -161,8 +161,13 @@ if (mode_i < 0.5) {
     fy = cancel_y + curl_y * turb_amt;
 }
 
-field_x = clamp(fx * gain * 0.5 + 0.5, 0.0, 1.0);
-field_y = clamp(fy * gain * 0.5 + 0.5, 0.0, 1.0);
+// Direction-preserving limit: when the larger gained component exceeds 1 the vector is scaled so it is exactly 1;
+// a per-channel clamp collapsed every direction to one of four diagonals at high gain. Output within +-1 is unchanged.
+gu = fx * gain;
+gv = fy * gain;
+kk = 1.0 / max(max(abs(gu), abs(gv)), 1.0);
+field_x = gu * kk * 0.5 + 0.5;
+field_y = gv * kk * 0.5 + 0.5;
 
 out1 = mix(vec(field_x, field_y, 0.5, 1.0), vec(0.5, 0.5, 0.5, 1.0), bypass);
 """,

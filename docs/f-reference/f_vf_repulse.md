@@ -68,7 +68,8 @@ for i in 0..15 (16 evenly-spaced unit directions):
 // mode 3 (Turbulent): fx,fy = cancel_vec + perp(cancel_vec) * turb_amt
 //   where turb_amt = clamp((Σw_i / |cancel_vec| - 1) * 0.2, 0, 1)
 
-field = clamp(fx * gain * 0.5 + 0.5, 0, 1), clamp(fy * gain * 0.5 + 0.5, 0, 1)
+gu = fx * gain; gv = fy * gain; kk = 1 / max(|gu|, |gv|, 1)   // scale so the larger component is at most 1; direction kept
+field = gu * kk * 0.5 + 0.5, gv * kk * 0.5 + 0.5
 out1 = mix(vec(field, 0.5, 1.0), vec(0.5, 0.5, 0.5, 1.0), bypass)
 ```
 

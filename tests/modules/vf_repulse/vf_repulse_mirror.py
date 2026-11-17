@@ -13,7 +13,7 @@ float32 throughout, in the codebox's own order of operations:
      ring position inside [0, 1]),
   5. the four floor(mode) branches (Cancel / Max / Abs Add / Turbulent) with the
      codebox's own scan order and guard constants (0.0001, turb scale 0.2),
-  6. the encoding clamp(fx * gain * 0.5 + 0.5, 0, 1) and the bypass mix to the neutral
+  6. the encoding (vector scaled so its larger gained component is at most 1; then * 0.5 + 0.5) and the bypass mix to the neutral
      vecfield (0.5, 0.5, 0.5, 1.0).
 
 Input: in1 = source texture, (H, W, 4) float32. Returns the f_vecfield output (H, W, 4).
@@ -114,11 +114,13 @@ def repulse(src, gain=4.0, reach=0.1, threshold=0.3, mode=0.0, bypass=0.0, bug=N
 
     if bug == "swap_xy":
         fx, fy = fy, fx
-    enc = F32(gain)
-    if bug != "no_scale":
-        enc = enc * F32(0.5)
-    field_x = np.clip(fx * enc + F32(0.5), F32(0.0), F32(1.0)).astype(F32)
-    field_y = np.clip(fy * enc + F32(0.5), F32(0.0), F32(1.0)).astype(F32)
+    # direction-preserving limit: scale so the larger gained component is at most 1 (no per-channel clamp)
+    gu = (fx * F32(gain)).astype(F32)
+    gv = (fy * F32(gain)).astype(F32)
+    kk = (F32(1.0) / np.maximum(np.maximum(np.abs(gu), np.abs(gv)), F32(1.0))).astype(F32)
+    half = F32(1.0) if bug == "no_scale" else F32(0.5)
+    field_x = (gu * kk * half + F32(0.5)).astype(F32)
+    field_y = (gv * kk * half + F32(0.5)).astype(F32)
 
     # mix(vec(field_x, field_y, 0.5, 1.0), vec(0.5, 0.5, 0.5, 1.0), bypass)
     b = F32(bypass)
