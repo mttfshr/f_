@@ -501,6 +501,9 @@ there, then the chapter-specific files for depth.
   Everything else is proposed. Open: video capture path (benches only grab
   single float32 frames today).
 
+- **[vsynth_as_m4l_research.md](vsynth_as_m4l_research.md)** — Vsynth / `f_` as Max for Live devices: scope, three architectures, licensing, LOE (inferred, desk research). Gate `G-m4l`.
+- **[m4l_ui_design.md](m4l_ui_design.md)** — what a Live-style panel changes (wide strip, macro dials plus unfold, Live parameter model) and the `f_separate` strip experiment. Gates `G-m4l`, `G-ui-density`.
+
 ## Analysis utilities (`f_util_`)
 
 - **[f_util_analysis.md](f_util_analysis.md)** ⚪ — Family of GPU→CPU texture
