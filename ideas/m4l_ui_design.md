@@ -42,3 +42,7 @@ Redesign one dense module, `f_separate`, as a wide strip with a hero preview and
 - Confirm or change the two recommendations above.
 - Go or no-go on the `f_separate` scratch experiment.
 - Is the density work (`G-ui-density`) the right home for this, or should it get its own gate row? I have not touched `gates.md`.
+
+## Strip experiment, round 1 (2026-11-18)
+
+Built as `scratch/experiments/m4l_strip_f_separate/f_separate_strip.maxpat` (local, gitignored; `make_strip.py` regenerates it from the real module, 360 x 169 px). Matt's feedback on the first version (dials for hue, an unfold for saturation and lightness): **use number boxes for hue, and put saturation and lightness in the main panel**, not behind an unfold. Round 2: a hero swatch per ink, H / S / L number boxes under it, Gain as a dial, Inks, Mode and the on/off in the title bar. Not yet looked at in Max. Lesson so far: the "few macro dials" rule gives way when the parameters are a color triple that reads best together.
