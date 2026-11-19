@@ -57,3 +57,12 @@ Rounds, with Matt's feedback:
 6. One ink per tab (`live.tab`, hidden boxes via `script sendbox ... hidden`), 212 x 124 px, `f_separate_strip_tabs.maxpat`. Built; the tab first drew nothing (inferred: `parameter_enable 0` left it without labels; fixed in the file, parameter_visibility 2 unverified). **Rejected** by Matt 2026-11-18: "the tabless version seems better". Reason, inferred: one ink at a time hides the color relationships a three-ink table exists to show. A summary row of color bars was not built.
 
 Where it stands: a 310 px wide strip with the title bar (Separate, Mode, Inks, on/off), then per ink a hero swatch, an H / S / L number-box row and a Gain row. Offline edits only; Matt has looked at it in Max (rounds 1 to 3), the final snap is unlooked-at. Lessons so far: the "few macro dials" rule gives way for a color triple, which reads best as three plain number boxes together; number boxes beat sliders and dials where the value must be readable and placeable.
+
+## Strip experiment 2: `f_vf_erode` (2026-11-18)
+
+Scratch files (local, gitignored): `scratch/experiments/m4l_strip_f_vf_erode/`, generated from the real module (presentation rects only; the three `make_strip*.py` scripts are one-shot, do not rerun after hand edits). Rounds:
+1. Nine dials in one row, four groups (Run: flow, push, speed; Pigment: lift, settle; Water: flood, dry; Feed: feed, fade), Wet button at the left, 390 x 95 px. Matt: not better, "just a single row version that's too wide"; **the group labels help a lot**.
+2. All number boxes, group columns with labels to the left, 346 x 88 px. Matt: fewer columns, more rows.
+3. **Chosen (Matt, 2026-11-18, "this is great"):** all number boxes in two columns of stacked groups, 204 x 146 px: left Run over Pigment, right Water over Feed, labels left of the boxes, Wet at the far left, title bar Erode / Darker-Lighter / on-off. File `f_vf_erode_strip_2col.maxpat`. Looked at in Max by Matt; unverified by Claude: the `dry` readout width (36 px for 0.0016) and whether Wet should move into the gap under Water.
+
+What transfers (inferred from two modules): group headers carry the meaning that dials-in-a-row lose; number boxes beat dials when a module has many parameters and no hero element; trade width for height, since a Live strip has about 170 px of height to spend; keep every parameter visible (tabs and unfolds were both rejected on `f_separate`). Not yet applied to the real modules: `definition.py` and the builder are untouched, and Live was not involved.
