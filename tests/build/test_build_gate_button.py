@@ -3,7 +3,7 @@ test_build_gate_button.py -- the `gate_button` param type (2026-11-05, f_vf_stam
 
 A held press: a panel face, a `ubutton`, `[sel bang 1 0]` and a draw counter, extracted from f_wave_field's raw boxes.
 
-  - it generates the 13 boxes, plus its own `r draw` and `loadbang` unless draw_from / load_from share a module's
+  - it generates the 14 boxes (the 13 and a foreground outline over the face, 2026-11-18), plus its own `r draw` and `loadbang` unless draw_from / load_from share a module's
   - it takes its route outlet in definition order among the raw_ui params
   - `param <gate> 0/1` reach every stage of the gate param's pix_target
   - it is loud on misuse: a missing key, a gate_param that is not internal, a bad release_draws or shared node
@@ -123,7 +123,7 @@ class Sim:
 def test_it_generates_the_press_and_its_own_shared_boxes():
     top, cords = _built(_defn())
     gate = [b for i, b in top.items() if i.startswith("obj-gate-hit-")]
-    _eq("13 gate boxes, an r draw and a loadbang", len(gate), 15)
+    _eq("14 gate boxes (incl. the outline), an r draw and a loadbang", len(gate), 16)
     _eq("the ubutton has the hint and the rect", (top[G("button")]["hint"], top[G("button")]["presentation_rect"]),
         ("hold", [10.0, 40.0, 28.0, 28.0]))
     _eq("the label", (top[G("label")]["text"], top[G("label")]["varname"]), ("Hit", "lbl_hit"))

@@ -6,7 +6,7 @@
 //   v  = clamp(prep - speed * flow * (w_B - w_A), -vmax, vmax)      prep = the static velocity from codebox_prep.gen
 //   q  = v * min(w_up, wlim) * clamp(w_up / film, 0, 1)             w_up = the depth of the donor cell (A when v > 0, else B)
 //   sf = c_donor * q + mixk * min(min(w_A, w_B), 1) * (c_A - c_B)   per channel; c = s / max(w, 0.001); never mixed between channels
-// w_new = w + q_left - q_right + q_up - q_down, then w = max(w - dry * speed, 0) (a dried wash is exactly still, FR-106); s likewise.
+// w_new = w + q_left - q_right + q_up - q_down, then w = max(w - dry * 0.001 * speed, 0) (dry is in thousandths; a dried wash is exactly still, FR-106); s likewise.
 // FRAME EDGE (T066): for the slope term the cell beyond the frame has the edge cell's own depth (clamped read), as a DONOR it has
 // depth 0 and no pigment (so nothing comes back in, and no diffusion across the edge). wlim 0.5, film 0.15, mixk 0.04 and vmax 0.2
 // are the mirror's constants, chosen so no cell can give away more than it holds (SC-105); INFERRED, tuned live.
@@ -44,7 +44,7 @@ rsb(uu, vv, ok) {
 
 Param flow(0.4);
 Param speed(1);
-Param dry(0.0016);
+Param dry(1.6);                  // thousandths of the depth per step (2026-11-18: was 0.0016, shown as 0.00 in a number box)
 Param width(256);
 Param height(256);
 
@@ -101,7 +101,7 @@ ql = fq(vlf, wld, wc, wlim, film);
 qr = fq(vrf, wc, wrd, wlim, film);
 qu = fq(vuf, wud, wc, wlim, film);
 qd = fq(vdf, wc, wdd, wlim, film);
-wn = max(wc + ql - qr + qu - qd - dry * speed, 0);
+wn = max(wc + ql - qr + qu - qd - dry * 0.001 * speed, 0);
 
 // pigment in suspension, per channel (a virtual cell beyond the frame holds none)
 rc = rsr(uc, va, 1);

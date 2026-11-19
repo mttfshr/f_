@@ -2779,6 +2779,44 @@
 			},
 			{
 				"box": {
+					"id": "obj-gate-strike-outline",
+					"maxclass": "panel",
+					"patching_rect": [
+						30.0,
+						942.0,
+						24.0,
+						24.0
+					],
+					"numinlets": 1,
+					"numoutlets": 0,
+					"background": 0,
+					"ignoreclick": 1,
+					"border": 1,
+					"bordercolor": [
+						0.75,
+						0.75,
+						0.75,
+						1.0
+					],
+					"bgcolor": [
+						0.0,
+						0.0,
+						0.0,
+						0.0
+					],
+					"rounded": 14,
+					"presentation": 1,
+					"presentation_rect": [
+						78.0,
+						186.0,
+						28.0,
+						28.0
+					],
+					"varname": "strike_outline"
+				}
+			},
+			{
+				"box": {
 					"id": "obj-gate-strike-label",
 					"maxclass": "comment",
 					"patching_rect": [

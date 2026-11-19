@@ -658,7 +658,7 @@
 							},
 							{
 								"box": {
-									"code": "// codebox_transport.gen -- f_vf_erode: water and the suspended pigment move through the cell faces (plan ADR-3), then the water dries.\n// W x 2H float32 atlas in and out. Mirror: tests/modules/vf_erode/vf_erode_mirror.step(), the water, flux and dry parts.\n//\n// GATHER form: each cell computes the four faces it shares (left, right, up, down) from the same operands as its neighbour does, so\n// what leaves one cell arrives in the next. Per face between A (left/up) and B (right/down):\n//   v  = clamp(prep - speed * flow * (w_B - w_A), -vmax, vmax)      prep = the static velocity from codebox_prep.gen\n//   q  = v * min(w_up, wlim) * clamp(w_up / film, 0, 1)             w_up = the depth of the donor cell (A when v > 0, else B)\n//   sf = c_donor * q + mixk * min(min(w_A, w_B), 1) * (c_A - c_B)   per channel; c = s / max(w, 0.001); never mixed between channels\n// w_new = w + q_left - q_right + q_up - q_down, then w = max(w - dry * speed, 0) (a dried wash is exactly still, FR-106); s likewise.\n// FRAME EDGE (T066): for the slope term the cell beyond the frame has the edge cell's own depth (clamped read), as a DONOR it has\n// depth 0 and no pigment (so nothing comes back in, and no diffusion across the edge). wlim 0.5, film 0.15, mixk 0.04 and vmax 0.2\n// are the mirror's constants, chosen so no cell can give away more than it holds (SC-105); INFERRED, tuned live.\n// Plane B (the paper pigment and the load flag) passes unchanged. Inlets (outer order): first = the state from the load stage\n// (hot), second = the static velocities from the prep stage (cold). Non-finite state texels read as 0 (FR-110).\nvel(vs, wa, wb, kk, vmax) {\n  return clamp(vs - kk * (wb - wa), -vmax, vmax);\n}\nfq(v, wad, wbd, wlim, film) {\n  wup = switch(v > 0, wad, wbd);\n  return v * min(wup, wlim) * clamp(wup / film, 0, 1);\n}\nsfc(v, q, wad, wbd, sa, sb, mixk) {\n  ca = sa / max(wad, 0.001);\n  cb = sb / max(wbd, 0.001);\n  cd = switch(v > 0, ca, cb);\n  return cd * q + mixk * min(min(wad, wbd), 1) * (ca - cb);\n}\nrw(uu, vv) {\n  x = nearest(in1, vec(uu, vv)).x;\n  return switch(abs(x) < 1e30, max(x, 0), 0);\n}\nrsr(uu, vv, ok) {\n  x = nearest(in1, vec(uu, vv)).y;\n  return switch(ok > 0.5 && abs(x) < 1e30, x, 0);\n}\nrsg(uu, vv, ok) {\n  x = nearest(in1, vec(uu, vv)).z;\n  return switch(ok > 0.5 && abs(x) < 1e30, x, 0);\n}\nrsb(uu, vv, ok) {\n  x = nearest(in1, vec(uu, vv)).w;\n  return switch(ok > 0.5 && abs(x) < 1e30, x, 0);\n}\n\nParam flow(0.4);\nParam speed(1);\nParam dry(0.0016);\nParam width(256);\nParam height(256);\n\nW = max(width, 3);\nH = max(height, 3);\n// RENDER-SIZE SCALING (T083; mirror `scales()`): the constants below are right at a render height of 1920. kr = H / 1920, kc = min(kr, 1.25):\n// the velocity cap scales by kc, the slope coefficient by kr * kc, diffusion by kc * kc. Above the cap everything runs slower, never faster.\nkr = H / 1920;\nkc = min(kr, 1.25);\nwlim = 0.5;\nfilm = 0.15;\nmixk = 0.04 * kc * kc;\nvmax = 0.2 * kc;\nkk = speed * flow * kr * kc;\n\npx = floor(norm.x * W);\nyt = floor(norm.y * 2 * H);\nkp = floor(yt / H);\npy = yt - kp * H;\nuc = (px + 0.5) / W;\nul = (max(px - 1, 0) + 0.5) / W;\nur = (min(px + 1, W - 1) + 0.5) / W;\nva = (py + 0.5) / (2 * H);\nvu = (max(py - 1, 0) + 0.5) / (2 * H);\nvd = (min(py + 1, H - 1) + 0.5) / (2 * H);\nvb = (H + py + 0.5) / (2 * H);\nokl = step(0.5, px);\nokr = step(px, W - 1.5);\noku = step(0.5, py);\nokd = step(py, H - 1.5);\n\n// depths: the clamped read (the edge cell's own value) for the slope, and the donor depth, 0 beyond the frame\nwc = rw(uc, va);\nwl = rw(ul, va);\nwr = rw(ur, va);\nwu = rw(uc, vu);\nwd = rw(uc, vd);\nwld = wl * okl;\nwrd = wr * okr;\nwud = wu * oku;\nwdd = wd * okd;\n\n// the static velocities of this cell's four faces\npl = nearest(in2, vec(uc, va)).x;\npr = nearest(in2, vec(uc, va)).y;\npu = nearest(in2, vec(uc, va)).z;\npd = nearest(in2, vec(uc, va)).w;\nvlf = vel(pl, wl, wc, kk, vmax);\nvrf = vel(pr, wc, wr, kk, vmax);\nvuf = vel(pu, wu, wc, kk, vmax);\nvdf = vel(pd, wc, wd, kk, vmax);\n\nql = fq(vlf, wld, wc, wlim, film);\nqr = fq(vrf, wc, wrd, wlim, film);\nqu = fq(vuf, wud, wc, wlim, film);\nqd = fq(vdf, wc, wdd, wlim, film);\nwn = max(wc + ql - qr + qu - qd - dry * speed, 0);\n\n// pigment in suspension, per channel (a virtual cell beyond the frame holds none)\nrc = rsr(uc, va, 1);\nrl = rsr(ul, va, okl);\nrr = rsr(ur, va, okr);\nru = rsr(uc, vu, oku);\nrd = rsr(uc, vd, okd);\ngc = rsg(uc, va, 1);\ngl = rsg(ul, va, okl);\ngr = rsg(ur, va, okr);\ngu = rsg(uc, vu, oku);\ngd = rsg(uc, vd, okd);\nbc = rsb(uc, va, 1);\nbl = rsb(ul, va, okl);\nbr = rsb(ur, va, okr);\nbu = rsb(uc, vu, oku);\nbd = rsb(uc, vd, okd);\nrn = rc + sfc(vlf, ql, wld, wc, rl, rc, mixk) - sfc(vrf, qr, wc, wrd, rc, rr, mixk) + sfc(vuf, qu, wud, wc, ru, rc, mixk) - sfc(vdf, qd, wc, wdd, rc, rd, mixk);\ngn = gc + sfc(vlf, ql, wld, wc, gl, gc, mixk) - sfc(vrf, qr, wc, wrd, gc, gr, mixk) + sfc(vuf, qu, wud, wc, gu, gc, mixk) - sfc(vdf, qd, wc, wdd, gc, gd, mixk);\nbn = bc + sfc(vlf, ql, wld, wc, bl, bc, mixk) - sfc(vrf, qr, wc, wrd, bc, br, mixk) + sfc(vuf, qu, wud, wc, bu, bc, mixk) - sfc(vdf, qd, wc, wdd, bc, bd, mixk);\n\n// plane B passes\nq0 = nearest(in1, vec(uc, vb)).x;\nq1 = nearest(in1, vec(uc, vb)).y;\nq2 = nearest(in1, vec(uc, vb)).z;\nq3 = nearest(in1, vec(uc, vb)).w;\nout1 = vec(switch(kp < 0.5, wn, q0), switch(kp < 0.5, rn, q1), switch(kp < 0.5, gn, q2), switch(kp < 0.5, bn, q3));\n",
+									"code": "// codebox_transport.gen -- f_vf_erode: water and the suspended pigment move through the cell faces (plan ADR-3), then the water dries.\n// W x 2H float32 atlas in and out. Mirror: tests/modules/vf_erode/vf_erode_mirror.step(), the water, flux and dry parts.\n//\n// GATHER form: each cell computes the four faces it shares (left, right, up, down) from the same operands as its neighbour does, so\n// what leaves one cell arrives in the next. Per face between A (left/up) and B (right/down):\n//   v  = clamp(prep - speed * flow * (w_B - w_A), -vmax, vmax)      prep = the static velocity from codebox_prep.gen\n//   q  = v * min(w_up, wlim) * clamp(w_up / film, 0, 1)             w_up = the depth of the donor cell (A when v > 0, else B)\n//   sf = c_donor * q + mixk * min(min(w_A, w_B), 1) * (c_A - c_B)   per channel; c = s / max(w, 0.001); never mixed between channels\n// w_new = w + q_left - q_right + q_up - q_down, then w = max(w - dry * 0.001 * speed, 0) (dry is in thousandths; a dried wash is exactly still, FR-106); s likewise.\n// FRAME EDGE (T066): for the slope term the cell beyond the frame has the edge cell's own depth (clamped read), as a DONOR it has\n// depth 0 and no pigment (so nothing comes back in, and no diffusion across the edge). wlim 0.5, film 0.15, mixk 0.04 and vmax 0.2\n// are the mirror's constants, chosen so no cell can give away more than it holds (SC-105); INFERRED, tuned live.\n// Plane B (the paper pigment and the load flag) passes unchanged. Inlets (outer order): first = the state from the load stage\n// (hot), second = the static velocities from the prep stage (cold). Non-finite state texels read as 0 (FR-110).\nvel(vs, wa, wb, kk, vmax) {\n  return clamp(vs - kk * (wb - wa), -vmax, vmax);\n}\nfq(v, wad, wbd, wlim, film) {\n  wup = switch(v > 0, wad, wbd);\n  return v * min(wup, wlim) * clamp(wup / film, 0, 1);\n}\nsfc(v, q, wad, wbd, sa, sb, mixk) {\n  ca = sa / max(wad, 0.001);\n  cb = sb / max(wbd, 0.001);\n  cd = switch(v > 0, ca, cb);\n  return cd * q + mixk * min(min(wad, wbd), 1) * (ca - cb);\n}\nrw(uu, vv) {\n  x = nearest(in1, vec(uu, vv)).x;\n  return switch(abs(x) < 1e30, max(x, 0), 0);\n}\nrsr(uu, vv, ok) {\n  x = nearest(in1, vec(uu, vv)).y;\n  return switch(ok > 0.5 && abs(x) < 1e30, x, 0);\n}\nrsg(uu, vv, ok) {\n  x = nearest(in1, vec(uu, vv)).z;\n  return switch(ok > 0.5 && abs(x) < 1e30, x, 0);\n}\nrsb(uu, vv, ok) {\n  x = nearest(in1, vec(uu, vv)).w;\n  return switch(ok > 0.5 && abs(x) < 1e30, x, 0);\n}\n\nParam flow(0.4);\nParam speed(1);\nParam dry(1.6);                  // thousandths of the depth per step (2026-11-18: was 0.0016, shown as 0.00 in a number box)\nParam width(256);\nParam height(256);\n\nW = max(width, 3);\nH = max(height, 3);\n// RENDER-SIZE SCALING (T083; mirror `scales()`): the constants below are right at a render height of 1920. kr = H / 1920, kc = min(kr, 1.25):\n// the velocity cap scales by kc, the slope coefficient by kr * kc, diffusion by kc * kc. Above the cap everything runs slower, never faster.\nkr = H / 1920;\nkc = min(kr, 1.25);\nwlim = 0.5;\nfilm = 0.15;\nmixk = 0.04 * kc * kc;\nvmax = 0.2 * kc;\nkk = speed * flow * kr * kc;\n\npx = floor(norm.x * W);\nyt = floor(norm.y * 2 * H);\nkp = floor(yt / H);\npy = yt - kp * H;\nuc = (px + 0.5) / W;\nul = (max(px - 1, 0) + 0.5) / W;\nur = (min(px + 1, W - 1) + 0.5) / W;\nva = (py + 0.5) / (2 * H);\nvu = (max(py - 1, 0) + 0.5) / (2 * H);\nvd = (min(py + 1, H - 1) + 0.5) / (2 * H);\nvb = (H + py + 0.5) / (2 * H);\nokl = step(0.5, px);\nokr = step(px, W - 1.5);\noku = step(0.5, py);\nokd = step(py, H - 1.5);\n\n// depths: the clamped read (the edge cell's own value) for the slope, and the donor depth, 0 beyond the frame\nwc = rw(uc, va);\nwl = rw(ul, va);\nwr = rw(ur, va);\nwu = rw(uc, vu);\nwd = rw(uc, vd);\nwld = wl * okl;\nwrd = wr * okr;\nwud = wu * oku;\nwdd = wd * okd;\n\n// the static velocities of this cell's four faces\npl = nearest(in2, vec(uc, va)).x;\npr = nearest(in2, vec(uc, va)).y;\npu = nearest(in2, vec(uc, va)).z;\npd = nearest(in2, vec(uc, va)).w;\nvlf = vel(pl, wl, wc, kk, vmax);\nvrf = vel(pr, wc, wr, kk, vmax);\nvuf = vel(pu, wu, wc, kk, vmax);\nvdf = vel(pd, wc, wd, kk, vmax);\n\nql = fq(vlf, wld, wc, wlim, film);\nqr = fq(vrf, wc, wrd, wlim, film);\nqu = fq(vuf, wud, wc, wlim, film);\nqd = fq(vdf, wc, wdd, wlim, film);\nwn = max(wc + ql - qr + qu - qd - dry * 0.001 * speed, 0);\n\n// pigment in suspension, per channel (a virtual cell beyond the frame holds none)\nrc = rsr(uc, va, 1);\nrl = rsr(ul, va, okl);\nrr = rsr(ur, va, okr);\nru = rsr(uc, vu, oku);\nrd = rsr(uc, vd, okd);\ngc = rsg(uc, va, 1);\ngl = rsg(ul, va, okl);\ngr = rsg(ur, va, okr);\ngu = rsg(uc, vu, oku);\ngd = rsg(uc, vd, okd);\nbc = rsb(uc, va, 1);\nbl = rsb(ul, va, okl);\nbr = rsb(ur, va, okr);\nbu = rsb(uc, vu, oku);\nbd = rsb(uc, vd, okd);\nrn = rc + sfc(vlf, ql, wld, wc, rl, rc, mixk) - sfc(vrf, qr, wc, wrd, rc, rr, mixk) + sfc(vuf, qu, wud, wc, ru, rc, mixk) - sfc(vdf, qd, wc, wdd, rc, rd, mixk);\ngn = gc + sfc(vlf, ql, wld, wc, gl, gc, mixk) - sfc(vrf, qr, wc, wrd, gc, gr, mixk) + sfc(vuf, qu, wud, wc, gu, gc, mixk) - sfc(vdf, qd, wc, wdd, gc, gd, mixk);\nbn = bc + sfc(vlf, ql, wld, wc, bl, bc, mixk) - sfc(vrf, qr, wc, wrd, bc, br, mixk) + sfc(vuf, qu, wud, wc, bu, bc, mixk) - sfc(vdf, qd, wc, wdd, bc, bd, mixk);\n\n// plane B passes\nq0 = nearest(in1, vec(uc, vb)).x;\nq1 = nearest(in1, vec(uc, vb)).y;\nq2 = nearest(in1, vec(uc, vb)).z;\nq3 = nearest(in1, vec(uc, vb)).w;\nout1 = vec(switch(kp < 0.5, wn, q0), switch(kp < 0.5, rn, q1), switch(kp < 0.5, gn, q2), switch(kp < 0.5, bn, q3));\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -2111,7 +2111,7 @@
 					"id": "obj-35",
 					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
-					"hint": "How fast the water goes, per step. A dried wash is still. PROVISIONAL",
+					"hint": "How fast the water goes, per step, in thousandths of its depth (1.6 = 0.0016, the old default; the old range was 0 to 0.02). A dried wash is still. PROVISIONAL",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
@@ -2136,12 +2136,12 @@
 					"saved_attribute_attributes": {
 						"valueof": {
 							"parameter_initial": [
-								0.0016
+								1.6
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
 							"parameter_longname": "dry",
-							"parameter_mmax": 0.02,
+							"parameter_mmax": 20.0,
 							"parameter_mmin": 0.0,
 							"parameter_modmode": 3,
 							"parameter_shortname": "dry",
@@ -2900,6 +2900,44 @@
 			},
 			{
 				"box": {
+					"id": "obj-gate-wet-outline",
+					"maxclass": "panel",
+					"patching_rect": [
+						30.0,
+						1042.0,
+						24.0,
+						24.0
+					],
+					"numinlets": 1,
+					"numoutlets": 0,
+					"background": 0,
+					"ignoreclick": 1,
+					"border": 1,
+					"bordercolor": [
+						0.75,
+						0.75,
+						0.75,
+						1.0
+					],
+					"bgcolor": [
+						0.0,
+						0.0,
+						0.0,
+						0.0
+					],
+					"rounded": 14,
+					"presentation": 1,
+					"presentation_rect": [
+						10.0,
+						38.0,
+						32.0,
+						32.0
+					],
+					"varname": "wet_outline"
+				}
+			},
+			{
+				"box": {
 					"id": "obj-gate-wet-label",
 					"maxclass": "comment",
 					"patching_rect": [
@@ -3248,44 +3286,6 @@
 					"numoutlets": 0,
 					"outlettype": [],
 					"presentation": 1
-				}
-			},
-			{
-				"box": {
-					"id": "obj-raw-wetoutline",
-					"maxclass": "panel",
-					"varname": "wet_outline",
-					"patching_rect": [
-						700.0,
-						742.0,
-						32.0,
-						32.0
-					],
-					"numinlets": 1,
-					"numoutlets": 0,
-					"background": 0,
-					"ignoreclick": 1,
-					"border": 1,
-					"rounded": 14,
-					"bordercolor": [
-						0.75,
-						0.75,
-						0.75,
-						1.0
-					],
-					"bgcolor": [
-						0.0,
-						0.0,
-						0.0,
-						0.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						10.0,
-						38.0,
-						32.0,
-						32.0
-					]
 				}
 			}
 		],

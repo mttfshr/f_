@@ -53,7 +53,7 @@ One texture keeps every stage to a single hot inlet (the `f_vf_lbm` finding). No
 | `push` | float | 0–4 | 1 | How strongly the vecfield moves the water. 0 equals no vecfield |
 | `lift` | float | 0–1 | 0.7 | How readily running water takes pigment off the paper. A square curve: effective rate 0.9 * (d / 0.7)^2, so the default is the old 0.9 and the top of the range is about twice that |
 | `settle` | float | 0–1 | 0.19 | How readily slow water puts pigment back, so less is carried far. A cubic curve: effective rate 0.6 * d^3, 0.004 (the old default) at the default. Water that has gone puts all of it down regardless |
-| `dry` | float | 0–0.02 | 0.0016 | Water lost per step. A dried wash is still |
+| `dry` | float | 0–20 | 1.6 | Water lost per step, in thousandths of its depth (the solver subtracts `dry * 0.001 * speed`). 1.6 is the old default 0.0016, 20 the old top 0.02; rescaled 2026-11-18 because a number box showed 0.0016 as 0.00. A dried wash is still |
 | `speed` | float | 0–4 | 1 | Step size of each solver step, limited inside the solver for stability |
 | `flood` | float | 0–4 | 1 | Water a wetting adds (and the depth Feed relaxes toward) |
 | `feed` | float | 0–1 | 0 | Continuous source. 0 = wet once |

@@ -1341,6 +1341,11 @@ def gate_button_parts(p, targets, route_outlet, draw_from=None, load_from=None):
         box(g("button"), maxclass="ubutton", patching_rect=rect(0.0, 0.0, 24.0, 24.0), numinlets=1, numoutlets=4,
             outlettype=["bang", "bang", "", "int"], hltcolor=[1.0, 1.0, 1.0, 0.45], presentation=1,
             presentation_rect=list(p["rect"]), varname=f"{name}_button", hint=p["hint"]),
+        # A foreground outline over the face: the face is a background-layer panel, which Max draws under the frame (the
+        # button was invisible, Matt 2026-11-18); this one draws, is transparent, and lets clicks through (ignoreclick).
+        box(g("outline"), maxclass="panel", patching_rect=rect(0.0, 0.0, 24.0, 24.0), numinlets=1, numoutlets=0,
+            background=0, ignoreclick=1, border=1, bordercolor=[0.75, 0.75, 0.75, 1.0], bgcolor=[0.0, 0.0, 0.0, 0.0],
+            rounded=14, presentation=1, presentation_rect=list(p["rect"]), varname=f"{name}_outline"),
         box(g("label"), maxclass="comment", patching_rect=rect(0.0, 26.0, 50.0, 18.0), fontname="Ableton Sans Light",
             fontsize=9.5, numinlets=1, numoutlets=0, presentation=1, presentation_rect=list(p["label_rect"]),
             text=p["label"], textjustification=1, varname=f"lbl_{name}"),

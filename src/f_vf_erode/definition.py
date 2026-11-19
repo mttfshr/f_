@@ -59,9 +59,9 @@ patcher = {
         {"name": "settle", "type": "float", "widget": "numbox", "min": 0.0, "max": 1.0, "default": 0.19, "label": "Settle",
          "pix_target": "react",
          "hint": "How readily slow water puts pigment back down; higher drops it sooner, so less is carried far. A cubic curve. Water that has gone puts all of it down regardless. PROVISIONAL"},
-        {"name": "dry", "type": "float", "widget": "numbox", "min": 0.0, "max": 0.02, "default": 0.0016, "label": "Dry",
+        {"name": "dry", "type": "float", "widget": "numbox", "min": 0.0, "max": 20.0, "default": 1.6, "label": "Dry",
          "pix_target": "transport",
-         "hint": "How fast the water goes, per step. A dried wash is still. PROVISIONAL"},
+         "hint": "How fast the water goes, per step, in thousandths of its depth (1.6 = 0.0016, the old default; the old range was 0 to 0.02). A dried wash is still. PROVISIONAL"},
         {"name": "speed", "type": "float", "widget": "numbox", "min": 0.0, "max": 4.0, "default": 1.0, "label": "Speed",
          "pix_target": ["prep", "transport", "react"],
          "hint": "Step size of each solver step; limited inside the solver so the water stays stable. PROVISIONAL"},
@@ -164,13 +164,5 @@ for _k, (_g, _x, _y0, _names) in enumerate(_GROUPS):
         _y = _y0 + 19.0 + 17.0 * _j
         _ov[f"{_n}.ctl"] = {"presentation_rect": [_x + 30.0, _y, 36.0, 15.0]}
         _ov[f"{_n}.label"] = {"presentation_rect": [_x - 2.0, _y - 1.5, 34.0, 18.0], "textjustification": 0}
-# The Wet button's own face (the panel behind its ubutton) did not draw in Max (Matt, 2026-11-18, screenshot): the area was
-# black on black. A foreground outline over the same rect, transparent fill, clicks pass through (ignoreclick), so the button
-# can be seen. Likely cause (inferred: test_generate_menu's docstring says a background-layer panel is drawn under the frame and
-# vanishes; the builder's gate_button face is background=1): not confirmed in Max. f_vf_stamp and f_wave_field share the face.
-RAW_BOXES.append({"box": dict(id="obj-raw-wetoutline", maxclass="panel", varname="wet_outline", patching_rect=[700.0, 20.0, 32.0, 32.0],
-                              numinlets=1, numoutlets=0, background=0, ignoreclick=1, border=1, rounded=14,
-                              bordercolor=[0.75, 0.75, 0.75, 1.0], bgcolor=[0.0, 0.0, 0.0, 0.0],
-                              presentation=1, presentation_rect=[10.0, 38.0, 32.0, 32.0])})
 patcher["raw_boxes"] = RAW_BOXES
 patcher["overrides"] = _ov

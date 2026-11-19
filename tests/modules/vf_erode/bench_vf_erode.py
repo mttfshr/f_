@@ -39,7 +39,7 @@ SIZE = {"width": float(W), "height": float(H)}
 PINNED = {
     "prep": dict(SIZE, flow=0.4, push=1.0, speed=1.0, src_terrain=1.0, src_field=1.0),
     "load": dict(SIZE, polar_sw=0.0, flood=1.0, feed=0.0, fade=0.0, wet_gate=0.0),
-    "transport": dict(SIZE, flow=0.4, speed=1.0, dry=0.0016),
+    "transport": dict(SIZE, flow=0.4, speed=1.0, dry=1.6),      # the Dry control is in thousandths since 2026-11-18
     "react": dict(SIZE, flow=0.4, speed=1.0, lift=0.7, settle=0.19),
     "enc": dict(polar_sw=0.0, src_bg=0.0, bypass_gate=0.0),
 }
@@ -198,7 +198,7 @@ def test_transport_matches_the_mirror():
     atl = to_atlas(st, 3.0)
     for flow, speed, dry in ((0.4, 1.0, 0.0016), (0.9, 1.6, 0.01)):
         pa = prep_gpu(terrain, field, push=2.0, flow=flow, speed=speed)
-        got = gpu("transport", [atl, pa], (W, 2 * H), flow=flow, speed=speed, dry=dry)
+        got = gpu("transport", [atl, pa], (W, 2 * H), flow=flow, speed=speed, dry=dry * 1000.0)   # the control is in thousandths
         want = em.step(st, T, F, only="transport", flow=flow, speed=speed, dry=dry, push=2.0, edge="open", k=KR)
         check(f"transport (flow {flow}, speed {speed}, dry {dry}): water", mx(got[:H, :, 0], want["w"]), TOL_STAGE)
         check("transport: suspension", mx(got[:H, :, 1:4], want["s"]), TOL_STAGE)
@@ -371,7 +371,7 @@ def test_chain_fed_still_picture_converges_like_the_mirror():
     st = em.new_state(H, W)
     for i in range(30):
         atl = gpu("load", [atl, pic], (W, 2 * H), feed=0.2)
-        atl = gpu("transport", [atl, pa], (W, 2 * H), dry=0.004)
+        atl = gpu("transport", [atl, pa], (W, 2 * H), dry=4.0)
         atl = gpu("react", [atl, pa], (W, 2 * H))
         st = em.step(em.feed(st, pic, "darker", 0.2), None, None, edge="open", dry=0.004, k=KR)
     check("fed chain, 30 steps: water vs the mirror", mx(atl[:H, :, 0], st["w"]), TOL_CHAIN)
@@ -392,7 +392,7 @@ def test_chain_dark_then_light_picture_is_followed():
     for i in range(100):
         pic = a if i < 40 else b
         atl = gpu("load", [atl, pic], (W, 2 * H), feed=0.2, fade=0.1)
-        atl = gpu("transport", [atl, pa], (W, 2 * H), dry=0.004)
+        atl = gpu("transport", [atl, pa], (W, 2 * H), dry=4.0)
         atl = gpu("react", [atl, pa], (W, 2 * H))
         st = em.step(em.feed(st, pic, "darker", 0.2, fade=0.1), None, None, edge="open", dry=0.004, k=KR)
     check("dark then light chain, 100 steps: paper pigment vs the mirror", mx(atl[H:, :, :3], st["p"]), TOL_CHAIN)
@@ -410,7 +410,7 @@ def test_chain_load_then_ten_steps_matches_the_mirror():
     atl = gpu("load", [to_atlas(em.new_state(H, W), 0.0), pic], (W, 2 * H), wet_gate=1.0, flood=1.0)
     st = em.load(em.new_state(H, W), pic, "darker", flood=1.0)
     for i in range(10):
-        atl = gpu("transport", [atl, pa], (W, 2 * H), flow=kw["flow"], speed=kw["speed"], dry=kw["dry"])
+        atl = gpu("transport", [atl, pa], (W, 2 * H), flow=kw["flow"], speed=kw["speed"], dry=kw["dry"] * 1000.0)
         atl = gpu("react", [atl, pa], (W, 2 * H), flow=kw["flow"], speed=kw["speed"], lift=kw["lift"], settle=kw["settle"])
         st = em.step(st, T, F, push=1.5, edge="open", **dict(kw, lift=em.lift_from_dial(kw["lift"]), settle=em.settle_from_dial(kw["settle"])), k=KR)
     check("chain, 10 steps: water vs the mirror", mx(atl[:H, :, 0], st["w"]), TOL_CHAIN)
