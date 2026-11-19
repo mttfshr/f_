@@ -3265,7 +3265,7 @@
 					"numoutlets": 0,
 					"background": 0,
 					"ignoreclick": 1,
-					"border": 2,
+					"border": 1,
 					"rounded": 14,
 					"bordercolor": [
 						0.75,

@@ -169,7 +169,7 @@ for _k, (_g, _x, _y0, _names) in enumerate(_GROUPS):
 # can be seen. Likely cause (inferred: test_generate_menu's docstring says a background-layer panel is drawn under the frame and
 # vanishes; the builder's gate_button face is background=1): not confirmed in Max. f_vf_stamp and f_wave_field share the face.
 RAW_BOXES.append({"box": dict(id="obj-raw-wetoutline", maxclass="panel", varname="wet_outline", patching_rect=[700.0, 20.0, 32.0, 32.0],
-                              numinlets=1, numoutlets=0, background=0, ignoreclick=1, border=2, rounded=14,
+                              numinlets=1, numoutlets=0, background=0, ignoreclick=1, border=1, rounded=14,
                               bordercolor=[0.75, 0.75, 0.75, 1.0], bgcolor=[0.0, 0.0, 0.0, 0.0],
                               presentation=1, presentation_rect=[10.0, 38.0, 32.0, 32.0])})
 patcher["raw_boxes"] = RAW_BOXES
