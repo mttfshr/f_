@@ -45,7 +45,6 @@ patcher = {
     "name":               "f_wc",
     "prefix":             "wc",
     "title":              "Wilson-Cowan",
-    "signal_type":        "rgb out",
 
     "presentation_width":  272,             # T069: row 1 = 5 dials + Reset; row 2 = Grain + Output/Input/Space.
     "presentation_height": 150,             # Width set by the header: title, type label, Freeze toggle, bypass.

@@ -26,7 +26,6 @@ patcher = {
     "prefix":              "separate",
     "object_name":         "#0_separate_pix",
     "title":               "Separate",
-    "signal_type":         "tex in/out",
     "archetype":           "processor",
 
     # Output follows the render size (the codebox uses `norm`, not `dim`, so no width/height Params): as f_stipple.
@@ -91,7 +90,6 @@ _ov = {
                            "parameter_longname": "n_inks", "parameter_mmax": 3.0, "parameter_mmin": 1.0,
                            "parameter_modmode": 3, "parameter_shortname": "n_inks",
                            "parameter_type": 1, "parameter_unitstyle": 0}}},
-    "signal_type":    {"presentation_rect": [170.0, 0.9, 49.0, 21.0]},
 }
 _CELL = {"h": "ink{n}_h", "s": "ink{n}_s", "l": "ink{n}_l", "gain": "gain{n}"}
 for _n, _y in _ROW_Y.items():

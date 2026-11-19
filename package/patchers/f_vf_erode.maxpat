@@ -1215,37 +1215,6 @@
 			},
 			{
 				"box": {
-					"id": "obj-8",
-					"maxclass": "comment",
-					"fontname": "Ableton Sans Light",
-					"fontsize": 11.0,
-					"textcolor": [
-						0.6,
-						0.6,
-						0.6,
-						1.0
-					],
-					"textjustification": 2,
-					"numinlets": 1,
-					"numoutlets": 0,
-					"patching_rect": [
-						1225.5,
-						200.0,
-						60.0,
-						21.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						94.0,
-						0.9,
-						70.0,
-						21.0
-					],
-					"text": "tex in/out"
-				}
-			},
-			{
-				"box": {
 					"id": "obj-19f",
 					"maxclass": "panel",
 					"background": 0,

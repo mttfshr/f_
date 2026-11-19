@@ -33,7 +33,6 @@ patcher = {
     "prefix":      "vferode",
     "object_name": "#0_vferode_pix",
     "title":       "Erode",
-    "signal_type": "tex in/out",
     "archetype":   "processor",
 
     "presentation_width":  190,

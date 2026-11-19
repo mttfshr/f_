@@ -21,7 +21,6 @@ patcher = {
     "prefix":              "halftone",
     "object_name":         "#0_halftone_pix",
     "title":               "Halftone",
-    "signal_type":         "tex in/out",
     "archetype":           "processor",
 
     "pix_attrs":           "@adapt 0 @dim 256 256 @type float32",

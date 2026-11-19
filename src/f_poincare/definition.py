@@ -16,7 +16,6 @@ patcher = {
     "name":               "f_poincare",
     "prefix":             "poinc",
     "title":              "Poincare",
-    "signal_type":        "tex in/out",
 
     "presentation_width":  212,
     "presentation_height": 90,

@@ -33,7 +33,6 @@ patcher = {
     "name":               "f_ks",
     "prefix":             "ks",
     "title":              "Kuramoto-Sivashinsky",
-    "signal_type":        "luma out",
 
     "presentation_width":  190,
     "presentation_height": 110,
