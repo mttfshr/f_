@@ -31,6 +31,8 @@ Closed 2026-10-30/31: the `render_dim` migration (all tensor modules, vorticity,
 4. `f_masonry` adopts tagged textures (Matt, 2026-11-01: later, not yet). Its modulation is by space (slot, brick, pixel) with a depth per appearance param in each: 6 params x 3 spaces = 18 depths, so "one tag per named `<param>_tex`" needs a decision about the spaces. It is the module on the never-regenerate list (`G-masonry`).
 5. The UI design conversation toward a design skill: `ideas/ui_design_concepts.md` (gate `G-ui-density`).
 
+6. **`f_vf_erode` Live-style panel** (Matt chose the layout 2026-11-18, `ideas/m4l_ui_design.md`; gate `G-m4l`): apply plan drafted as `.specify/stable/f_vf_erode/tasks.md` Phase 4, T100-T107, nothing built; waits on Matt's go and the three T100 choices.
+
 ## Owed to Matt
 
 - **Audio modules, Max (2026-11-16; offline build by Claude, nothing heard):** `f_a_ripple` (`.specify/f_a_ripple/tasks.md` T013), `f_a_purr` (`.specify/f_a_purr/tasks.md` T047: also the first compile of its realism code), `f_a_decorrelate` (`.specify/f_a_decorrelate/tasks.md` T016 spike and T024), and the menu (`.specify/f_modules_menu/tasks.md` T076). Until then the README keeps the warning marks. Audio helpfile shape is an unstarted item.
