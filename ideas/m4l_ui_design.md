@@ -43,6 +43,13 @@ Redesign one dense module, `f_separate`, as a wide strip with a hero preview and
 - Go or no-go on the `f_separate` scratch experiment.
 - Is the density work (`G-ui-density`) the right home for this, or should it get its own gate row? I have not touched `gates.md`.
 
-## Strip experiment, round 1 (2026-11-18)
+## Strip experiment (2026-11-18)
 
-Built as `scratch/experiments/m4l_strip_f_separate/f_separate_strip.maxpat` (local, gitignored; `make_strip.py` regenerates it from the real module, 360 x 169 px). Matt's feedback on the first version (dials for hue, an unfold for saturation and lightness): **use number boxes for hue, and put saturation and lightness in the main panel**, not behind an unfold. Round 2: a hero swatch per ink, H / S / L number boxes under it, Gain as a dial, Inks, Mode and the on/off in the title bar. Not yet looked at in Max. Lesson so far: the "few macro dials" rule gives way when the parameters are a color triple that reads best together.
+Built as `scratch/experiments/m4l_strip_f_separate/f_separate_strip.maxpat` (local, gitignored). Generated once from the real module by `make_strip.py`, then edited by hand: **do not rerun the script, it would overwrite Matt's tweaks.** Max has saved it (9.2.0).
+
+Rounds, with Matt's feedback:
+1. Dials for hue, saturation and lightness behind an unfold. Matt: **number boxes for hue, and saturation and lightness in the main panel**.
+2. Gain as a dial, then a `live.slider` with its value shown. Finding: `live.slider` cannot place its value readout (the installed `live.slider.maxref.xml` lists only `showname`, `shownumber` and `textcolor`; read 2026-11-18, not tried in Live). Matt: **gain as a number box**.
+3. Matt trimmed the panel to about 361 x 125 px and moved Gain to its own row, label on the left, box running to the column edge. Claude then snapped the three Gain boxes to 64 px wide, 40 px in from each column, and the labels to y 102.5.
+
+Where it stands: a 360 px wide strip with the title bar (Separate, Mode, Inks, on/off), then per ink a hero swatch, an H / S / L number-box row and a Gain row. Offline edits only; Matt has looked at it in Max (rounds 1 to 3), the final snap is unlooked-at. Lessons so far: the "few macro dials" rule gives way for a color triple, which reads best as three plain number boxes together; number boxes beat sliders and dials where the value must be readable and placeable.
