@@ -35,8 +35,8 @@ patcher = {
     "title":       "Erode",
     "archetype":   "processor",
 
-    "presentation_width":  190,
-    "presentation_height": 150,      # two dial rows end at y 143; the Wet button took the empty first slot (Matt, 2026-11-10)
+    "presentation_width":  204,      # was 190 x 150: two dial rows, the Wet button in the first slot (Matt, 2026-11-10)
+    "presentation_height": 146,      # Live-style panel, 2026-11-18 (Matt chose it: ideas/m4l_ui_design.md, tasks.md Phase 4)
 
     "outlets": [
         {"comment": "ink (composite over the background)"},
@@ -47,35 +47,35 @@ patcher = {
         {"name": "polar_sw", "type": "text_button", "options": ["Darker", "Lighter"], "default": 0, "label": "Polarity",
          "pix_target": ["load", "enc"],
          "hint": "Darker: the pigment filters the background, white when inlet 3 is unconnected. Lighter: it adds to a black background. A change takes effect at the next wetting"},
-        {"name": "flow", "type": "float", "min": 0.0, "max": 2.0, "default": 0.4, "label": "Flow",
+        {"name": "flow", "type": "float", "widget": "numbox", "min": 0.0, "max": 2.0, "default": 0.4, "label": "Flow",
          "pix_target": ["prep", "transport", "react"],
          "hint": "How strongly the water runs downhill on the terrain (inlet 1). PROVISIONAL"},
-        {"name": "push", "type": "float", "min": 0.0, "max": 4.0, "default": 1.0, "label": "Push",
+        {"name": "push", "type": "float", "widget": "numbox", "min": 0.0, "max": 4.0, "default": 1.0, "label": "Push",
          "pix_target": "prep",
          "hint": "How strongly the vecfield (inlet 2) moves the water. 0 is the same as no vecfield. PROVISIONAL"},
-        {"name": "lift", "type": "float", "min": 0.0, "max": 1.0, "default": 0.7, "label": "Lift",
+        {"name": "lift", "type": "float", "widget": "numbox", "min": 0.0, "max": 1.0, "default": 0.7, "label": "Lift",
          "pix_target": "react",
          "hint": "How readily running water takes pigment off the paper. A curve: the bottom half is gentle, the top lifts almost everything at once. PROVISIONAL"},
-        {"name": "settle", "type": "float", "min": 0.0, "max": 1.0, "default": 0.19, "label": "Settle",
+        {"name": "settle", "type": "float", "widget": "numbox", "min": 0.0, "max": 1.0, "default": 0.19, "label": "Settle",
          "pix_target": "react",
          "hint": "How readily slow water puts pigment back down; higher drops it sooner, so less is carried far. A cubic curve. Water that has gone puts all of it down regardless. PROVISIONAL"},
-        {"name": "dry", "type": "float", "min": 0.0, "max": 0.02, "default": 0.0016, "label": "Dry",
+        {"name": "dry", "type": "float", "widget": "numbox", "min": 0.0, "max": 0.02, "default": 0.0016, "label": "Dry",
          "pix_target": "transport",
          "hint": "How fast the water goes, per step. A dried wash is still. PROVISIONAL"},
-        {"name": "speed", "type": "float", "min": 0.0, "max": 4.0, "default": 1.0, "label": "Speed",
+        {"name": "speed", "type": "float", "widget": "numbox", "min": 0.0, "max": 4.0, "default": 1.0, "label": "Speed",
          "pix_target": ["prep", "transport", "react"],
          "hint": "Step size of each solver step; limited inside the solver so the water stays stable. PROVISIONAL"},
-        {"name": "flood", "type": "float", "min": 0.0, "max": 4.0, "default": 1.0, "label": "Flood",
+        {"name": "flood", "type": "float", "widget": "numbox", "min": 0.0, "max": 4.0, "default": 1.0, "label": "Flood",
          "pix_target": "load",
          "hint": "How much water a wetting adds. It is added to any water still on the paper. PROVISIONAL"},
-        {"name": "feed", "type": "float", "min": 0.0, "max": 1.0, "default": 0.0, "label": "Feed",
+        {"name": "feed", "type": "float", "widget": "numbox", "min": 0.0, "max": 1.0, "default": 0.0, "label": "Feed",
          "pix_target": "load",
          "hint": "A continuous source for an animated or live picture: each step a fraction of what the picture holds beyond the paper is deposited, and the water relaxes toward Flood. 0 is wet once. A still picture on a flat frame converges to itself. PROVISIONAL"},
-        {"name": "fade", "type": "float", "min": 0.0, "max": 1.0, "default": 0.02, "label": "Fade",
+        {"name": "fade", "type": "float", "widget": "numbox", "min": 0.0, "max": 1.0, "default": 0.02, "label": "Fade",
          "pix_target": "load",
          "hint": "With Feed above 0: how fast ink above what the picture holds returns to the picture, so a picture that gets lighter is followed and the frame does not go black. Small = pooled ink lasts about 1 / Fade frames. 0 = it never fades. PROVISIONAL"},
         {"name": "wet", "type": "gate_button", "label": "Wet", "gate_param": "wet_gate",
-         "rect": [3.5, 46.0, 28.0, 28.0], "label_rect": [-7.5, 20.0, 50.0, 18.0],     # column 0 of the first dial row, under its label (Matt, 2026-11-10)
+         "rect": [10.0, 38.0, 32.0, 32.0], "label_rect": [1.0, 20.0, 50.0, 18.0],      # far left, label above (was [3.5, 46, 28, 28] in the dial grid, 2026-11-10)
          "hint": "Wet once: the picture on inlet 0 becomes the pigment on the paper and the frame is flooded. Holding does not wet again"},
         {"name": "bypass", "type": "bypass"},
 
@@ -141,9 +141,36 @@ patcher = {
 }
 
 
-# The Darker / Lighter toggle lives in the title bar (Matt, 2026-11-10), like f_weave's mode controls: [Erode] [Darker] ... [type label] [bypass].
-# The title shrinks to its text; the toggle is 52 px wide so it clears the right-justified "tex in/out" label (its text starts near x 109).
-patcher["overrides"] = {
-    "title":        {"presentation_rect": [10.5, 0.0, 40.0, 21.0]},
-    "polar_sw.ctl": {"presentation_rect": [50.0, 3.0, 52.0, 15.0]},
+# The Darker / Lighter toggle lives in the title bar (Matt, 2026-11-10), like f_weave's mode controls: [Erode] [Darker] ... [bypass].
+# 2026-11-18 (Matt): Live-style panel, 204 x 146: all number boxes in two columns of stacked groups, a header over each group
+# (Run / Pigment over Water / Feed), the label left of its box, Wet far left. The type label was dropped (commit 66374e0).
+# The rects come from scratch/experiments/m4l_strip_f_vf_erode/f_vf_erode_strip_2col.maxpat (local mock).
+# Before: title [10.5, 0, 40, 21], polar_sw.ctl [50, 3, 52, 15], nine dials in two rows on the builder's grid.
+_GROUPS = [("Run",     58.0,  17.0, ["flow", "push", "speed"]),
+           ("Pigment", 58.0,  89.0, ["lift", "settle"]),
+           ("Water",   134.0, 17.0, ["flood", "dry"]),
+           ("Feed",    134.0, 89.0, ["feed", "fade"])]
+_ov = {
+    "title":        {"presentation_rect": [10.5, 0.0, 44.0, 21.0]},   # x 10.5 is what test_generate_menu finds the module name by (the mock had 14)
+    "polar_sw.ctl": {"presentation_rect": [62.0, 3.0, 56.0, 15.0]},
 }
+_LBL = dict(fontname="Ableton Sans Light", fontsize=9.5, textjustification=0, numinlets=1, numoutlets=0, outlettype=[], presentation=1)
+RAW_BOXES = []
+for _k, (_g, _x, _y0, _names) in enumerate(_GROUPS):
+    RAW_BOXES.append({"box": dict(id=f"obj-raw-grp{_k}", maxclass="comment", text=_g,
+                                  patching_rect=[620.0, 20.0 + 22.0 * _k, 60.0, 18.0],
+                                  presentation_rect=[_x - 1.0, _y0, 68.0, 16.0], **_LBL)})
+    for _j, _n in enumerate(_names):
+        _y = _y0 + 19.0 + 17.0 * _j
+        _ov[f"{_n}.ctl"] = {"presentation_rect": [_x + 30.0, _y, 36.0, 15.0]}
+        _ov[f"{_n}.label"] = {"presentation_rect": [_x - 2.0, _y - 1.5, 34.0, 18.0], "textjustification": 0}
+# The Wet button's own face (the panel behind its ubutton) did not draw in Max (Matt, 2026-11-18, screenshot): the area was
+# black on black. A foreground outline over the same rect, transparent fill, clicks pass through (ignoreclick), so the button
+# can be seen. Likely cause (inferred: test_generate_menu's docstring says a background-layer panel is drawn under the frame and
+# vanishes; the builder's gate_button face is background=1): not confirmed in Max. f_vf_stamp and f_wave_field share the face.
+RAW_BOXES.append({"box": dict(id="obj-raw-wetoutline", maxclass="panel", varname="wet_outline", patching_rect=[700.0, 20.0, 32.0, 32.0],
+                              numinlets=1, numoutlets=0, background=0, ignoreclick=1, border=2, rounded=14,
+                              bordercolor=[0.75, 0.75, 0.75, 1.0], bgcolor=[0.0, 0.0, 0.0, 0.0],
+                              presentation=1, presentation_rect=[10.0, 38.0, 32.0, 32.0])})
+patcher["raw_boxes"] = RAW_BOXES
+patcher["overrides"] = _ov

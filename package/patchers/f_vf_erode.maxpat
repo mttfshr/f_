@@ -1176,15 +1176,15 @@
 					"patching_rect": [
 						915.5,
 						260.0,
-						190.0,
-						150.0
+						204.0,
+						146.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						0.0,
 						0.0,
-						190.0,
-						150.0
+						204.0,
+						146.0
 					],
 					"proportion": 0.5
 				}
@@ -1207,7 +1207,7 @@
 					"presentation_rect": [
 						10.5,
 						0.0,
-						40.0,
+						44.0,
 						21.0
 					],
 					"text": "Erode"
@@ -1621,9 +1621,9 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						50.0,
+						62.0,
 						3.0,
-						52.0,
+						56.0,
 						15.0
 					],
 					"text": "Darker",
@@ -1707,13 +1707,7 @@
 			{
 				"box": {
 					"id": "obj-23",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "How strongly the water runs downhill on the terrain (inlet 1). PROVISIONAL",
 					"numinlets": 1,
@@ -1725,22 +1719,19 @@
 					"param_connect": "#0_vferode_prep::flow",
 					"parameter_enable": 1,
 					"patching_rect": [
-						118.5,
+						110.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						41.0,
-						38.0,
-						27.0,
-						43.0
+						88.0,
+						36.0,
+						36.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								0.4
@@ -1756,10 +1747,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "flow"
 				}
 			},
@@ -1836,26 +1823,20 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						29.5,
-						20.0,
-						50.0,
+						56.0,
+						34.5,
+						34.0,
 						18.0
 					],
 					"text": "Flow",
-					"textjustification": 1,
+					"textjustification": 0,
 					"varname": "lbl_flow"
 				}
 			},
 			{
 				"box": {
 					"id": "obj-26",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "How strongly the vecfield (inlet 2) moves the water. 0 is the same as no vecfield. PROVISIONAL",
 					"numinlets": 1,
@@ -1867,22 +1848,19 @@
 					"param_connect": "#0_vferode_prep::push",
 					"parameter_enable": 1,
 					"patching_rect": [
-						190.5,
+						182.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						78.0,
-						38.0,
-						27.0,
-						43.0
+						88.0,
+						53.0,
+						36.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								1.0
@@ -1898,10 +1876,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "push"
 				}
 			},
@@ -1940,26 +1914,20 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						66.5,
-						20.0,
-						50.0,
+						56.0,
+						51.5,
+						34.0,
 						18.0
 					],
 					"text": "Push",
-					"textjustification": 1,
+					"textjustification": 0,
 					"varname": "lbl_push"
 				}
 			},
 			{
 				"box": {
 					"id": "obj-29",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "How readily running water takes pigment off the paper. A curve: the bottom half is gentle, the top lifts almost everything at once. PROVISIONAL",
 					"numinlets": 1,
@@ -1971,22 +1939,19 @@
 					"param_connect": "#0_vferode_react::lift",
 					"parameter_enable": 1,
 					"patching_rect": [
-						262.5,
+						254.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						115.0,
-						38.0,
-						27.0,
-						43.0
+						88.0,
+						108.0,
+						36.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								0.7
@@ -2002,10 +1967,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "lift"
 				}
 			},
@@ -2044,26 +2005,20 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						103.5,
-						20.0,
-						50.0,
+						56.0,
+						106.5,
+						34.0,
 						18.0
 					],
 					"text": "Lift",
-					"textjustification": 1,
+					"textjustification": 0,
 					"varname": "lbl_lift"
 				}
 			},
 			{
 				"box": {
 					"id": "obj-32",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "How readily slow water puts pigment back down; higher drops it sooner, so less is carried far. A cubic curve. Water that has gone puts all of it down regardless. PROVISIONAL",
 					"numinlets": 1,
@@ -2075,22 +2030,19 @@
 					"param_connect": "#0_vferode_react::settle",
 					"parameter_enable": 1,
 					"patching_rect": [
-						334.5,
+						326.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						152.0,
-						38.0,
-						27.0,
-						43.0
+						88.0,
+						125.0,
+						36.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								0.19
@@ -2106,10 +2058,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "settle"
 				}
 			},
@@ -2148,26 +2096,20 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						140.5,
-						20.0,
-						50.0,
+						56.0,
+						123.5,
+						34.0,
 						18.0
 					],
 					"text": "Settle",
-					"textjustification": 1,
+					"textjustification": 0,
 					"varname": "lbl_settle"
 				}
 			},
 			{
 				"box": {
 					"id": "obj-35",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "How fast the water goes, per step. A dried wash is still. PROVISIONAL",
 					"numinlets": 1,
@@ -2179,22 +2121,19 @@
 					"param_connect": "#0_vferode_transport::dry",
 					"parameter_enable": 1,
 					"patching_rect": [
-						406.5,
+						398.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						4.0,
-						100.0,
-						27.0,
-						43.0
+						164.0,
+						53.0,
+						36.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								0.0016
@@ -2210,10 +2149,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "dry"
 				}
 			},
@@ -2252,26 +2187,20 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						-7.5,
-						82.0,
-						50.0,
+						132.0,
+						51.5,
+						34.0,
 						18.0
 					],
 					"text": "Dry",
-					"textjustification": 1,
+					"textjustification": 0,
 					"varname": "lbl_dry"
 				}
 			},
 			{
 				"box": {
 					"id": "obj-38",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "Step size of each solver step; limited inside the solver so the water stays stable. PROVISIONAL",
 					"numinlets": 1,
@@ -2283,22 +2212,19 @@
 					"param_connect": "#0_vferode_prep::speed",
 					"parameter_enable": 1,
 					"patching_rect": [
-						478.5,
+						470.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						41.0,
-						100.0,
-						27.0,
-						43.0
+						88.0,
+						70.0,
+						36.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								1.0
@@ -2314,10 +2240,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "speed"
 				}
 			},
@@ -2394,26 +2316,20 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						29.5,
-						82.0,
-						50.0,
+						56.0,
+						68.5,
+						34.0,
 						18.0
 					],
 					"text": "Speed",
-					"textjustification": 1,
+					"textjustification": 0,
 					"varname": "lbl_speed"
 				}
 			},
 			{
 				"box": {
 					"id": "obj-41",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "How much water a wetting adds. It is added to any water still on the paper. PROVISIONAL",
 					"numinlets": 1,
@@ -2425,22 +2341,19 @@
 					"param_connect": "#0_vferode_load::flood",
 					"parameter_enable": 1,
 					"patching_rect": [
-						550.5,
+						542.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						78.0,
-						100.0,
-						27.0,
-						43.0
+						164.0,
+						36.0,
+						36.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								1.0
@@ -2456,10 +2369,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "flood"
 				}
 			},
@@ -2498,26 +2407,20 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						66.5,
-						82.0,
-						50.0,
+						132.0,
+						34.5,
+						34.0,
 						18.0
 					],
 					"text": "Flood",
-					"textjustification": 1,
+					"textjustification": 0,
 					"varname": "lbl_flood"
 				}
 			},
 			{
 				"box": {
 					"id": "obj-44",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "A continuous source for an animated or live picture: each step a fraction of what the picture holds beyond the paper is deposited, and the water relaxes toward Flood. 0 is wet once. A still picture on a flat frame converges to itself. PROVISIONAL",
 					"numinlets": 1,
@@ -2529,22 +2432,19 @@
 					"param_connect": "#0_vferode_load::feed",
 					"parameter_enable": 1,
 					"patching_rect": [
-						622.5,
+						614.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						115.0,
-						100.0,
-						27.0,
-						43.0
+						164.0,
+						108.0,
+						36.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								0.0
@@ -2560,10 +2460,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "feed"
 				}
 			},
@@ -2602,26 +2498,20 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						103.5,
-						82.0,
-						50.0,
+						132.0,
+						106.5,
+						34.0,
 						18.0
 					],
 					"text": "Feed",
-					"textjustification": 1,
+					"textjustification": 0,
 					"varname": "lbl_feed"
 				}
 			},
 			{
 				"box": {
 					"id": "obj-47",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "With Feed above 0: how fast ink above what the picture holds returns to the picture, so a picture that gets lighter is followed and the frame does not go black. Small = pooled ink lasts about 1 / Fade frames. 0 = it never fades. PROVISIONAL",
 					"numinlets": 1,
@@ -2633,22 +2523,19 @@
 					"param_connect": "#0_vferode_load::fade",
 					"parameter_enable": 1,
 					"patching_rect": [
-						694.5,
+						686.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						152.0,
-						100.0,
-						27.0,
-						43.0
+						164.0,
+						125.0,
+						36.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								0.02
@@ -2664,10 +2551,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "fade"
 				}
 			},
@@ -2706,13 +2589,13 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						140.5,
-						82.0,
-						50.0,
+						132.0,
+						123.5,
+						34.0,
 						18.0
 					],
 					"text": "Fade",
-					"textjustification": 1,
+					"textjustification": 0,
 					"varname": "lbl_fade"
 				}
 			},
@@ -2735,7 +2618,7 @@
 						12.0
 					],
 					"presentation_rect": [
-						168.0,
+						182.0,
 						5.0,
 						18.0,
 						12.0
@@ -2768,7 +2651,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						480.0,
-						742.0,
+						1042.0,
 						40.0,
 						22.0
 					],
@@ -2786,7 +2669,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						620.0,
-						742.0,
+						1042.0,
 						60.0,
 						22.0
 					],
@@ -2804,7 +2687,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						620.0,
-						772.0,
+						1072.0,
 						70.0,
 						22.0
 					],
@@ -2820,7 +2703,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						530.0,
-						742.0,
+						1042.0,
 						60.0,
 						22.0
 					],
@@ -2839,7 +2722,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						530.0,
-						772.0,
+						1072.0,
 						60.0,
 						22.0
 					],
@@ -2858,7 +2741,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						480.0,
-						802.0,
+						1102.0,
 						120.0,
 						22.0
 					],
@@ -2876,7 +2759,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						610.0,
-						802.0,
+						1102.0,
 						120.0,
 						22.0
 					],
@@ -2894,7 +2777,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						830.0,
-						922.0,
+						1222.0,
 						80.0,
 						22.0
 					],
@@ -2912,7 +2795,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						830.0,
-						952.0,
+						1252.0,
 						60.0,
 						22.0
 					],
@@ -2930,7 +2813,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						830.0,
-						982.0,
+						1282.0,
 						80.0,
 						22.0
 					],
@@ -2948,7 +2831,7 @@
 					"maxclass": "panel",
 					"patching_rect": [
 						30.0,
-						742.0,
+						1042.0,
 						24.0,
 						24.0
 					],
@@ -2972,10 +2855,10 @@
 					"rounded": 14,
 					"presentation": 1,
 					"presentation_rect": [
-						3.5,
-						46.0,
-						28.0,
-						28.0
+						10.0,
+						38.0,
+						32.0,
+						32.0
 					],
 					"varname": "wet_face"
 				}
@@ -2986,7 +2869,7 @@
 					"maxclass": "ubutton",
 					"patching_rect": [
 						30.0,
-						742.0,
+						1042.0,
 						24.0,
 						24.0
 					],
@@ -3006,10 +2889,10 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						3.5,
-						46.0,
-						28.0,
-						28.0
+						10.0,
+						38.0,
+						32.0,
+						32.0
 					],
 					"varname": "wet_button",
 					"hint": "Wet once: the picture on inlet 0 becomes the pigment on the paper and the frame is flooded. Holding does not wet again"
@@ -3021,7 +2904,7 @@
 					"maxclass": "comment",
 					"patching_rect": [
 						30.0,
-						768.0,
+						1068.0,
 						50.0,
 						18.0
 					],
@@ -3031,7 +2914,7 @@
 					"numoutlets": 0,
 					"presentation": 1,
 					"presentation_rect": [
-						-7.5,
+						1.0,
 						20.0,
 						50.0,
 						18.0
@@ -3047,7 +2930,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						30.0,
-						972.0,
+						1272.0,
 						90.0,
 						22.0
 					],
@@ -3068,7 +2951,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						30.0,
-						1007.0,
+						1307.0,
 						40.0,
 						22.0
 					],
@@ -3087,7 +2970,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						90.0,
-						1042.0,
+						1342.0,
 						40.0,
 						22.0
 					],
@@ -3106,7 +2989,7 @@
 					"maxclass": "message",
 					"patching_rect": [
 						30.0,
-						1077.0,
+						1377.0,
 						30.0,
 						22.0
 					],
@@ -3124,7 +3007,7 @@
 					"maxclass": "message",
 					"patching_rect": [
 						90.0,
-						1077.0,
+						1377.0,
 						120.0,
 						22.0
 					],
@@ -3142,7 +3025,7 @@
 					"maxclass": "message",
 					"patching_rect": [
 						230.0,
-						1077.0,
+						1377.0,
 						36.0,
 						22.0
 					],
@@ -3160,7 +3043,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						300.0,
-						972.0,
+						1272.0,
 						30.0,
 						22.0
 					],
@@ -3178,7 +3061,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						340.0,
-						1002.0,
+						1302.0,
 						30.0,
 						22.0
 					],
@@ -3196,7 +3079,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						300.0,
-						1032.0,
+						1332.0,
 						40.0,
 						22.0
 					],
@@ -3215,7 +3098,7 @@
 					"maxclass": "message",
 					"patching_rect": [
 						300.0,
-						1062.0,
+						1362.0,
 						120.0,
 						22.0
 					],
@@ -3233,7 +3116,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						300.0,
-						942.0,
+						1242.0,
 						50.0,
 						22.0
 					],
@@ -3251,7 +3134,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						230.0,
-						1047.0,
+						1347.0,
 						60.0,
 						22.0
 					],
@@ -3260,6 +3143,148 @@
 					"numoutlets": 1,
 					"outlettype": [
 						"bang"
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-grp0",
+					"maxclass": "comment",
+					"text": "Run",
+					"patching_rect": [
+						620.0,
+						742.0,
+						60.0,
+						18.0
+					],
+					"presentation_rect": [
+						57.0,
+						17.0,
+						68.0,
+						16.0
+					],
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.5,
+					"textjustification": 0,
+					"numinlets": 1,
+					"numoutlets": 0,
+					"outlettype": [],
+					"presentation": 1
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-grp1",
+					"maxclass": "comment",
+					"text": "Pigment",
+					"patching_rect": [
+						620.0,
+						764.0,
+						60.0,
+						18.0
+					],
+					"presentation_rect": [
+						57.0,
+						89.0,
+						68.0,
+						16.0
+					],
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.5,
+					"textjustification": 0,
+					"numinlets": 1,
+					"numoutlets": 0,
+					"outlettype": [],
+					"presentation": 1
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-grp2",
+					"maxclass": "comment",
+					"text": "Water",
+					"patching_rect": [
+						620.0,
+						786.0,
+						60.0,
+						18.0
+					],
+					"presentation_rect": [
+						133.0,
+						17.0,
+						68.0,
+						16.0
+					],
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.5,
+					"textjustification": 0,
+					"numinlets": 1,
+					"numoutlets": 0,
+					"outlettype": [],
+					"presentation": 1
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-grp3",
+					"maxclass": "comment",
+					"text": "Feed",
+					"patching_rect": [
+						620.0,
+						808.0,
+						60.0,
+						18.0
+					],
+					"presentation_rect": [
+						133.0,
+						89.0,
+						68.0,
+						16.0
+					],
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.5,
+					"textjustification": 0,
+					"numinlets": 1,
+					"numoutlets": 0,
+					"outlettype": [],
+					"presentation": 1
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-wetoutline",
+					"maxclass": "panel",
+					"varname": "wet_outline",
+					"patching_rect": [
+						700.0,
+						742.0,
+						32.0,
+						32.0
+					],
+					"numinlets": 1,
+					"numoutlets": 0,
+					"background": 0,
+					"ignoreclick": 1,
+					"border": 2,
+					"rounded": 14,
+					"bordercolor": [
+						0.75,
+						0.75,
+						0.75,
+						1.0
+					],
+					"bgcolor": [
+						0.0,
+						0.0,
+						0.0,
+						0.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						10.0,
+						38.0,
+						32.0,
+						32.0
 					]
 				}
 			}

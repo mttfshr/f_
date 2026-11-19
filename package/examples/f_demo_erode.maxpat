@@ -111,7 +111,7 @@
                     "numoutlets": 2,
                     "offset": [ 0.0, 0.0 ],
                     "outlettype": [ "jit_gl_texture", "jit_gl_texture" ],
-                    "patching_rect": [ 504.0, 519.0, 193.0, 154.0 ],
+                    "patching_rect": [ 504.0, 519.0, 204.0, 146.0 ],
                     "varname": "f_vf_erode",
                     "viewvisibility": 1
                 }

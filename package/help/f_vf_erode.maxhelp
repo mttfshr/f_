@@ -326,8 +326,8 @@
 					"patching_rect": [
 						650.0,
 						24.0,
-						190.0,
-						150.0
+						204.0,
+						146.0
 					],
 					"viewvisibility": 1,
 					"varname": "f_vf_erode"
