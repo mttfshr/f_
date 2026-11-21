@@ -41,6 +41,10 @@ Modules are built from definition files, not patched by hand. `definition.py` is
 
 The `f_modules` menu (`package/patchers/f_modules.maxpat`) and the size table in `package/javascript/f_addmod.js` are generated, like `f_Launch`: edit `src/f_modules/menu.py` and run `build/py.sh build/generate_menu.py` (`--check` reports a stale file). One-off scripts from earlier sessions were removed; they remain in git history.
 
+## Demos
+
+Added 2026-11-21. The `## Demos` table in `README.md` is the one table of demo state (stage, last look, note); it is not a Patches table, and `generate_launch.py` stops reading at the next `##`. **A new patcher in `package/patchers/` gets an `unbuilt` stub row there in the same change**, named `demo_<module>`, with the module in the Modules column, so every patcher has at least one demo row. Internal inners and `f_modules` are the exceptions; paused modules are left out. Coverage means a row other than `demo_sampleplatter` or the `f_example_*` patchers lists the module.
+
 ## Helpfiles
 
 `build/generate_helpfiles.py` only builds the prompt; the helpfile itself is written in a Claude session, never by an API call from a script.

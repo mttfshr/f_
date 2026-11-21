@@ -140,6 +140,72 @@ These patches are developed alongside personal Vsynth performance work and relea
 
 There is no release schedule. Patches may change significantly as development continues.
 
+## Demos
+
+Stages: `unbuilt` (stub, no patcher yet) > `untriaged` > `needs-work` > `polishing` > `done`. Edit Stage, Last look and Note by hand.
+Last look = date Matt opened it live in Max. Note = what he saw. Patchers are `package/examples/f_<demo>.maxpat`.
+Modules were scanned from the patcher text by Claude 2026-11-21 (offline, not opened in Max); trust them loosely.
+Concepts and intent: `.specify/demos/spec.md`.
+
+| Demo | Stage | Last look | Preset | Modules | Note |
+|---|---|---|---|---|---|
+| demo_advect | untriaged | | yes | f_grain, f_lens, f_stipple, f_vf_advect, f_vf_fieldmap, f_vf_prism | |
+| demo_aniso_blur | untriaged | | yes | f_tf_aniso_blur, f_tf_tensormap | |
+| demo_axisflow | untriaged | | yes | f_tf_axisflow, f_tf_tensormap, f_vf_advect, f_vf_vortex | |
+| demo_caustic | untriaged | | yes | f_caustic, f_grain, f_lens, f_vf_advect, f_vf_fieldmap | |
+| demo_caustic2 | untriaged | | yes | f_caustic, f_ngon, f_vf_fieldmap, f_vf_fluid, f_vf_prism | |
+| demo_ch | untriaged | | yes | f_ks, f_stipple, f_vf_advect, f_vf_ch, f_vf_fieldmap, f_vf_fluid | |
+| demo_chladni | untriaged | | yes | f_chladni, f_lens, f_vf_advect, f_vf_fieldmap, f_vf_glow | |
+| demo_erode | untriaged | | yes | f_grain, f_ks, f_lens, f_separate, f_stipple, f_vf_advect, f_vf_erode, f_vf_lbm | |
+| demo_fluid | untriaged | | yes | f_droste, f_vf_fieldmap, f_vf_fluid, f_wave_field | |
+| demo_general | untriaged | |  | f_lens, f_vf_advect, f_vf_fieldmap, f_vf_glow | |
+| demo_glow | untriaged | | yes | f_channel_grader, f_lens, f_vf_advect, f_vf_fieldmap, f_vf_glow, f_weave | |
+| demo_halftone | untriaged | |  | f_halftone, f_ks, f_lens, f_separate, f_vf_erode, f_vf_stamp, f_wave_field | |
+| demo_hatch | untriaged | |  | f_ngon, f_tf_hatch, f_tf_sharpen, f_tf_smooth, f_tf_tensormap, f_vf_advect, f_vf_fieldmap | |
+| demo_ink | untriaged | |  | f_grain, f_ks, f_lens, f_stipple, f_vf_advect, f_vf_erode, f_vf_lbm | |
+| demo_ks | untriaged | | yes | f_ks, f_vf_fieldmap, f_vf_fluid, f_vf_lbm, f_vf_split, f_weave | |
+| demo_lb | untriaged | |  | f_ink, f_ks, f_lens, f_stipple, f_vf_advect, f_vf_lbm | |
+| demo_lbm | untriaged | | yes | f_ks, f_lens, f_separate, f_stipple, f_vf_advect, f_vf_lbm | |
+| demo_lens | untriaged | | yes | f_caustic, f_lens, f_vf_prism, f_vf_repulse | |
+| demo_ngon | untriaged | |  | f_ngon, f_vf_advect, f_vf_flow, f_vf_prism | |
+| demo_poincare | untriaged | | yes | f_poincare, f_quasi, f_separate, f_vf_advect, f_wave_field | |
+| demo_prism-masonry | untriaged | | yes | f_masonry, f_vf_optical_flow, f_vf_prism | |
+| demo_quasi | untriaged | | yes | f_quasi, f_vf_advect, f_vf_warp | |
+| demo_repulse | untriaged | | yes | f_masonry, f_vf_advect, f_vf_repulse | |
+| demo_sampleplatter | untriaged | |  | f_caustic, f_channel_grader, f_chladni, f_droste, f_grain, f_halftone, f_hue_processor, f_ks, f_lens, f_luma_processor, f_masonry, f_mobius, f_ngon, f_poincare, f_quasi, f_separate, f_sirds, f_stereo, f_stipple, f_texrouter, f_tf_aniso_blur, f_tf_axisflow, f_tf_glyph, f_tf_hatch, f_tf_sharpen, f_tf_smooth, f_tf_tensormap, f_tone_curve, f_util_profile, f_util_vary, f_vf_advect, f_vf_ch, f_vf_chroma, f_vf_erode, f_vf_fieldmap, f_vf_flow, f_vf_fluid, f_vf_glow, f_vf_lbm, f_vf_optical_flow, f_vf_prism, f_vf_repulse, f_vf_seeds, f_vf_stamp, f_vf_streak, f_vf_vortex, f_vf_vortex_multi, f_vf_vorticity, f_vf_warp, f_wave_field, f_wc, f_weave | |
+| demo_seeds | untriaged | | yes | f_vf_fieldmap, f_vf_seeds | |
+| demo_seeds2 | untriaged | | yes | f_stereo, f_vf_repulse, f_vf_seeds, f_weave | |
+| demo_sirds | untriaged | |  | f_grain, f_sirds, f_stereo | |
+| demo_stipple | untriaged | | yes | f_lens, f_stipple | |
+| demo_streak | untriaged | |  | f_caustic, f_vf_fieldmap, f_vf_streak | |
+| demo_vorticity | untriaged | | yes | f_caustic, f_ngon, f_vf_fieldmap, f_vf_fluid, f_vf_prism, f_vf_vorticity | |
+| demo_warp | untriaged | | yes | f_grain, f_lens, f_vf_fieldmap, f_vf_warp | |
+| demo_wave_field | untriaged | | yes | f_caustic, f_chladni, f_vf_advect, f_wave_field | |
+| demo_wc | untriaged | | yes | f_caustic, f_chladni, f_wave_field | |
+| demo_weave-advect | untriaged | | yes | f_weave | |
+| example_axisflow_combed_weave | untriaged | |  | f_tf_axisflow, f_tf_tensormap, f_vf_warp, f_weave | |
+| example_camera_pulsed_web | untriaged | |  | f_hue_processor, f_tone_curve, f_wc | |
+| example_optical_flow_memory | untriaged | |  | f_vf_advect, f_vf_fluid, f_vf_optical_flow, f_wc | |
+| demo_a_decorrelate | unbuilt | | | f_a_decorrelate | stub 2026-11-21: no demo uses this patcher |
+| demo_a_purr | unbuilt | | | f_a_purr | stub 2026-11-21: no demo uses this patcher |
+| demo_a_ripple | unbuilt | | | f_a_ripple | stub 2026-11-21: no demo uses this patcher |
+| demo_chladni_audio | unbuilt | | | f_chladni_audio | stub 2026-11-21: no demo uses this patcher |
+| demo_potential | unbuilt | | | f_vf_potential | stub 2026-11-21: no demo uses this patcher |
+| demo_util_matrix_2 | unbuilt | | | f_util_matrix_2 | stub 2026-11-21: no demo uses this patcher |
+| demo_util_vary_row | unbuilt | | | f_util_vary_row | stub 2026-11-21: no demo uses this patcher |
+| demo_luma_processor | unbuilt | | | f_luma_processor | stub 2026-11-21: only demo_sampleplatter uses this patcher, which doesn't count |
+| demo_mobius | unbuilt | | | f_mobius | stub 2026-11-21: only demo_sampleplatter uses this patcher, which doesn't count |
+| demo_texrouter | unbuilt | | | f_texrouter | stub 2026-11-21: only demo_sampleplatter uses this patcher, which doesn't count |
+| demo_tf_glyph | unbuilt | | | f_tf_glyph | stub 2026-11-21: only demo_sampleplatter uses this patcher, which doesn't count |
+| demo_util_profile | unbuilt | | | f_util_profile | stub 2026-11-21: only demo_sampleplatter uses this patcher, which doesn't count |
+| demo_util_vary | unbuilt | | | f_util_vary | stub 2026-11-21: only demo_sampleplatter uses this patcher, which doesn't count |
+| demo_vf_vortex_multi | unbuilt | | | f_vf_vortex_multi | stub 2026-11-21: only demo_sampleplatter uses this patcher, which doesn't count |
+| demo_hue_processor | unbuilt | | | f_hue_processor | stub 2026-11-21: only examples use this patcher, which don't count |
+| demo_tone_curve | unbuilt | | | f_tone_curve | stub 2026-11-21: only examples use this patcher, which don't count |
+| demo_f_wc | unbuilt | | | f_wc | stub 2026-11-21: only examples use this patcher; named demo_f_wc because demo_wc exists and lists no f_wc |
+
+Stub scan 2026-11-21 (offline): a patcher counts as covered if some demo or example other than `demo_sampleplatter` (a catch-all) and the `f_example_*` patchers (neither counts) lists it in Modules. Skipped: `f_a_decorrelate_inner` (internal), `f_modules` (menu), `f_cmap` and `f_vf_chroma` (paused).
+
 ## Repo Structure
 
 This repo has six parts. The map first, details below.
