@@ -27,6 +27,17 @@ Added 2026-11-01, after a workstream was reported closed while its gate row was 
 - **Inferred is not verified.** Anything worked out instead of observed (a size from a failing shape, a cause from reading code) is labelled as inferred until a run or a live look confirms it.
 - **Records say who observed what:** offline by Claude, or live by Matt, with the date.
 
+## Skills
+
+- The skills are not in this repo. They are installed at user level from agent-skills
+  (`~/Github/agent-skills`, set up with `sh scripts/link-skills.sh`). **Edit a skill there, never a copy,**
+  and commit it there. Rebuilding or re-uploading zips for claude.ai is done in that repo
+  (`scripts/upload-check.sh`, `scripts/build-zips.sh`).
+- f_-only notes for a skill live here in `.claude/local/<skill>.md` and are edited here.
+- Skill trigger evals live in agent-skills (`evals/`).
+- Older notes in `docs/`, `tests/` and `.specify/` say `skills/<name>`; that now means the skill of
+  that name in agent-skills.
+
 ## Repo map
 
 `src/<module>/` (`definition.py` + `codebox_*.gen`) → `build/build_patcher.py` → `package/patchers/` (the installable Max package). Tests are in `tests/` (math mirrors in `tests/modules/<m>/`, the Max bench via `tests/bench.sh`, contracts in `tests/contracts/`). Planning is in `.specify/` (specs and tasks per module, `stable/` and `paused/`) and `ideas/` (`INDEX.md`). Reference docs are in `docs/f-reference/` (`module-inventory.md` is the one-line-per-module map). Skills are in `skills/`.

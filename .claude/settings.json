@@ -7,8 +7,6 @@
       "Bash(tests/bg.sh status:*)",
       "Bash(tests/bg.sh log:*)",
       "Bash(tests/bg.sh list)",
-      "Bash(./skills/check.sh)",
-      "Bash(skills/check.sh)",
       "Bash(build/py.sh build/generate_menu.py --check)",
       "Bash(build/py.sh build/generate_launch.py --check)",
       "Bash(build/py.sh build/generate_bluenoise.py --check)"
@@ -18,9 +16,7 @@
       "Bash(tests/check.sh full:*)",
       "Bash(tests/bg.sh start bench:*)",
       "Bash(tests/bg.sh start all:*)",
-      "Bash(build/release.sh:*)",
-      "Bash(./skills/check.sh stamp)",
-      "Bash(skills/check.sh stamp)"
+      "Bash(build/release.sh:*)"
     ]
   }
 }

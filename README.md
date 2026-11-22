@@ -217,7 +217,7 @@ This repo has six parts. The map first, details below.
 | `src/` | Build inputs, per module. |
 | `tests/` | Verification: math mirrors and a Max test bench. |
 | `ideas/`, `.specify/`, `docs/` | Planning and reference material. |
-| `skills/` | Claude skills used to collaborate on this codebase. |
+| `.claude/local/` | f_-only notes that extend the shared skills (the skills themselves live in agent-skills). |
 
 ### `package/`
 
@@ -263,22 +263,20 @@ Planning and reference material. Kept public as a reference and conversation sta
   - `.specify/paused/f_name/` — shelved on a real open question, not to be resumed by default.
 - **`docs/`** — as-built reference docs, plus research notes on Vsynth/Max internals. `docs/f-reference/module-inventory.md` and `docs/vsynth-reference/module-inventory.md` are flat one-line-per-module capability maps (the `f_` layer and the core Vsynth layer, respectively): the fast way to answer "does something here already do X" without reading full per-module docs.
 
-### `skills/`
+### Skills
 
-[Claude](https://claude.ai) skills used to collaborate with Claude on this codebase. Ten of them, covering Max/Vsynth/audio-DSP domain knowledge:
+The Claude skills used on this codebase no longer live here. They are in
+[agent-skills](https://github.com/mttfshr/agent-skills), the one place they are edited:
+`packages/max-msp` (`gen-tilde-codebox`, `jit-gen-codebox`, `pfft-spectral-processing`,
+`max-advanced-object-methodology`, `maxpat-json-authoring`, `max-patch-notation`) and
+`packages/f-library` (`vsynth-bpatcher`, `f-helpfile`, `bench-test-authoring`,
+`module-preflight`).
 
-- `vsynth-bpatcher` — conventions for bpatcher structure.
-- `jit-gen-codebox` — GenExpr/`jit.gl.pix` gotchas.
-- `gen-tilde-codebox` — the audio-domain equivalent for `gen~`.
-- `pfft-spectral-processing` — `pfft~` spectral processing.
-- `max-advanced-object-methodology` — the read-the-help-patch-first workflow for unfamiliar Max objects.
-- `maxpat-json-authoring` — hand-authoring `.maxpat` JSON without a live Max.
-- `f-helpfile` — helpfile format.
-- `max-patch-notation` — a notation system for describing patches in chat.
-- `bench-test-authoring` — conventions for writing tier-2 bench test files.
-- `module-preflight` — the checklist before calling a module done or moving it to `stable/`.
-
-The dividing line: domain knowledge lives here, generic workflow/process scaffolding does not. This directory is the single source of truth — other checkouts symlink here rather than keeping copies, after two of them silently diverged in both directions. Uploaded copies can't be symlinked, so `skills/MANIFEST.md` records the last-uploaded state and `skills/check.sh` reports drift (`check.sh stamp` after re-uploading). Copy these into your own Claude setup (e.g. `claude-scaffold`-style skills directory) if you want a similar collaboration workflow — you'll want to adjust the hardcoded paths in `vsynth-bpatcher/SKILL.md` to match your own repo location.
+To use them, clone agent-skills and run `scripts/link-skills.sh` (symlinks into
+`~/.claude/skills`), or install the packages with APM
+(`mttfshr/agent-skills/packages/f-library#v1.0.0`, `mttfshr/agent-skills/packages/max-msp#v1.0.0`).
+Notes that only make sense for this repo live in `.claude/local/<skill>.md`; the three skills
+that support them read that file.
 
 ## Development
 
