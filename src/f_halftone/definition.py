@@ -16,6 +16,10 @@ Seed and the Bayer Read button), and below it a plate table, one row per plate (
 The row labels are comments with varnames `lbl_plate_r/g/b`, so Plates mode (T028) can set them to 1 / 2 / 3.
 """
 
+from pathlib import Path
+
+_HERE = Path(__file__).resolve().parent
+
 patcher = {
     "name":                "f_halftone",
     "prefix":              "halftone",
@@ -111,7 +115,7 @@ patcher = {
         {"name": "height", "type": "internal"},
     ],
 
-    "codebox": open("/Users/matt/Github/f_/src/f_halftone/codebox_halftone.gen").read(),
+    "codebox": (_HERE / "codebox_halftone.gen").open().read(),
 }
 
 

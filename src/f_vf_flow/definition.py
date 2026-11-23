@@ -11,6 +11,10 @@ Bypass: neutral vecfield (0.5, 0.5) — not passthrough.
 Signal chain: [texture] → f_vf_flow → any vecfield inlet
 """
 
+from pathlib import Path
+
+_HERE = Path(__file__).resolve().parent
+
 patcher = {
     "name":               "f_vf_flow",
     "prefix":             "vfflow",
@@ -49,7 +53,7 @@ patcher = {
         },
     ],
 
-    "codebox": open("/Users/matt/Github/f_/src/f_vf_flow/codebox_flow.gen").read(),
+    "codebox": (_HERE / "codebox_flow.gen").open().read(),
 
     # The shipped spread dial's saved valueof still says mmin -1.0 (left over from when spread was
     # bipolar; its range is 0..1). Kept as shipped; unverified whether Max rewrites it on load.

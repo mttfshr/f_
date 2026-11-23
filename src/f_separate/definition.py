@@ -18,6 +18,10 @@ The panel (Matt, 2026-11-14: "the same tabular layout as we did for halftone"): 
 title bar, and below it an ink table, one row per ink (1, 2, 3) of number boxes: H, S, L, Gain. Sizes are Claude's.
 """
 
+from pathlib import Path
+
+_HERE = Path(__file__).resolve().parent
+
 # Default inks in H (degrees), S, L: the same colors as the earlier RGB defaults (1, 0.25, 0), (0, 0.6, 0.6), (0.45, 0, 1)
 DEFAULTS = {1: (15.0, 1.0, 0.5), 2: (180.0, 1.0, 0.3), 3: (267.0, 1.0, 0.5)}
 
@@ -66,7 +70,7 @@ patcher = {
         {"name": "bypass_gate", "type": "internal"},
     ],
 
-    "codebox": open("/Users/matt/Github/f_/src/f_separate/codebox_separate.gen").read(),
+    "codebox": (_HERE / "codebox_separate.gen").open().read(),
 }
 
 

@@ -1,3 +1,7 @@
+from pathlib import Path
+
+_HERE = Path(__file__).resolve().parent
+
 patcher = {
     "name":               "f_vf_glow",
     "prefix":             "vfglow",
@@ -38,7 +42,7 @@ patcher = {
         {"name": "bypass",      "type": "bypass"},
     ],
 
-    "codebox": open("/Users/matt/Github/f_/src/f_vf_glow/codebox_v1.gen").read(),
+    "codebox": (_HERE / "codebox_v1.gen").open().read(),
 }
 
 # BEGIN overrides (build/capture.py rewrites only this block)

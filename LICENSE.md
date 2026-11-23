@@ -13,7 +13,7 @@ Protect the product, and encourage broad reuse of the scaffold and process aroun
 | Covered by | What |
 |---|---|
 | **Product license**, below | `package/`, `src/`, `.specify/` |
-| **MIT License**, below | Everything else, including `build/`, `tests/`, `skills/`, `tools/`, `scratch/`, `ideas/`, `docs/`, `README.md` and `HANDOFF.md` |
+| **MIT License**, below | Everything else, including `build/`, `tests/`, `tools/`, `scratch/`, `ideas/`, `docs/`, `README.md` and `HANDOFF.md` |
 
 `f_` requires Vsynth, a separate work by Kevin Kripper that is distributed under its own license terms. Nothing in this repository changes Vsynth's terms. The notes in `docs/vsynth-reference/` describe Vsynth; they are notes about it, not part of it.
 

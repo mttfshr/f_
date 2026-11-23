@@ -337,7 +337,7 @@ flicker caveat rather than building a smoother here.
 
 ## Verification Tiers & Phase-0 gates
 
-Per the constitution (`​.specify/constitution.md` §Verification Tiers), which tiers
+Per the constitution (`.specify/constitution.md` §Verification Tiers), which tiers
 apply is a decision gate — but in this module the **cost-shape gate comes FIRST**
 (before the tier gate), because its outcome changes what the tiers would even test: a
 branch-S pick means a multi-pass/loop-heavy pipeline whose tier-2 story differs

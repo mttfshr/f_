@@ -1,3 +1,7 @@
+from pathlib import Path
+
+_HERE = Path(__file__).resolve().parent
+
 patcher = {
     "name":               "f_vf_chroma",
     "prefix":             "vfchroma",
@@ -45,5 +49,5 @@ patcher = {
         {"name": "bypass",          "type": "bypass"},
     ],
 
-    "codebox": open("/Users/matt/Github/f_/src/f_vf_chroma/codebox_v10.gen").read(),
+    "codebox": (_HERE / "codebox_v10.gen").open().read(),
 }
