@@ -346,7 +346,7 @@ patcher = {
 
 # BEGIN overrides (build/capture.py rewrites only this block)
 patcher["overrides"] = {
-    "dot_in": {"presentation_rect": [4.0, 7.0, 5.0, 5.0]},
-    "dot_out": {"presentation_rect": [4.0, 14.0, 5.0, 5.0]},
+    "dot_in_0": {"presentation_rect": [4.0, 7.0, 5.0, 5.0]},
+    "dot_out_0": {"presentation_rect": [4.0, 14.0, 5.0, 5.0]},
 }
 # END overrides

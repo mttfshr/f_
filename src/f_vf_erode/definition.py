@@ -151,7 +151,7 @@ _GROUPS = [("Run",     58.0,  17.0, ["flow", "push", "speed"]),
            ("Water",   134.0, 17.0, ["flood", "dry"]),
            ("Feed",    134.0, 89.0, ["feed", "fade"])]
 _ov = {
-    "title":        {"presentation_rect": [10.5, 0.0, 44.0, 21.0]},   # x 10.5 is what test_generate_menu finds the module name by (the mock had 14)
+    "title":        {"presentation_rect": [17.0, 0.0, 44.0, 21.0]},   # x 17 = just right of the two dot columns (test_generate_menu finds the module name by title_x; the mock had 14)
     "polar_sw.ctl": {"presentation_rect": [62.0, 3.0, 56.0, 15.0]},
 }
 _LBL = dict(fontname="Ableton Sans Light", fontsize=9.5, textjustification=0, numinlets=1, numoutlets=0, outlettype=[], presentation=1)
