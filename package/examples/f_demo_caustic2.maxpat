@@ -18,6 +18,27 @@
                     "clickthrough": 0,
                     "enablehscroll": 0,
                     "enablevscroll": 0,
+                    "id": "obj-20",
+                    "lockeddragscroll": 0,
+                    "lockedsize": 0,
+                    "maxclass": "bpatcher",
+                    "name": "vs_displacement.maxpat",
+                    "numinlets": 5,
+                    "numoutlets": 1,
+                    "offset": [ 0.0, 0.0 ],
+                    "outlettype": [ "jit_gl_texture" ],
+                    "patching_rect": [ 645.0, 689.0, 162.0, 119.0 ],
+                    "varname": "vs_displacement",
+                    "viewvisibility": 1
+                }
+            },
+            {
+                "box": {
+                    "bgmode": 1,
+                    "border": 1,
+                    "clickthrough": 0,
+                    "enablehscroll": 0,
+                    "enablevscroll": 0,
                     "id": "obj-17",
                     "lockeddragscroll": 0,
                     "lockedsize": 0,
@@ -47,7 +68,7 @@
                     "numoutlets": 3,
                     "offset": [ 0.0, 0.0 ],
                     "outlettype": [ "jit_gl_texture", "jit_gl_texture", "jit_gl_texture" ],
-                    "patching_rect": [ 450.0, 598.0, 190.0, 160.0 ],
+                    "patching_rect": [ 538.0, 506.0, 196.0, 126.0 ],
                     "varname": "f_vf_prism",
                     "viewvisibility": 1
                 }
@@ -108,7 +129,7 @@
                     "numoutlets": 1,
                     "outlettype": [ "" ],
                     "patching_rect": [ 1021.0, 749.0, 123.0, 22.0 ],
-                    "text": "0.035229"
+                    "text": "0.540538"
                 }
             },
             {
@@ -204,7 +225,7 @@
                     "numoutlets": 1,
                     "offset": [ 0.0, 0.0 ],
                     "outlettype": [ "jit_gl_texture" ],
-                    "patching_rect": [ 699.0, 313.0, 190.0, 150.0 ],
+                    "patching_rect": [ 699.0, 313.0, 197.0, 130.0 ],
                     "varname": "f_vf_fluid",
                     "viewvisibility": 1
                 }
@@ -367,7 +388,13 @@
                     "patching_rect": [ 115.0, 99.0, 138.0, 35.0 ],
                     "priority": {
                         "vs_wfg_polarizer::pm_range": -1,
-                        "vs_wfg_polarizer::lock_freq": -1
+                        "vs_wfg_polarizer::lock_freq": -1,
+                        "vs_displacement::displacement_gui::displacement_anglemenu": -1,
+                        "vs_displacement::displacement_gui::displacement_x_range": -1,
+                        "vs_displacement::displacement_gui::displacement_y_range": -1,
+                        "vs_displacement::displacement_gui::displacement_scale_xm": -1,
+                        "vs_displacement::displacement_gui::displacement_scale_ym": -1,
+                        "vs_displacement::displacement_gui::displacement_angle_range": -1
                     },
                     "saved_object_attributes": {
                         "client_rect": [ 0, 100, 412, 440 ],
@@ -513,6 +540,12 @@
             },
             {
                 "patchline": {
+                    "destination": [ "obj-3", 0 ],
+                    "source": [ "obj-20", 0 ]
+                }
+            },
+            {
+                "patchline": {
                     "destination": [ "obj-12", 0 ],
                     "source": [ "obj-31", 0 ]
                 }
@@ -531,7 +564,7 @@
             },
             {
                 "patchline": {
-                    "destination": [ "obj-3", 0 ],
+                    "destination": [ "obj-20", 0 ],
                     "source": [ "obj-40", 0 ]
                 }
             },
@@ -587,8 +620,8 @@
         "parameters": {
             "obj-11::obj-20": [ "gain[1]", "gain", 0 ],
             "obj-11::obj-23": [ "scale[2]", "scale", 0 ],
-            "obj-11::obj-28": [ "rotate", "rotate", 0 ],
-            "obj-11::obj-31": [ "thresh", "thresh", 0 ],
+            "obj-11::obj-26": [ "rotate", "rotate", 0 ],
+            "obj-11::obj-29": [ "thresh", "thresh", 0 ],
             "obj-12::obj-2": [ "vs_phase_ctrl", "vs_phase_ctrl", 0 ],
             "obj-13::obj-11": [ "cycles", "Cycles", 0 ],
             "obj-13::obj-15": [ "inv", "Inv", 0 ],
@@ -607,6 +640,25 @@
             "obj-1::obj-45::obj-19": [ "live.numbox[2]", "live.numbox[1]", 0 ],
             "obj-1::obj-45::obj-32": [ "live.numbox", "live.numbox", 0 ],
             "obj-1::obj-45::obj-9": [ "live.numbox[3]", "live.numbox", 0 ],
+            "obj-20::obj-22::obj-19": [ "displacement_angle", "Angle", 0 ],
+            "obj-20::obj-22::obj-29": [ "live.numbox[5]", "live.numbox", 0 ],
+            "obj-20::obj-22::obj-35": [ "displacement_zoom", "Zoom", 0 ],
+            "obj-20::obj-22::obj-4": [ "disp_ang_range", "angle", 0 ],
+            "obj-20::obj-22::obj-40": [ "displacement_y_m", "YM", 0 ],
+            "obj-20::obj-22::obj-42": [ "displacement_x_m", "XM", 0 ],
+            "obj-20::obj-22::obj-44": [ "displacement_zoom_m", "ZM", 0 ],
+            "obj-20::obj-22::obj-47": [ "displacement_angle_m", "AGLM", 0 ],
+            "obj-20::obj-22::obj-52": [ "MENU[1]", "angle", 0 ],
+            "obj-20::obj-22::obj-55": [ "MENU[2]", "angle", 0 ],
+            "obj-20::obj-22::obj-56": [ "MENU[3]", "angle", 0 ],
+            "obj-20::obj-22::obj-57": [ "MENU[4]", "angle", 0 ],
+            "obj-20::obj-22::obj-6": [ "offrot_x", "X", 0 ],
+            "obj-20::obj-22::obj-67": [ "menu", "angle", 0 ],
+            "obj-20::obj-22::obj-8": [ "displacement_y", "Y", 0 ],
+            "obj-20::obj-33": [ "displacement_init_point", "live.text", 2 ],
+            "obj-20::obj-49": [ "a_lock", "a_lock", 0 ],
+            "obj-20::obj-8": [ "displacement_polar", "live.text", 2 ],
+            "obj-20::obj-96": [ "displacement_boundmode", "live.menu", 0 ],
             "obj-2::obj-19": [ "dim_x", "dim_x", 0 ],
             "obj-2::obj-23": [ "dim_y", "dim_y", 0 ],
             "obj-2::obj-36": [ "live.text", "live.text", 0 ],
@@ -642,6 +694,12 @@
             "obj-4::obj-33": [ "f_module_6_file", "live.menu", 0 ],
             "obj-4::obj-36": [ "f_module_7_disp", "live.menu", 0 ],
             "obj-4::obj-37": [ "f_module_7_file", "live.menu", 0 ],
+            "obj-4::obj-40": [ "f_module_8_disp", "live.menu", 0 ],
+            "obj-4::obj-41": [ "f_module_8_file", "live.menu", 0 ],
+            "obj-4::obj-44": [ "f_module_9_disp", "live.menu", 0 ],
+            "obj-4::obj-45": [ "f_module_9_file", "live.menu", 0 ],
+            "obj-4::obj-48": [ "f_module_10_disp", "live.menu", 0 ],
+            "obj-4::obj-49": [ "f_module_10_file", "live.menu", 0 ],
             "obj-4::obj-8": [ "f_module_0_disp", "live.menu", 0 ],
             "obj-4::obj-9": [ "f_module_0_file", "live.menu", 0 ],
             "obj-5::obj-14": [ "live.menu[18]", "live.menu", 0 ],
@@ -683,6 +741,7 @@
             "obj-8::obj-26": [ "scale[1]", "scale", 0 ],
             "obj-8::obj-29": [ "softness", "expo", 0 ],
             "obj-8::obj-310": [ "range_gain", "range_gain", 0 ],
+            "obj-8::obj-32": [ "edge", "edge", 0 ],
             "obj-8::obj-320": [ "range_scale", "range_scale", 0 ],
             "obj-9::obj-20": [ "force", "force", 0 ],
             "obj-9::obj-23": [ "dt", "dt", 0 ],
@@ -690,6 +749,7 @@
             "obj-9::obj-29": [ "project", "project", 0 ],
             "obj-9::obj-32": [ "drag", "drag", 0 ],
             "obj-9::obj-35": [ "gain[2]", "gain", 0 ],
+            "obj-9::obj-38": [ "drift", "drift", 0 ],
             "parameterbanks": {
                 "0": {
                     "index": 0,
@@ -715,14 +775,14 @@
                     "parameter_type": 0,
                     "parameter_unitstyle": 1
                 },
-                "obj-11::obj-28": {
+                "obj-11::obj-26": {
                     "parameter_invisible": 0,
                     "parameter_modmode": 3,
                     "parameter_steps": 0,
                     "parameter_type": 0,
                     "parameter_unitstyle": 1
                 },
-                "obj-11::obj-31": {
+                "obj-11::obj-29": {
                     "parameter_invisible": 0,
                     "parameter_modmode": 3,
                     "parameter_steps": 0,
@@ -743,6 +803,27 @@
                 },
                 "obj-1::obj-32": {
                     "parameter_longname": "live.numbox[4]"
+                },
+                "obj-20::obj-22::obj-19": {
+                    "parameter_range": [ -180.0, 180.0 ]
+                },
+                "obj-20::obj-22::obj-29": {
+                    "parameter_longname": "live.numbox[5]"
+                },
+                "obj-20::obj-22::obj-40": {
+                    "parameter_range": [ -1.0, 1.0 ]
+                },
+                "obj-20::obj-22::obj-42": {
+                    "parameter_range": [ -1.0, 1.0 ]
+                },
+                "obj-20::obj-22::obj-47": {
+                    "parameter_range": [ -6.28, 6.28 ]
+                },
+                "obj-20::obj-22::obj-6": {
+                    "parameter_range": [ -1.0, 1.0 ]
+                },
+                "obj-20::obj-22::obj-8": {
+                    "parameter_range": [ -1.0, 1.0 ]
                 },
                 "obj-2::obj-19": {
                     "parameter_longname": "dim_x"
@@ -971,6 +1052,13 @@
                 "obj-9::obj-35": {
                     "parameter_invisible": 0,
                     "parameter_longname": "gain[2]",
+                    "parameter_modmode": 3,
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 1
+                },
+                "obj-9::obj-38": {
+                    "parameter_invisible": 0,
                     "parameter_modmode": 3,
                     "parameter_steps": 0,
                     "parameter_type": 0,

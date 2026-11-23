@@ -1,0 +1,62 @@
+{
+    "pattrstorage": {
+        "name": "Vsynth",
+        "slots": {
+            "1": {
+                "id": 1,
+                "data": {
+                    "vs_output[1]::lowr_y": [ 1.0 ],
+                    "vs_output[1]::lowr_x": [ 1.0 ],
+                    "vs_output[1]::lowl_y": [ 1.0 ],
+                    "vs_output[1]::lowl_x": [ 0.0 ],
+                    "vs_output[1]::uppr_y": [ 0.0 ],
+                    "vs_output[1]::uppr_x": [ 1.0 ],
+                    "vs_output[1]::uppl_y": [ 0.0 ],
+                    "vs_output[1]::uppl_x": [ 0.0 ],
+                    "vs_presets::7170.pre": [ -1 ],
+                    "f_vf_fluid::bypass": [ 0 ],
+                    "f_vf_fluid::drag": [ 0.5 ],
+                    "f_vf_fluid::drift": [ 0.4724409448818895 ],
+                    "f_vf_fluid::dt": [ 0.01 ],
+                    "f_vf_fluid::force": [ 0.02 ],
+                    "f_vf_fluid::gain": [ 10.0 ],
+                    "f_vf_fluid::project": [ 1.0 ],
+                    "f_vf_fluid::taps": [ "taps", 8.0 ],
+                    "f_vf_fluid::viscosity": [ 0.085 ],
+                    "f_vf_fieldmap::bypass": [ 0 ],
+                    "f_vf_fieldmap::gain": [ 10.0 ],
+                    "f_vf_fieldmap::rotate": [ 0.0 ],
+                    "f_vf_fieldmap::scale": [ 0.05 ],
+                    "f_vf_fieldmap::thresh": [ 0.0 ],
+                    "vs_noise_3::n3_lock": [ 1.0 ],
+                    "vs_noise_3::n3_range": [ 0.0 ],
+                    "vs_noise_3::color_mode": [ 0.0 ],
+                    "vs_noise_3::n3_dim_x": [ 12.0 ],
+                    "vs_noise_3::n3_dim_y": [ 12.0 ],
+                    "vs_noise_3::n3_speed": [ 0.1 ],
+                    "f_wave_field::bypass": [ 0 ],
+                    "f_wave_field::damping": [ 0.001 ],
+                    "f_wave_field::dispersion": [ 2.0 ],
+                    "f_wave_field::edge": [ 0.0 ],
+                    "f_wave_field::force": [ 0.30708661417322763 ],
+                    "f_wave_field::gain": [ 1.0 ],
+                    "f_wave_field::lmode": [ 1.0 ],
+                    "f_wave_field::reset_button": [ 0.0 ],
+                    "f_wave_field::ring": [ 1.1811023622047243 ],
+                    "f_wave_field::speed": [ 0.3799212598425195 ],
+                    "f_wave_field::strength": [ 0.31496062992126006 ],
+                    "f_wave_field::strike_button": [ 0 ],
+                    "f_droste::bypass": [ 0 ],
+                    "f_droste::n_arms": [ 1.0 ],
+                    "f_droste::rotation": [ 0.0 ],
+                    "f_droste::twist": [ 2.0 ],
+                    "f_droste::zoom": [ 57.29055118110236 ],
+                    "vs_lfo::lfo_freq_range": [ 0.0 ],
+                    "vs_lfo::lfo_freq": [ 1.9685039370078776 ],
+                    "vs_lfo::lfo_pw": [ 50.0 ],
+                    "vs_lfo::lfo_wave": [ 2.0 ]
+                }
+            }
+        }
+    }
+}

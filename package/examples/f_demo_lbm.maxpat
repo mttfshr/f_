@@ -9,8 +9,28 @@
             "modernui": 1
         },
         "classnamespace": "box",
-        "rect": [ 34.0, 95.0, 1000.0, 780.0 ],
+        "rect": [ 34.0, 95.0, 1142.0, 866.0 ],
         "boxes": [
+            {
+                "box": {
+                    "bgmode": 1,
+                    "border": 1,
+                    "clickthrough": 0,
+                    "enablehscroll": 0,
+                    "enablevscroll": 0,
+                    "id": "obj-4",
+                    "lockeddragscroll": 0,
+                    "lockedsize": 0,
+                    "maxclass": "bpatcher",
+                    "name": "vs_preview.maxpat",
+                    "numinlets": 1,
+                    "numoutlets": 1,
+                    "offset": [ 0.0, 0.0 ],
+                    "outlettype": [ "jit_gl_texture" ],
+                    "patching_rect": [ 762.0, 198.0, 157.0, 112.0 ],
+                    "viewvisibility": 1
+                }
+            },
             {
                 "box": {
                     "bgmode": 1,
@@ -111,7 +131,7 @@
                     "numoutlets": 1,
                     "offset": [ 0.0, 0.0 ],
                     "outlettype": [ "jit_gl_texture" ],
-                    "patching_rect": [ 270.0, 207.0, 231.0, 156.0 ],
+                    "patching_rect": [ 270.0, 171.0, 231.0, 156.0 ],
                     "varname": "f_lens",
                     "viewvisibility": 1
                 }
@@ -173,7 +193,7 @@
                     "numoutlets": 1,
                     "offset": [ 0.0, 0.0 ],
                     "outlettype": [ "jit_gl_texture" ],
-                    "patching_rect": [ 514.0, 280.0, 197.0, 110.0 ],
+                    "patching_rect": [ 532.0, 246.0, 197.0, 110.0 ],
                     "varname": "f_vf_lbm",
                     "viewvisibility": 1
                 }
@@ -213,7 +233,7 @@
                     "numoutlets": 1,
                     "offset": [ 0.0, 0.0 ],
                     "outlettype": [ "" ],
-                    "patching_rect": [ 666.0, 611.5, 170.0, 144.5 ],
+                    "patching_rect": [ 762.0, 532.0, 170.0, 144.5 ],
                     "varname": "vs_presets",
                     "viewvisibility": 1
                 }
@@ -228,17 +248,14 @@
                     "numinlets": 1,
                     "numoutlets": 1,
                     "outlettype": [ "" ],
-                    "patching_rect": [ 666.0, 698.5, 138.0, 35.0 ],
-                    "presentation_linecount": 2,
+                    "patching_rect": [ 762.0, 619.0, 138.0, 35.0 ],
                     "priority": {
-                        "vs_wfg_polarizer::pm_range": -1,
-                        "vs_wfg_polarizer::lock_freq": -1,
-                        "vs_displacement::displacement_gui::displacement_y_range": -1,
                         "vs_displacement::displacement_gui::displacement_anglemenu": -1,
-                        "vs_displacement::displacement_gui::displacement_scale_ym": -1,
                         "vs_displacement::displacement_gui::displacement_x_range": -1,
-                        "vs_displacement::displacement_gui::displacement_angle_range": -1,
-                        "vs_displacement::displacement_gui::displacement_scale_xm": -1
+                        "vs_displacement::displacement_gui::displacement_y_range": -1,
+                        "vs_displacement::displacement_gui::displacement_scale_xm": -1,
+                        "vs_displacement::displacement_gui::displacement_scale_ym": -1,
+                        "vs_displacement::displacement_gui::displacement_angle_range": -1
                     },
                     "saved_object_attributes": {
                         "client_rect": [ 854, 172, 1208, 300 ],
@@ -266,7 +283,7 @@
                     "numoutlets": 1,
                     "offset": [ 0.0, 0.0 ],
                     "outlettype": [ "" ],
-                    "patching_rect": [ 565.0, 609.5, 96.85526317358028, 146.5 ],
+                    "patching_rect": [ 661.0, 530.0, 96.85526317358028, 146.5 ],
                     "varname": "vs_render",
                     "viewvisibility": 1
                 }
@@ -374,7 +391,15 @@
             },
             {
                 "patchline": {
+                    "destination": [ "obj-4", 0 ],
+                    "order": 0,
+                    "source": [ "obj-9", 0 ]
+                }
+            },
+            {
+                "patchline": {
                     "destination": [ "obj-8", 0 ],
+                    "order": 1,
                     "source": [ "obj-9", 0 ]
                 }
             }
@@ -439,12 +464,18 @@
             "obj-20::obj-96": [ "displacement_boundmode", "live.menu", 0 ],
             "obj-26::obj-20": [ "n_inks", "n_inks", 0 ],
             "obj-26::obj-23": [ "sep_mode", "sep_mode", 0 ],
-            "obj-26::obj-26": [ "gain1", "gain1", 0 ],
-            "obj-26::obj-29": [ "gain2", "gain2", 0 ],
-            "obj-26::obj-32": [ "gain3", "gain3", 0 ],
-            "obj-26::obj-35": [ "sat1", "sat1", 0 ],
-            "obj-26::obj-38": [ "sat2", "sat2", 0 ],
-            "obj-26::obj-41": [ "sat3", "sat3", 0 ],
+            "obj-26::obj-26": [ "gain1", "ink1_h", 0 ],
+            "obj-26::obj-29": [ "gain2", "ink1_s", 0 ],
+            "obj-26::obj-32": [ "gain3", "ink1_l", 0 ],
+            "obj-26::obj-35": [ "sat1", "gain1", 0 ],
+            "obj-26::obj-38": [ "sat2", "ink2_h", 0 ],
+            "obj-26::obj-41": [ "sat3", "ink2_s", 0 ],
+            "obj-26::obj-44": [ "ink2_l", "ink2_l", 0 ],
+            "obj-26::obj-47": [ "gain2[1]", "gain2", 0 ],
+            "obj-26::obj-50": [ "ink3_h", "ink3_h", 0 ],
+            "obj-26::obj-53": [ "ink3_s", "ink3_s", 0 ],
+            "obj-26::obj-56": [ "ink3_l", "ink3_l", 0 ],
+            "obj-26::obj-59": [ "gain3[1]", "gain3", 0 ],
             "obj-2::obj-19": [ "dim_x", "dim_x", 0 ],
             "obj-2::obj-23": [ "dim_y", "dim_y", 0 ],
             "obj-2::obj-36": [ "live.text", "live.text", 0 ],
@@ -509,11 +540,19 @@
             "obj-9::obj-41": [ "along_phase", "along_phase", 0 ],
             "obj-9::obj-44": [ "across_phase", "across_phase", 0 ],
             "obj-9::obj-47": [ "softness", "softness", 0 ],
+            "parameterbanks": {
+                "0": {
+                    "index": 0,
+                    "name": "",
+                    "parameters": [ "-", "-", "-", "-", "-", "-", "-", "-" ],
+                    "buttons": [ "-", "-", "-", "-", "-", "-", "-", "-" ]
+                }
+            },
             "parameter_overrides": {
                 "obj-14::obj-20": {
                     "parameter_invisible": 0,
                     "parameter_modmode": 3,
-                    "parameter_range": [ -1.0, 1.0 ],
+                    "parameter_range": [ -2.0, 2.0 ],
                     "parameter_steps": 0,
                     "parameter_type": 0,
                     "parameter_unitstyle": 1
@@ -694,6 +733,7 @@
                 },
                 "obj-26::obj-26": {
                     "parameter_invisible": 0,
+                    "parameter_longname": "gain1",
                     "parameter_modmode": 3,
                     "parameter_steps": 0,
                     "parameter_type": 0,
@@ -701,6 +741,7 @@
                 },
                 "obj-26::obj-29": {
                     "parameter_invisible": 0,
+                    "parameter_longname": "gain2",
                     "parameter_modmode": 3,
                     "parameter_steps": 0,
                     "parameter_type": 0,
@@ -708,6 +749,75 @@
                 },
                 "obj-26::obj-32": {
                     "parameter_invisible": 0,
+                    "parameter_longname": "gain3",
+                    "parameter_modmode": 3,
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 1
+                },
+                "obj-26::obj-35": {
+                    "parameter_invisible": 0,
+                    "parameter_longname": "sat1",
+                    "parameter_modmode": 3,
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 1
+                },
+                "obj-26::obj-38": {
+                    "parameter_invisible": 0,
+                    "parameter_longname": "sat2",
+                    "parameter_modmode": 3,
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 1
+                },
+                "obj-26::obj-41": {
+                    "parameter_invisible": 0,
+                    "parameter_longname": "sat3",
+                    "parameter_modmode": 3,
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 1
+                },
+                "obj-26::obj-44": {
+                    "parameter_invisible": 0,
+                    "parameter_modmode": 3,
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 1
+                },
+                "obj-26::obj-47": {
+                    "parameter_invisible": 0,
+                    "parameter_longname": "gain2[1]",
+                    "parameter_modmode": 3,
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 1
+                },
+                "obj-26::obj-50": {
+                    "parameter_invisible": 0,
+                    "parameter_modmode": 3,
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 1
+                },
+                "obj-26::obj-53": {
+                    "parameter_invisible": 0,
+                    "parameter_modmode": 3,
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 1
+                },
+                "obj-26::obj-56": {
+                    "parameter_invisible": 0,
+                    "parameter_modmode": 3,
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 1
+                },
+                "obj-26::obj-59": {
+                    "parameter_invisible": 0,
+                    "parameter_longname": "gain3[1]",
                     "parameter_modmode": 3,
                     "parameter_steps": 0,
                     "parameter_type": 0,
