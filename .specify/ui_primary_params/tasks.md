@@ -90,3 +90,9 @@ Spec: `spec.md`. Record of results: this file. Who observed what is stated per t
 - **`f_sirds` reverted, not applied:** rebuilding it failed `test_drift.py` (15/16, `tests/logs/20261122-180446-offline.log`: `f_sirds` drifted from its definition, 11 boxes each way). Its shipped patcher does not reproduce from `definition.py` (known side finding, HANDOFF 2026-11-21: a definition plus an older build script, which governs is not established). Restored `src/f_sirds/definition.py` and `package/patchers/f_sirds.maxpat` from git. It has one param, so there was nothing to lay out anyway.
 - **Helpfile embeds smaller than the new panel (not fixed):** `f_vf_optical_flow.maxhelp` 154 x 91, `f_vf_streak.maxhelp` 154 x 91, `f_vf_potential.maxhelp` 208 x 110, `f_vf_repulse.maxhelp` 182 x 91, `f_ngon.maxhelp` 172 x 101; most were already below the old frame (preflight Phase 0).
 - Totals now: 22 shipped modules carry the role layout (8 pilot, 8 pool, 6 held-back).
+
+### 2026-11-22: f_sirds looked at (Claude, offline, read-only)
+
+- `f_sirds` does not drift. It is built by `src/f_sirds/build_sirds.py` (13 pix stages, depth and bypass broadcast to every stage); `definition.py` documents it and says it is NOT built by `build_patcher.py`. `build/py.sh build/drift.py f_sirds`: `[script] ok`, reproduces exactly (observed). The 15/16 failure was my doing: `apply_roles.py` rebuilt it with the generic builder. Reverted the same session; nothing of it was committed.
+- Of the 22 modules that carry the layout, none has a `build_*.py` (only `f_sirds` and `f_util_vary` do; checked with `ls src/*/build_*.py`), so none was built the wrong way; drift 16/16 agrees.
+- Open, not mine: `docs/f-reference/f_sirds.md` and the script's docstring point at `.specify/f_sirds/` (the files are in `src/f_sirds/`; `.specify/f_sirds/tasks.md` T003). Role layout for `f_sirds` would be a one-param change in `build_sirds.py` (`PH` 130); not done.

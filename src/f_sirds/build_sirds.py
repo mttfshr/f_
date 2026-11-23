@@ -5,20 +5,20 @@ build_sirds.py — generates f_sirds.maxpat
 13-stage SIRDS chain: stage0 (reference/seed, unmasked periodic tile) +
 stage1..stage12 (depth-driven, byte-identical codebox apart from baked
 stage_index). num_strips=12 is a fixed build-time constant, not a live
-param -- see .specify/f_sirds/definition.py for full rationale.
+param -- see src/f_sirds/definition.py for full rationale.
 
 depth_factor and bypass are broadcast to every depth-driven stage (not
 just the primary/final one) -- this is why this module has its own
 builder instead of going through tools/build_patcher.py, which only
 wires live params to a single "primary" pix_chain node.
 
-Run: python3 .specify/f_sirds/build_sirds.py
+Run: python3 src/f_sirds/build_sirds.py
 """
 
 import json
 from pathlib import Path
 
-REPO = Path(__file__).parent.parent.parent   # .specify/f_sirds/ → f_/
+REPO = Path(__file__).parent.parent.parent   # src/f_sirds/ → f_/ (three levels up)
 HERE = Path(__file__).parent
 
 # ---------------------------------------------------------------------------

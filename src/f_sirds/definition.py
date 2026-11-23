@@ -7,7 +7,7 @@ construction per Policarpo, "Real-Time Stereograms," GPU Gems Ch. 41 (2004).
 NOT built via tools/build_patcher.py directly -- pix_chain as currently
 specced only wires live params (depth_factor, bypass) to the "primary"
 node, but this module needs every depth-driven stage to receive both.
-Built via the dedicated .specify/f_sirds/build_sirds.py instead, following
+Built via the dedicated src/f_sirds/build_sirds.py instead, following
 the f_vf_advect precedent (custom builder script, definition.py stays the
 documented source of truth). See docs/f-reference/f_sirds.md for the full
 research writeup this build is based on.

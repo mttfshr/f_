@@ -33,7 +33,7 @@ are per directory: `f_sirds/T001`.
   builder, same as its siblings), and decide whether a contract/bypass
   bench entry is feasible given the 13-stage broadcast-gate design.
 
-- **T003 — convention/docs: `docs/f-reference/f_sirds.md`'s Build section
+- [x] **T003 (fixed 2026-11-22, Claude: the paths in `docs/f-reference/f_sirds.md`, `build_sirds.py` and `definition.py` now say `src/f_sirds/`) — convention/docs: `docs/f-reference/f_sirds.md`'s Build section
   points at a path that doesn't exist.** It documents the source of truth
   as `.specify/f_sirds/definition.py`, `codebox_stage0.gen`,
   `codebox_stage_n.gen`, `build_sirds.py` — but those files are actually at

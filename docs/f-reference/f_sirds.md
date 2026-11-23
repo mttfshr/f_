@@ -77,15 +77,15 @@ documented source of truth even though it isn't literally consumed by
 `build_patcher.py`):
 
 ```
-.specify/f_sirds/definition.py       — documented source of truth
-.specify/f_sirds/codebox_stage0.gen  — reference stage template
-.specify/f_sirds/codebox_stage_n.gen — depth-driven stage template
+src/f_sirds/definition.py       — documented source of truth
+src/f_sirds/codebox_stage0.gen  — reference stage template
+src/f_sirds/codebox_stage_n.gen — depth-driven stage template
                                         ({stage_index}/{strip_width}
                                         baked in via .format() per instance)
-.specify/f_sirds/build_sirds.py      — generates patchers/f_sirds.maxpat
+src/f_sirds/build_sirds.py      — generates patchers/f_sirds.maxpat
 ```
 
-Run: `python3 .specify/f_sirds/build_sirds.py`
+Run: `python3 src/f_sirds/build_sirds.py`
 Validate: `python3 -c "import json; json.load(open('patchers/f_sirds.maxpat'))"`
 
 Registered in `f_modules` under Processors — `build/generate_menu.py`
