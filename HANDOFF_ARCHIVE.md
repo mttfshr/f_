@@ -1,6 +1,13 @@
 # HANDOFF archive
 
-Entries moved out of `HANDOFF.md` on 2026-10-31, 2026-11-04, 2026-11-08, 2026-11-10, 2026-11-11, 2026-11-12, 2026-11-13 and 2026-11-14 (three times) and 2026-11-15 (twice) (newest first, as they were). Not read at session start: grep it for history. The full pre-trim `HANDOFF.md` is also in git (commit 76c2ab8).
+Entries moved out of `HANDOFF.md` on 2026-10-31, 2026-11-04, 2026-11-08, 2026-11-10, 2026-11-11, 2026-11-12, 2026-11-13 and 2026-11-14 (three times) and 2026-11-15 (twice) and 2026-11-21 (newest first, as they were). Not read at session start: grep it for history. The full pre-trim `HANDOFF.md` is also in git (commit 76c2ab8).
+
+## 2026-11-15 (night): runner 2 re-baseline of three skills
+
+- **Runs (offline by Claude, Opus, 51 runs, Matt's go):** vsynth-bpatcher 9/12 (old 8/12), max-patch-notation 9/12 (old 9/12), max-advanced-object-methodology 11/12 (old 10/12). 0/15 near-miss hits. Files `skills/evals/results/<skill>.2026-11-15-runner2.json`; table and notes in `skills/evals/results/README.md`.
+- **Misses (from `run_log`; cause inferred):** all 22 missed runs opened with a repo read, none with text, a timeout or a wrong skill: CLAUDE.md's fresh-session read order (HANDOFF, plan, gates), a grep for the thing the prompt names ("the stereo chain", "boundmode"), a Bash read of `skills/vsynth-bpatcher/` (the memory `feedback_max_patch_editing.md` points there), or `build/spec.md` for the jsui capture case that CLAUDE.md answers. The runner stops at the first tool, so these are scored as misses.
+- **No description edited.** The evals closed 2026-11-15 (see State).
+- Session end: `test_gates.py` not run (Matt: skip, 2026-11-15).
 
 ## 2026-11-15 (evening): eval runner 2, gen~ re-baseline
 

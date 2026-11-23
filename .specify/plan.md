@@ -21,6 +21,8 @@ Closed 2026-11-01 (evening): `f_weave` rework and promotion: the vecfield inlet 
 
 Closed 2026-10-30/31: the `render_dim` migration (all tensor modules, vorticity, quasi, grain, seeds; `f_masonry` and `f_cmap` stay exempt), its live contract bench (green 2026-10-31 after a harness input-size fix), the `f_vf_advect` Trail rework, and `f_tf_hatch` (v2 built, benched, helpfile checked; the spike-script tidy closed 2026-11-06, T064; hub Q17, NaN masking in its E1 stage, probed clean 2026-11-01).
 
+7. **UI roles spike** (Matt's idea, 2026-11-22): do params split into primary (character) and secondary, so dials mean primary and number boxes secondary? Scaffolded offline: `.specify/ui_primary_params/` (spec, tasks, param inventory). Spec approved, 8 scratch layouts looked at (Matt: great), rule written down in `ideas/ui_design_concepts.md` 2026-11-22; shipped modules unchanged. Open: apply to the 8, extend, or J2/J3. Gate `G-ui-density`.
+
 ## Next (Claude's lean; Matt decides)
 
 0. Stable push (Matt, 2026-11-06): batch 3, `f_tf_tensormap`, `f_tf_hatch`, `f_tf_axisflow`, `f_vf_fieldmap`, `f_vf_potential`, `f_vf_flow` and `f_tone_curve` moved, so all seven are in `.specify/stable/`; batch 4 triage is done (`.specify/maintenance/batch4_triage_2026-11-06.md`), Group A (`f_vf_warp`, `f_stipple`, `f_vf_glow`, `f_vf_prism`) moved to `.specify/stable/` 2026-11-06; Group B (`f_vf_advect`, `f_vf_streak`) moved to `.specify/stable/` 2026-11-06; `f_vf_optical_flow` and `f_vf_seeds` bypass passthrough done 2026-11-06 (look and bench passed); `f_vf_vortex` moved to `.specify/stable/` 2026-11-06, batch 4 done; bar is in `HANDOFF_ARCHIVE.md`, 2026-11-06 entries.
