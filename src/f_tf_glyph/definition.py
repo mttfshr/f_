@@ -61,7 +61,7 @@ patcher = {
     ],
 
     "mod_inlets": [
-        {"label": "tensor (tensormap outlet 0)", "vs_instate": True},
+        {"type": "tensor", "label": "tensor (tensormap outlet 0)", "vs_instate": True},
         {"label": "source (tint)", "vs_instate": True},
     ],
 

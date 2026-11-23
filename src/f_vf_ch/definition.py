@@ -39,7 +39,7 @@ patcher = {
 
     "outlets": [
         {"comment": "phi (grey scalar)"},
-        {"comment": "blended velocity vecfield"},
+        {"type": "vec", "comment": "blended velocity vecfield"},
     ],
 
     "params": [
@@ -87,9 +87,9 @@ patcher = {
     "inlet_comment": "control / phi source texture",
     "inlet_fanout": {"texture": [["adv", 2]], "state": ["adv"], "state_param": "src_phi"},
     "mod_inlets": [
-        {"label": "velocity A (phase A)", "vs_instate": True, "state_param": "src_a",
+        {"type": "vec", "label": "velocity A (phase A)", "vs_instate": True, "state_param": "src_a",
          "fanout": [["inab", 1]], "state_nodes": ["inab"]},
-        {"label": "velocity B (phase B)", "vs_instate": True, "state_param": "src_b",
+        {"type": "vec", "label": "velocity B (phase B)", "vs_instate": True, "state_param": "src_b",
          "fanout": [["inab", 2]], "state_nodes": ["inab"]},
     ],
     "draw_triggers": ["inab", "pass", "enc"],

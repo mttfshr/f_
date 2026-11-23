@@ -29,6 +29,7 @@ patcher = {
     "title":       "Sharpen",
     "signal_type": "T_ in/out",
     "archetype":   "processor",
+    "in_type": "tensor",
     "pix_type":    "float32",
     "bypass_mode": "param",
 
@@ -38,7 +39,7 @@ patcher = {
     "codebox": (_HERE / "codebox_sharpen.gen").open(newline="").read(),
 
     "outlets": [
-        {"comment": "tensor (raw Jxx, Jxy, Jyy)",
+        {"type": "tensor", "comment": "tensor (raw Jxx, Jxy, Jyy)",
          "color": [0.85, 0.55, 0.2, 1.0],
          "hint": "Raw structure tensor, gap-scaled: R = Jxx'*strength, G = Jxy'*strength*0.5 + 0.5, B = Jyy'*strength, A = 1. Gap = 1 is exact passthrough; relax (<1) eases toward isotropy, exaggerate (>1) commits edges. Axis never changes; trace preserved inside the linear range. Neutral (zero tensor) = (0, 0.5, 0, 1)."},
     ],

@@ -12,7 +12,7 @@ patcher = {
     "presentation_height": 283,
 
     "outlets": [
-        {"comment": "vecfield"},
+        {"type": "vec", "comment": "vecfield"},
     ],
 
     # Mod inlets

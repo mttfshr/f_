@@ -21,7 +21,7 @@ patcher = {
     "outlets": [
         {"comment": "composite"},
         {"comment": "prism", "color": [0.6196078431372549, 0.9529411764705882, 0.6588235294117647, 1.0]},
-        {"comment": "vecfield", "signal_type": "float32"},
+        {"type": "vec", "comment": "vecfield", "signal_type": "float32"},
     ],
 
     # Inlet 0: source texture
@@ -29,7 +29,7 @@ patcher = {
     # Inlet 2: length mod
     # Inlet 3: width mod
     "mod_inlets": [
-        {"label": "vecfield",    "state_param": "src_vecfield"},
+        {"type": "vec", "label": "vecfield",    "state_param": "src_vecfield"},
         {"label": "reach mod",   "state_param": "src_length_mod"},
         {"label": "spread mod",  "state_param": "src_width_mod"},
     ],

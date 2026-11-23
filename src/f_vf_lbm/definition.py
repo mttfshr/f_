@@ -54,7 +54,7 @@ patcher = {
     "archetype": "processor",
 
     "outlets": [
-        {"comment": "velocity vecfield"},
+        {"type": "vec", "comment": "velocity vecfield"},
     ],
 
     "params": [

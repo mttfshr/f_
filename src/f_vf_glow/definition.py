@@ -23,7 +23,7 @@ patcher = {
 
     # Inlet 1: vecfield; Inlet 2: radius mod
     "mod_inlets": [
-        {"label": "vecfield", "state_param": "src_vecfield"},
+        {"type": "vec", "label": "vecfield", "state_param": "src_vecfield"},
         {"label": "radius mod"},
     ],
 

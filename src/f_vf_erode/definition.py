@@ -97,7 +97,7 @@ patcher = {
     "mod_inlets": [
         {"label": "terrain (luma = height; water runs downhill)", "vs_instate": True, "state_param": "src_terrain",
          "fanout": [["prep", 1]], "state_nodes": ["prep"]},
-        {"label": "vecfield (pushes the water)", "vs_instate": True, "state_param": "src_field",
+        {"type": "vec", "label": "vecfield (pushes the water)", "vs_instate": True, "state_param": "src_field",
          "fanout": [["prep", 2]], "state_nodes": ["prep"]},
         {"label": "background (the paper the pigment sits on)", "vs_instate": True, "state_param": "src_bg",
          "fanout": [["enc", 3]], "state_nodes": ["enc"]},

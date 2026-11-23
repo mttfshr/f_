@@ -93,10 +93,10 @@ patcher = {
     ],
 
     "outlets": [
-        {"comment": "tensor (raw Jxx, Jxy, Jyy)",
+        {"type": "tensor", "comment": "tensor (raw Jxx, Jxy, Jyy)",
          "color": [0.85, 0.55, 0.2, 1.0],
          "hint": "Raw structure tensor: R = Jxx*strength, G = Jxy*strength*0.5 + 0.5, B = Jyy*strength, A = 1. Sign-safe: no angle doubling. Neutral (zero tensor) = (0, 0.5, 0, 1)."},
-        {"comment": "tensor packed (cos2t, sin2t, trace, coherence)",
+        {"type": "tensor", "comment": "tensor packed (cos2t, sin2t, trace, coherence)",
          "color": [0.85, 0.35, 0.55, 1.0],
          "hint": "Convenience outlet: R = cos(2 theta)*0.5+0.5, G = sin(2 theta)*0.5+0.5, B = clamp(trace*strength), A = coherence (0-1, gain-free). Angle-DOUBLED: do not feed R/G to sign-sensitive consumers (warp, advect, caustic, fluid, potential, seeds); decode theta = 0.5*atan2 first. Neutral = (0.5, 0.5, 0, 0)."},
     ],

@@ -80,6 +80,7 @@ patcher = {
     # Vecfield inlet — vs_inState gates src_vecfield (suppresses vs_black displacement)
     "mod_inlets": [
         {
+            "type": "vec",
             "label":       "vecfield",
             "vs_instate":  True,
             "state_param": "src_vecfield",
@@ -90,7 +91,7 @@ patcher = {
     "outlets": [
         {"comment": "composite"},
         {"comment": "advected"},
-        {"comment": "vecfield"},
+        {"type": "vec", "comment": "vecfield"},
     ],
 
     # Params.  `"hint": None` = the shipped control has no hint key at all (build/spec.md).

@@ -11,6 +11,7 @@ patcher = {
     "title":              "Vorticity",
     "signal_type":        "∇ in/out",
     "archetype":          "processor",
+    "in_type": "vec",
     # 2026-10-30: `dim` reads 1 inside a live jit.gl.pix, so the texel step came from `dim.x/dim.y`
     # unreliably.  width / height are internal Params driven from the render size by the builder's
     # `render_dim` key, and the output follows the render size (`@adapt 0`; the input is assumed
@@ -27,7 +28,7 @@ patcher = {
     "presentation_height": 80,
 
     "outlets": [
-        {"comment": "vecfield"},
+        {"type": "vec", "comment": "vecfield"},
     ],
 
     # Single inlet: in1 IS the vecfield (not a scalar source), same

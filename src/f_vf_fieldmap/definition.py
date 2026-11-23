@@ -15,7 +15,7 @@ patcher = {
     "presentation_height": 80,
 
     "outlets": [
-        {"comment": "vecfield"},
+        {"type": "vec", "comment": "vecfield"},
     ],
 
     "params": [

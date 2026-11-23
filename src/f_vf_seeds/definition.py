@@ -161,7 +161,7 @@ patcher = {
                      "state": _RENDER, "state_param": "src_shape"},
     # inlets 1-3: each its own vs_inState, fanned out to the stages that read it
     "mod_inlets": [
-        {"label": "vecfield", "vs_instate": True, "state_param": "src_vecfield",
+        {"type": "vec", "label": "vecfield", "vs_instate": True, "state_param": "src_vecfield",
          "fanout": [["1a", 0], ["1b", 0], ["render_1", 2], ["render_2", 2]], "state_nodes": []},
         {"label": "mod tex", "vs_instate": True, "state_param": "src_mod",
          "fanout": [["render_1", 3], ["render_2", 3]], "state_nodes": _RENDER},

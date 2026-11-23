@@ -30,7 +30,7 @@ patcher = {
 
     "outlets": [
         {"comment": "ink"},
-        {"comment": "impulse (vecfield)"},
+        {"type": "vec", "comment": "impulse (vecfield)"},
     ],
 
     "params": [
@@ -81,7 +81,7 @@ patcher = {
     "inlet_comment": "stamp texture / control",
     "inlet_fanout": {"texture": [["stamp", 1]], "state": ["stamp"], "state_param": "src_stamp"},
     "mod_inlets": [
-        {"label": "vecfield", "vs_instate": True, "state_param": "src_vec",
+        {"type": "vec", "label": "vecfield", "vs_instate": True, "state_param": "src_vec",
          "fanout": [["stamp", 2]], "state_nodes": ["stamp"]},
     ],
     "draw_triggers": ["stamp"],

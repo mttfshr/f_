@@ -40,9 +40,10 @@ patcher = {
     # processor: the force vecfield arrives on the primary inlet and, when
     # bypassed, passes straight through (see bypass_gate below)
     "archetype": "processor",
+    "in_type": "vec",
 
     "outlets": [
-        {"comment": "velocity vecfield"},
+        {"type": "vec", "comment": "velocity vecfield"},
     ],
 
     "params": [

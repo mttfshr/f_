@@ -24,7 +24,7 @@ patcher = {
     # Inlet 1: vecfield (required)
     # Inlets 2–3: hue mod, dispersion mod
     "mod_inlets": [
-        {"label": "vecfield",       "state_param": "src_vecfield"},
+        {"type": "vec", "label": "vecfield",       "state_param": "src_vecfield"},
         {"label": "hue mod",        "state_param": "src_hue_mod"},
         {"label": "dispersion mod", "state_param": "src_dispersion_mod"},
     ],

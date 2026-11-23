@@ -160,7 +160,7 @@ patcher = {
     ],
 
     "outlets": [
-        {"comment": "vecfield (u,v)"},
+        {"type": "vec", "comment": "vecfield (u,v)"},
         {"comment": "confidence"},
     ],
 

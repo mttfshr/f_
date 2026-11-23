@@ -370,7 +370,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						10.5,
+						17.0,
 						0.0,
 						92.0,
 						21.0
@@ -415,6 +415,38 @@
 					"maxclass": "panel",
 					"background": 0,
 					"bgcolor": [
+						0.28,
+						0.28,
+						0.28,
+						1.0
+					],
+					"border": 0,
+					"mode": 0,
+					"hint": "Takes texture",
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						20.0,
+						20.0,
+						5.0,
+						5.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						4.0,
+						5.0,
+						5.0,
+						5.0
+					],
+					"rounded": 6
+				}
+			},
+			{
+				"box": {
+					"id": "obj-19h",
+					"maxclass": "panel",
+					"background": 0,
+					"bgcolor": [
 						0.35,
 						0.75,
 						0.95,
@@ -422,18 +454,18 @@
 					],
 					"border": 0,
 					"mode": 0,
-					"hint": "Takes: vecfield",
+					"hint": "Takes vecfield",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						980.0,
-						232.0,
+						20.0,
+						20.0,
 						5.0,
 						5.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						4.0,
+						10.5,
 						5.0,
 						5.0,
 						5.0
@@ -454,12 +486,12 @@
 					],
 					"border": 0,
 					"mode": 0,
-					"hint": "Outputs: no vecfield or tensor",
+					"hint": "Outputs texture",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						1000.0,
-						232.0,
+						20.0,
+						20.0,
 						5.0,
 						5.0
 					],

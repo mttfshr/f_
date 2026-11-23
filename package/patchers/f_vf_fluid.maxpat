@@ -1264,12 +1264,12 @@
 					],
 					"border": 0,
 					"mode": 0,
-					"hint": "Takes: vecfield",
+					"hint": "Takes vecfield",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						980.0,
-						232.0,
+						20.0,
+						20.0,
 						5.0,
 						5.0
 					],
@@ -1296,12 +1296,12 @@
 					],
 					"border": 0,
 					"mode": 0,
-					"hint": "Outputs: vecfield",
+					"hint": "Outputs vecfield",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						1000.0,
-						232.0,
+						20.0,
+						20.0,
 						5.0,
 						5.0
 					],

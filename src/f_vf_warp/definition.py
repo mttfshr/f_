@@ -50,7 +50,7 @@ patcher = {
     # vecfield inlet: in1 on pix (in2 in codebox), via vs_inState
     # state_param wires vs_inState out1 → prepend param src_vecfield → pix in0
     "mod_inlets": [
-        {"label": "vecfield", "state_param": "src_vecfield"},
+        {"type": "vec", "label": "vecfield", "state_param": "src_vecfield"},
     ],
 
     "params": [

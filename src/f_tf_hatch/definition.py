@@ -35,6 +35,7 @@ patcher = {
     # tensor/vecfield.
     "signal_type": "T_ in",
     "archetype":   "processor",
+    "in_type": "tensor",
     "bypass_mode": "param",
     "bypass_target": "e3",
 

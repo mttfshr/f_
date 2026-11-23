@@ -55,7 +55,7 @@ patcher = {
 
     "outlets": [
         {"comment": "field (luma)"},
-        {"comment": "gradient (vecfield)"},
+        {"type": "vec", "comment": "gradient (vecfield)"},
     ],
 
     "params": [

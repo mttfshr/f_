@@ -1426,38 +1426,6 @@
 			},
 			{
 				"box": {
-					"id": "obj-19f",
-					"maxclass": "panel",
-					"background": 0,
-					"bgcolor": [
-						0.28,
-						0.28,
-						0.28,
-						1.0
-					],
-					"border": 0,
-					"mode": 0,
-					"hint": "Takes: no vecfield or tensor",
-					"numinlets": 1,
-					"numoutlets": 0,
-					"patching_rect": [
-						980.0,
-						232.0,
-						5.0,
-						5.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						4.0,
-						5.0,
-						5.0,
-						5.0
-					],
-					"rounded": 6
-				}
-			},
-			{
-				"box": {
 					"id": "obj-19g",
 					"maxclass": "panel",
 					"background": 0,
@@ -1469,12 +1437,12 @@
 					],
 					"border": 0,
 					"mode": 0,
-					"hint": "Outputs: no vecfield or tensor",
+					"hint": "Outputs texture",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						1000.0,
-						232.0,
+						20.0,
+						20.0,
 						5.0,
 						5.0
 					],

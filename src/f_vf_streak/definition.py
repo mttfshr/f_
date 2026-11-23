@@ -23,7 +23,7 @@ patcher = {
 
     # Inlet 1: vecfield texture, via vs_inState + state_param (suppress silent offset)
     "mod_inlets": [
-        {"label": "vecfield", "state_param": "src_vecfield"},
+        {"type": "vec", "label": "vecfield", "state_param": "src_vecfield"},
     ],
 
     "params": [

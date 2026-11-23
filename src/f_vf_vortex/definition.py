@@ -12,7 +12,7 @@ patcher = {
     "presentation_height": 160,
 
     "outlets": [
-        {"comment": "vecfield"},
+        {"type": "vec", "comment": "vecfield"},
     ],
 
     # Optional modulation inlets — each adds an inlet with vs_inState + vs_black fallback

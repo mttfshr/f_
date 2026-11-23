@@ -24,6 +24,7 @@ patcher = {
     "title":       "Axis Flow",
     "signal_type": "T_ in ∇ out",
     "archetype":   "processor",
+    "in_type": "tensor",
     # Output is a vecfield and must stay float32. pix_attrs replaces pix_type (the builder rejects both).
     "pix_attrs":   "@adapt 0 @dim 256 256 @type float32",
     "bypass_mode": "param",
@@ -44,11 +45,11 @@ patcher = {
     # Optional per-pixel reference direction (2026-10-17): outer inlet 1 -> codebox in2, wired
     # straight to the pix like f_caustic's field inlet (no vs_inState: the codebox gates on B).
     "mod_inlets": [
-        {"label": "reference vecfield (optional)", "vs_instate": False},
+        {"type": "vec", "label": "reference vecfield (optional)", "vs_instate": False},
     ],
 
     "outlets": [
-        {"comment": "vecfield",
+        {"type": "vec", "comment": "vecfield",
          "hint": "Signed vecfield: R,G = v*0.5+0.5, B = 0.5, A = 1. The reference direction projected onto the edge line (Along) or the gradient axis (Across); no seam. Neutral = (0.5, 0.5, 0.5, 1)."},
     ],
 

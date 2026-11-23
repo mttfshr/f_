@@ -87,7 +87,7 @@ patcher = {
 
     "outlets": [
         {"comment": "pattern (banded look)"},
-        {"comment": "gradient (vecfield)", "signal_type": "float32"},
+        {"type": "vec", "comment": "gradient (vecfield)", "signal_type": "float32"},
         {"comment": "potential"},
     ],
 

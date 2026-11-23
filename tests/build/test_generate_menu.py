@@ -227,38 +227,45 @@ def frame_border(module):
     return [round(c, 3) for c in big["bordercolor"]]
 
 
-def title_bar_dots(module):
-    """(top dot, bottom dot, the module-name comments sitting right of them, every box id) of a patcher."""
+def title_bar_dots(module, title_x):
+    """({id: dot box}, the module-name comments sitting right of the dots, every box id) of a patcher."""
     p = json.loads((g.PATCHERS_DIR / f"f_{module}.maxpat").read_text())["patcher"]
     boxes = {b["box"]["id"]: b["box"] for b in p["boxes"]}
     names = [b for b in boxes.values() if b.get("maxclass") == "comment" and b.get("presentation")
-             and b["presentation_rect"][0] == 10.5 and b["presentation_rect"][1] < 8]
-    return boxes.get("obj-19f"), boxes.get("obj-19g"), names, boxes
+             and b["presentation_rect"][0] == title_x and b["presentation_rect"][1] < 8]
+    dots = {i: b for i, b in boxes.items() if i in ("obj-19" + c for c in "fghijk")}
+    return dots, names, boxes
 
 
-def test_the_type_dots_show_what_each_module_takes_and_outputs():
-    """Two stacked round dots left of the module name on EVERY module: top = the type it takes, bottom = the type
-    it outputs (cyan vecfield, amber tensor, dim gray neither), read from the title-bar label.  They are foreground
-    panels (a background-layer panel is drawn under the frame and vanishes).  The frame border stays dark blue."""
-    DARK, VEC, TENSOR, GRAY = [0.0, 0.035, 0.227, 1.0], [0.35, 0.75, 0.95, 1.0], [0.85, 0.55, 0.2, 1.0], [0.28, 0.28, 0.28, 1.0]
-    color = {"\u2207": VEC, "T_": TENSOR, None: GRAY}
+def test_the_type_dots_show_which_port_types_each_module_has():
+    """A grid left of the module name: top row = the distinct types of its inlets, bottom row = of its outlets
+    (texture gray, vecfield cyan, tensor amber, in that order), from the definition's per-port tags (port_types).
+    Column k holds the k-th type of each side, so a texture-in / vecfield-out module is ONE column, gray over cyan;
+    a slot a side has no type for is empty.  5 px round foreground panels (a background-layer panel is drawn under
+    the frame and vanishes).  The name sits right of the last column.  The frame border stays dark blue."""
+    import build_patcher as bp
+    DARK = [0.0, 0.035, 0.227, 1.0]
+    root = Path(__file__).resolve().parents[2]
     menu = g.load_menu()
     for _, items in menu.CATEGORIES:
         for _, m, kinds in items:
-            labels = title_labels(m)
-            ins = outs = None
-            for mark, direction in re.findall("(\u2207|T_) (in/out|in|out)", labels[0] if labels else ""):
-                ins = mark if direction in ("in", "in/out") else ins
-                outs = mark if direction in ("out", "in/out") else outs
-            d_in, d_out, names, boxes = title_bar_dots(m)
-            _eq(f"{m}: both dots exist and one module name sits to their right", (d_in is not None, d_out is not None, len(names)), (True, True, 1))
-            _eq(f"{m}: top dot = what it takes ({ins or 'neither'})", [round(c, 3) for c in d_in["bgcolor"]], color[ins])
-            _eq(f"{m}: bottom dot = what it outputs ({outs or 'neither'})", [round(c, 3) for c in d_out["bgcolor"]], color[outs])
-            r_in, r_out = d_in["presentation_rect"], d_out["presentation_rect"]
-            _eq(f"{m}: 5 px dots in one column at x 4, stacked 7 px apart", (r_in[2:], r_out[2:], r_in[0], r_out[0], round(r_out[1] - r_in[1], 3)),
-                ([5.0, 5.0], [5.0, 5.0], 4.0, 4.0, 7.0))
-            _eq(f"{m}: both dots are round", (d_in.get("rounded"), d_out.get("rounded")), (6, 6))
-            _eq(f"{m}: dots are in the foreground layer", (d_in.get("background"), d_out.get("background")), (0, 0))
+            if not (root / "src" / f"f_{m}" / "definition.py").exists():
+                continue
+            defn = bp.load_definition(root / "src" / f"f_{m}" / "definition.py")
+            ins, outs = bp.port_types(defn)
+            dots, names, boxes = title_bar_dots(m, bp.title_x(defn))
+            want = {}
+            for sd, ts in (("in", ins), ("out", outs)):
+                for k, t in enumerate(bp.side_types(ts)):
+                    want[bp.OBJ_DOT[(sd, k)]] = (sd, k, t)
+            _eq(f"{m}: exactly the dots for its ports ({bp.side_types(ins)} in, {bp.side_types(outs)} out)", set(dots), set(want))
+            _eq(f"{m}: one module name sits right of the grid", len(names), 1)
+            for oid, (sd, k, t) in want.items():
+                d = dots[oid]
+                _eq(f"{m}: {sd} dot {k} ({t}): color, 5 px round foreground at its column and row",
+                    ([round(c, 3) for c in d["bgcolor"]], d["presentation_rect"][2:], round(d["presentation_rect"][0], 3),
+                     round(d["presentation_rect"][1] - names[0]["presentation_rect"][1], 3), d.get("rounded"), d.get("background")),
+                    (bp.DOT_COLORS[t], [5.0, 5.0], 4.0 + k * 6.5, 5.0 + (7.0 if sd == "out" else 0.0), 6, 0))
             _eq(f"{m}: frame border is the standard dark blue", frame_border(m), DARK)
 
 

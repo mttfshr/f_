@@ -5,6 +5,7 @@ patcher = {
     "title":              "VF Split",
     "signal_type":        "∇ in",
     "archetype":          "processor",
+    "in_type": "vec",
     "pix_type":           "float32",
 
     # Bypass drives the codebox Param `bypass_gate` (jsui -> `prepend param bypass_gate` -> pix),

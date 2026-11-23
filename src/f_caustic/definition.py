@@ -45,7 +45,7 @@ patcher = {
     # Inlet 1: the vecfield, direct (no vs_inState: unconnected = silent, not a misleading default caustic).
     "inlet_fanout": {"texture": [["caustic", 0], [SLAB_SRC, 0]]},
     "mod_inlets": [
-        {"label": "vecfield", "vs_instate": False,
+        {"type": "vec", "label": "vecfield", "vs_instate": False,
          "fanout": [["caustic", 2], [SLAB_FIELD, 0]]},
     ],
 

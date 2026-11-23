@@ -37,6 +37,7 @@ patcher = {
     "title":       "Smooth",
     "signal_type": "T_ in/out",
     "archetype":   "processor",
+    "in_type": "tensor",
     "bypass_mode": "param",
 
     "presentation_width":  154,
@@ -72,7 +73,7 @@ patcher = {
     ],
 
     "outlets": [
-        {"comment": "tensor (raw Jxx, Jxy, Jyy)", "color": [0.85, 0.55, 0.2, 1.0],
+        {"type": "tensor", "comment": "tensor (raw Jxx, Jxy, Jyy)", "color": [0.85, 0.55, 0.2, 1.0],
          "hint": "Raw structure tensor, smoothed in time: same encoding as the input "
                  "(f_tensor_type.md outlet 0; R = Jxx*strength, G = Jxy*strength*0.5 + 0.5, "
                  "B = Jyy*strength, A = 1). Neutral (zero tensor) = (0, 0.5, 0, 1). "

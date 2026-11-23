@@ -496,12 +496,12 @@
 					],
 					"border": 0,
 					"mode": 0,
-					"hint": "Takes: no vecfield or tensor",
+					"hint": "Takes texture",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						1135.5,
-						232.0,
+						20.0,
+						20.0,
 						5.0,
 						5.0
 					],
@@ -528,12 +528,12 @@
 					],
 					"border": 0,
 					"mode": 0,
-					"hint": "Outputs: no vecfield or tensor",
+					"hint": "Outputs texture",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						1155.5,
-						232.0,
+						20.0,
+						20.0,
 						5.0,
 						5.0
 					],

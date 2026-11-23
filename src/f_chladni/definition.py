@@ -219,7 +219,7 @@ patcher = {
 
     "outlets": [
         {"comment": "luma"},
-        {"comment": "vecfield", "signal_type": "float32"},
+        {"type": "vec", "comment": "vecfield", "signal_type": "float32"},
         {"comment": "magnitude"},
     ],
 

@@ -58,6 +58,7 @@ patcher = {
 
     "mod_inlets": [
         {
+            "type": "vec",
             "label":       "vecfield",
             "vs_instate":  True,
             "state_param": "src_vecfield",

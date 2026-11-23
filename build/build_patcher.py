@@ -37,22 +37,26 @@ SIGNAL_FONT_SIZE = 11.0    # the title-bar type label (module titles are FONT_TI
 SIGNAL_W   = 70.0          # label box width; the text is right-justified inside it
 SIGNAL_GAP = 4.0           # space between the label's right edge and the bypass button
 SIGNAL_Y   = 0.9           # puts an 11 pt label on the baseline of the 12 pt title (which sits at y = 0)
-# The type dots (2026-10-17): two stacked dots left of the module name.  Top = the type the module takes,
-# bottom = the type it outputs: cyan vecfield, amber tensor, dim gray neither.
-TITLE_X    = 10.5          # every module name starts here, to the right of the dots
+# The type dots (2026-10-17; columns 2026-11-22): a grid left of the module name, top row = the types of the module's
+# inlets, bottom row = the types of its outlets.  Each side lists its distinct types (texture, vecfield, tensor, in
+# that order), one dot per type, colored by type; column k holds the k-th type of each side, so a module whose
+# inlets are textures and whose outlet is a vecfield shows ONE column: gray over cyan.  A side with fewer types than
+# the other leaves its slot empty (nothing drawn), and there are as many columns as the longer side needs
+# (dot_columns()); the module name moves up against the last one.  Types come from per-port tags in the definition
+# (port_types()).
+PORT_TYPES = ("texture", "vec", "tensor")          # column order
+TITLE_GAP  = 1.5           # between the last dot column and the module name
 TITLE_W    = 92.0
 DOT_SIZE   = 5.0
-DOT_GAP    = 2.0
+DOT_GAP    = 2.0           # between the in row and the out row
+DOT_COL_GAP = 1.5          # between columns
 DOT_X      = 4.0
-DOT_PAD    = 1.0           # the type_dots jsui box is the shapes plus this margin all round
 DOT_Y0     = 5.0           # first dot's top below the title box's top (the 12 px bypass-button band: y 5..17)
-DOT_NONE   = [0.28, 0.28, 0.28, 1.0]   # dim gray: no vecfield or tensor on that side
-DOT_KIND   = {"\u2207": "vecfield", "T_": "tensor"}
+DOT_COLORS = {"texture": [0.28, 0.28, 0.28, 1.0],   # dim gray (Matt, 2026-11-22)
+              "vec":     [0.350, 0.750, 0.950, 1.000],   # = SIGNAL_TYPE_COLORS["\u2207"]
+              "tensor":  [0.850, 0.550, 0.200, 1.000]}   # = SIGNAL_TYPE_COLORS["T_"]
+DOT_KIND   = {"texture": "texture", "vec": "vecfield", "tensor": "tensor"}
 BORDER_BY_TYPE = False     # True colors the frame border by type too (tried 2026-10-17, replaced by the dots)
-TYPE_DOTS  = "panels"       # "panels": two round panels, cyan / amber / dim gray (Matt, 2026-10-17);
-                           # "jsui": ONE type_dots.js jsui drawing triangle / disc / square: tried, read as noisy; the script is parked in
-                           # ideas/type_dots.js (copy it to package/javascript/ to use this style)
-DOT_ARG    = {"\u2207": "vec", "T_": "tensor"}
 
 # ---------------------------------------------------------------------------
 # Object ID scheme (deterministic)
@@ -82,8 +86,9 @@ OBJ_HEADER_TOGGLE_PRE   = "obj-19c"
 OBJ_PANEL_TOGGLE    = "obj-19d"
 OBJ_PANEL_TOGGLE_JS = "obj-19e"
 # Type dots (2026-10-17) — fixed IDs
-OBJ_DOT_IN  = "obj-19f"
-OBJ_DOT_OUT = "obj-19g"
+# one id per (side, column): 19f in/col 0, 19g out/col 0, 19h in/col 1, 19i out/col 1, 19j in/col 2, 19k out/col 2
+OBJ_DOT = {(sd, k): f"obj-19{c}" for (k, sd), c in
+           zip(((k, sd) for k in range(len(PORT_TYPES)) for sd in ("in", "out")), "fghijk")}
 
 # mod_inlets "tag" (2026-11-01): the `route <tags>` that strips the tag off a named modulation texture
 # arriving on the main inlet (ideas/named_mod_textures.md).  One per module, fed by the scalar route's
@@ -231,14 +236,14 @@ def panel_box(pw, ph, border_color=None):
         presentation_rect=[0.0, 0.0, pw, ph],
         proportion=0.5)
 
-def title_box(title):
+def title_box(title, x):
     return box(OBJ_TITLE,
         maxclass="comment",
         fontname=FONT, fontsize=FONT_TITLE,
         numinlets=1, numoutlets=0,
         patching_rect=[20.0, 20.0, 80.0, 21.0],
         presentation=1,
-        presentation_rect=[TITLE_X, 0.0, TITLE_W, 21.0],
+        presentation_rect=[x, 0.0, TITLE_W, 21.0],
         text=title)
 
 def signal_type_box(signal_type, button_x):
@@ -260,47 +265,63 @@ def signal_type_box(signal_type, button_x):
         presentation_rect=[right - SIGNAL_W, SIGNAL_Y, SIGNAL_W, 21.0],
         text=signal_type)
 
-def parse_signal_type(signal_type):
-    """(in_mark, out_mark) from a title-bar label such as "T_ in \u2207 out"; None on a side with no type."""
-    ins = outs = None
-    for mark, direction in re.findall(r"(\u2207|T_) (in/out|in|out)", signal_type or ""):
-        if direction in ("in", "in/out"):
-            ins = mark
-        if direction in ("out", "in/out"):
-            outs = mark
+def port_types(defn):
+    """(in_types, out_types): the sets of PORT_TYPES present on each side, from per-port tags in the definition.
+    Tags: `"type": "texture" | "vec" | "tensor"` on an entry of `mod_inlets` or `outlets`, and `"in_type"` for the
+    main inlet.  Untagged ports are textures.  The main inlet is a texture for processor/dual/utility modules, and
+    absent for a source (its main inlet carries control messages only) unless `in_type` says otherwise, and under
+    `driving_inlet` it is mod_inlets[0], tagged like any other mod inlet.  Audio
+    modules have no dots."""
+    arch = str(defn.get("archetype", "processor"))
+    if arch.startswith("audio_"):
+        return set(), set()
+    main = defn.get("in_type", None if arch == "source" else "texture")
+    mods = list(defn.get("mod_inlets", []))
+    if defn.get("driving_inlet") and mods:
+        main = None                       # mod_inlets[0] IS the main inlet: its own tag counts, not a second texture
+    ins = {main} if main else set()
+    ins |= {m.get("type", "texture") for m in mods}
+    outs = {o.get("type", "texture") for o in defn.get("outlets", [])} or {"texture"}
+    bad = (ins | outs) - set(PORT_TYPES)
+    if bad:
+        raise ValueError(f"unknown port type {sorted(bad)}: use one of {PORT_TYPES}")
     return ins, outs
 
-def dot_box(obj_id, mark, side, title_y):
-    """One of the two type dots left of the module name; `side` is "in" (top) or "out" (bottom)."""
-    color = SIGNAL_TYPE_COLORS[mark] if mark else DOT_NONE
-    y = title_y + DOT_Y0 + (DOT_SIZE + DOT_GAP if side == "out" else 0.0)
-    return box(obj_id,
-        maxclass="panel",
-        background=0,           # foreground layer: background panels are drawn UNDER the frame panel
-        bgcolor=list(color),
-        border=0,
-        mode=0,
-        hint=("Takes: " if side == "in" else "Outputs: ") + DOT_KIND.get(mark, "no vecfield or tensor"),
-        numinlets=1, numoutlets=0,
-        patching_rect=[20.0, 20.0, DOT_SIZE, DOT_SIZE],
-        presentation=1,
-        presentation_rect=[DOT_X, y, DOT_SIZE, DOT_SIZE],
-        rounded=6)                          # all dots are round: shapes were tried and read as noise (Matt, 2026-10-17)
+def side_types(types):
+    """One side's distinct port types, in PORT_TYPES order."""
+    return [t for t in PORT_TYPES if t in types]
 
-def type_dots_box(obj_id, in_mark, out_mark, title_y):
-    """Both type dots as one jsui: package/javascript/type_dots.js draws a filled triangle (vecfield), a disc
-    (tensor) or a gray square (neither) for what the module takes (top) and outputs (bottom)."""
-    what = lambda m: DOT_KIND.get(m, "no vecfield or tensor")
-    return box(obj_id,
-        maxclass="jsui",
-        filename="type_dots.js",
-        jsarguments=[DOT_ARG.get(in_mark, "none"), DOT_ARG.get(out_mark, "none")],
-        hint=f"Takes: {what(in_mark)} | Outputs: {what(out_mark)}",
-        ignoreclick=1,
-        numinlets=1, numoutlets=0,
-        patching_rect=[20.0, 20.0, DOT_SIZE + 2 * DOT_PAD, 2 * DOT_SIZE + DOT_GAP + 2 * DOT_PAD],
-        presentation=1,
-        presentation_rect=[DOT_X - DOT_PAD, title_y + DOT_Y0 - DOT_PAD, DOT_SIZE + 2 * DOT_PAD, 2 * DOT_SIZE + DOT_GAP + 2 * DOT_PAD])
+def dot_columns(defn):
+    """How many dot columns the module needs: the longer of its two sides' distinct-type lists (0 when none)."""
+    ins, outs = port_types(defn)
+    return max(len(ins), len(outs))
+
+def title_x(defn):
+    """Where the module name starts: just right of the last dot column (one column's worth for a module with none)."""
+    n = max(1, dot_columns(defn))
+    return DOT_X + n * DOT_SIZE + (n - 1) * DOT_COL_GAP + TITLE_GAP
+
+def dot_boxes(defn, title_y):
+    """The dots: for each side, the k-th distinct type of that side as a round panel in column k."""
+    ins, outs = port_types(defn)
+    boxes = []
+    for side, types in (("in", ins), ("out", outs)):
+        for k, t in enumerate(side_types(types)):
+            x = DOT_X + k * (DOT_SIZE + DOT_COL_GAP)
+            y = title_y + DOT_Y0 + (DOT_SIZE + DOT_GAP if side == "out" else 0.0)
+            boxes.append(box(OBJ_DOT[(side, k)],
+                maxclass="panel",
+                background=0,           # foreground layer: background panels are drawn UNDER the frame panel
+                bgcolor=list(DOT_COLORS[t]),
+                border=0,
+                mode=0,
+                hint=("Takes " if side == "in" else "Outputs ") + DOT_KIND[t],
+                numinlets=1, numoutlets=0,
+                patching_rect=[20.0, 20.0, DOT_SIZE, DOT_SIZE],
+                presentation=1,
+                presentation_rect=[x, y, DOT_SIZE, DOT_SIZE],
+                rounded=6))             # all dots are round: shapes were tried and read as noise (Matt, 2026-10-17)
+    return boxes
 
 def panel_toggle_boxes(panel_toggle, pw):
     """
@@ -1399,7 +1420,7 @@ def assign_roles(ui_params, header_toggles, mod_inlets, outlets, pix_ids,
          OBJ_ROUTE: ("route", None), OBJ_AUTOPATTR: ("autopattr", None),
          OBJ_PANEL: ("panel", None), OBJ_TITLE: ("title", None),
          OBJ_SIGNAL_TYPE: ("signal_type", None),
-         OBJ_DOT_IN: ("type_dots" if TYPE_DOTS == "jsui" else "dot_in", None), OBJ_DOT_OUT: ("dot_out", None),
+         **{oid: ("dot_%s_%d" % (sd, k), None) for (sd, k), oid in OBJ_DOT.items()},
          OBJ_LOADBANG: ("loadbang", None), OBJ_GETATTR: ("getattr", None),
          OBJ_THISPATCHER: ("thispatcher", None), OBJ_ZLSLICE: ("zlslice", None),
          OBJ_PRETAM: ("pretam", None), OBJ_MODULESIZE: ("modulesize", None),
@@ -1985,7 +2006,7 @@ def build(defn, debug=None, side_files=None):
     mod_fan = {}
     for i_, mi_ in enumerate(mod_inlets or []):
         what = f"mod_inlets[{i_}]"
-        unknown = set(mi_) - {"label", "vs_instate", "state_param", "fanout", "state_nodes", "tag", "static"}
+        unknown = set(mi_) - {"label", "vs_instate", "state_param", "fanout", "state_nodes", "tag", "static", "type"}
         if unknown:
             raise ValueError(f"{what}: unknown key(s) {sorted(unknown)}")
         if "static" in mi_:
@@ -2093,7 +2114,7 @@ def build(defn, debug=None, side_files=None):
     boxes.extend(pix_boxes_to_add)
     boxes.append(autopattr_box(prefix, legacy.get("autopattr_varname")))
     boxes.append(panel_box(pw, ph, border_color_for(defn.get("signal_type"))))
-    boxes.append(title_box(title))
+    boxes.append(title_box(title, title_x(defn)))
     signal_type = defn.get("signal_type")
     if signal_type:
         button_x = defn.get("overrides", {}).get("bypass_jsui", {}).get("presentation_rect", [pw - 22.0])[0]
@@ -2101,12 +2122,7 @@ def build(defn, debug=None, side_files=None):
             button_x = min(button_x, pw - 50.0 - 43.0)   # left of them instead (2026-10-25, first header-toggle user)
         boxes.append(signal_type_box(signal_type, button_x))
     title_y = defn.get("overrides", {}).get("title", {}).get("presentation_rect", [0.0, 0.0])[1]
-    in_mark, out_mark = parse_signal_type(signal_type)
-    if TYPE_DOTS == "jsui":
-        boxes.append(type_dots_box(OBJ_DOT_IN, in_mark, out_mark, title_y))
-    else:
-        boxes.append(dot_box(OBJ_DOT_IN, in_mark, "in", title_y))
-        boxes.append(dot_box(OBJ_DOT_OUT, out_mark, "out", title_y))
+    boxes.extend(dot_boxes(defn, title_y))
     boxes.extend(modulesize_boxes())
 
     panel_toggle = defn.get("panel_toggle")
@@ -2745,9 +2761,7 @@ def build_audio(defn, debug=None, side_files=None):
     lines.append(wire(ctl_in, 0, OBJ_ROUTE, 0))
     boxes.append(autopattr_box(prefix))
     boxes.append(panel_box(pw, ph))
-    boxes.append(title_box(title))
-    boxes.append(dot_box(OBJ_DOT_IN, None, "in", 0.0))       # the type dots: audio takes and outputs neither a vecfield nor a tensor
-    boxes.append(dot_box(OBJ_DOT_OUT, None, "out", 0.0))
+    boxes.append(title_box(title, title_x(defn)))
 
     params_block = {}
     for n, p in enumerate(params):
