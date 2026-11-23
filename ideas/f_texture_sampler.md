@@ -58,7 +58,7 @@ at the 128-256 px sizes `f_vf_fluid` already runs at.
 
 ## The angle only this library has: field samples
 
-Record `f_vf_fluid`, `f_vf_vortex` or `f_vf_optical_flow` output into slots and replay it
+Record `f_vf_fluid`, `f_vf_vortex` or `f_vf_lk` output into slots and replay it
 as a force field into `f_vf_advect`, `f_vf_warp` or `f_caustic`: a performable library of
 flows. Trigger a flow "pad", loop it, scrub it, play it backwards. Replay costs texture
 reads rather than a solve. Reversed playback is playback of a recording, not the solver

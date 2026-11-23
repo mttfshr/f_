@@ -1,6 +1,6 @@
 """
 bench_vf_encode_limit.py -- Tier 2: the direction-preserving encode limit (2026-11-16) on the GPU for the modules
-that had no encode bench: f_vf_repulse, f_vf_vortex_multi, f_vf_fieldmap and f_vf_optical_flow stage_c / stage_d. Each case drives the
+that had no encode bench: f_vf_repulse, f_vf_vortex_multi, f_vf_fieldmap and f_vf_lk stage_c / stage_d. Each case drives the
 real codebox far past the f_vecfield range, so the old per-channel clamp and the new rescale differ, and diffs it against
 the module's NumPy mirror (stage_d and f_vf_fieldmap have none: their references are inline). Each case also proves it is not vacuous: some
 pixels sit on the limit.
@@ -20,11 +20,11 @@ import benchclient as bc
 from harness import check, note, run
 
 REPO = _paths.REPO
-for _m in ("vf_repulse", "vf_vortex_multi", "vf_optical_flow"):
+for _m in ("vf_repulse", "vf_vortex_multi", "vf_lk"):
     sys.path.insert(0, str(REPO / "tests" / "modules" / _m))
 from vf_repulse_mirror import repulse                 # noqa: E402
 from vf_vortex_multi_mirror import vortex_multi       # noqa: E402
-from vf_optical_flow_mirror import stage_c            # noqa: E402
+from vf_lk_mirror import stage_c            # noqa: E402
 import gpu_sim as g                                    # noqa: E402
 
 F32 = np.float32
@@ -105,7 +105,7 @@ def test_optical_flow_stage_c_gain():
     in2[..., 0] = rng.uniform(-2.0, 2.0, (H, W))          # Sxt
     in2[..., 1] = rng.uniform(-2.0, 2.0, (H, W))          # Syt
     in2[..., 3] = 1.0
-    code = (REPO / "src" / "f_vf_optical_flow" / "codebox_stage_c.gen").read_text()
+    code = (REPO / "src" / "f_vf_lk" / "codebox_stage_c.gen").read_text()
     params = {"gain": 10.0, "mask_lo": 0.0, "mask_hi": 0.001, "bypass_gate": 0.0}
     out, r = bc.run_pass(code, [in1, in2], params=params)
     check("stage_c: status ok", 0 if r["status"] == "ok" else 1, 0)
@@ -127,7 +127,7 @@ def test_optical_flow_stage_d_accumulator():
     src = np.zeros((H, W, 4), F32)
     src[..., 3] = 1.0
     decay, inj = 1.4, 1.0                                  # decay above 1 (excitable regime) pushes the sum past +-1
-    code = (REPO / "src" / "f_vf_optical_flow" / "codebox_stage_d.gen").read_text()
+    code = (REPO / "src" / "f_vf_lk" / "codebox_stage_d.gen").read_text()
     out, r = bc.run_pass(code, [raw, prev, src], params={"decay": decay, "injection": inj, "bypass_gate": 0.0})
     check("stage_d: status ok", 0 if r["status"] == "ok" else 1, 0)
     au = (prev[..., 0].astype(np.float64) - 0.5) * 2 * decay + (raw[..., 0].astype(np.float64) - 0.5) * 2 * inj

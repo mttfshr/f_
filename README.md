@@ -33,6 +33,7 @@ This table is also the source for the package's launcher patcher (`package/extra
 | `f_ks` | Kuramoto-Sivashinsky generator: a self-sustaining chaotic pattern, solved on the GPU |
 | `f_wc` | Wilson-Cowan form-constant generator: fixed 1024² solver, retinal map; a texture pulses it |
 | `f_masonry` | Parametric masonry texture -- courses, bond, mortar, drift, color |
+| `f_ngon` | Regular N-gon generator / mask, live-modulatable vertex count; not yet confirmed or documented |
 | `f_quasi` | Shepard-zoom quasicrystal generator: endless zoom, banded pattern; gradient vecfield and potential outlets |
 | `f_stipple` | 2D hash field stipple texture |
 | `f_vf_seeds` | Discrete mark placement and orientation from a vecfield and shape tex -- Voronoi-style seeds with overlap |
@@ -45,7 +46,6 @@ This table is also the source for the package's launcher patcher (`package/extra
 | `f_droste` | Log-polar spiral transform -- Droste / Escher-style recursive zoom |
 | `f_lens` | Filmic lens -- aberration, distortion, transmission, ghost images, halation, spatial modulation |
 | `f_mobius` | Mobius transformation UV-space processor |
-| `f_ngon` | Regular N-gon generator / mask, live-modulatable vertex count; not yet confirmed or documented |
 | `f_poincare` | Poincare disk tiling: folds a texture into a hyperbolic {p,q} tiling, Whole or Sliver, with a camera |
 | `f_sirds` | Single Image Random Dot Stereogram -- real-time strips; a depth texture displaces a repeating pattern |
 | `f_stereo` | Stereographic projection display layer |
@@ -70,7 +70,7 @@ This table is also the source for the package's launcher patcher (`package/extra
 | `f_vf_fluid` | Incompressible-flow solver -- force vecfield in, evolving velocity field out; feed it to advect / warp / glow |
 | `f_vf_ch` | Blends two velocity vecfields (two Fluids) via a Cahn-Hilliard phase field; blended vecfield and phase out |
 | `f_vf_lbm` | Lattice Boltzmann channel flow around a mask-shaped obstacle; velocity vecfield out |
-| `f_vf_optical_flow` | Lucas-Kanade optical flow from source motion -- confidence-gated, with aperture-problem fill; two outlets |
+| `f_vf_lk` | Lucas-Kanade optical flow from source motion -- confidence-gated, with aperture-problem fill; two outlets |
 | `f_vf_repulse` | Texture-driven repulsion vecfield -- 16-sample ring accumulation, luma threshold, four accumulation modes |
 | `f_vf_vortex` | Single fixed-point vortex field -- convergence, curl, position, 4 mod inlets |
 | `f_vf_vortex_multi` | Three-site additive vortex field -- per-site position/conv/curl, 4 global mod inlets |
@@ -169,10 +169,10 @@ Concepts and intent: `.specify/demos/spec.md`.
 | demo_lens | untriaged | | yes | f_caustic, f_lens, f_vf_prism, f_vf_repulse | |
 | demo_ngon | untriaged | |  | f_ngon, f_vf_advect, f_vf_flow, f_vf_prism | |
 | demo_poincare | untriaged | | yes | f_poincare, f_quasi, f_separate, f_vf_advect, f_wave_field | |
-| demo_prism-masonry | untriaged | | yes | f_masonry, f_vf_optical_flow, f_vf_prism | |
+| demo_prism-masonry | untriaged | | yes | f_masonry, f_vf_lk, f_vf_prism | |
 | demo_quasi | untriaged | | yes | f_quasi, f_vf_advect, f_vf_warp | |
 | demo_repulse | untriaged | | yes | f_masonry, f_vf_advect, f_vf_repulse | |
-| demo_sampleplatter | untriaged | |  | f_caustic, f_channel_grader, f_chladni, f_droste, f_grain, f_halftone, f_hue_processor, f_ks, f_lens, f_luma_processor, f_masonry, f_mobius, f_ngon, f_poincare, f_quasi, f_separate, f_sirds, f_stereo, f_stipple, f_texrouter, f_tf_aniso_blur, f_tf_axisflow, f_tf_glyph, f_tf_hatch, f_tf_sharpen, f_tf_smooth, f_tf_tensormap, f_tone_curve, f_util_profile, f_util_vary, f_vf_advect, f_vf_ch, f_vf_chroma, f_vf_erode, f_vf_fieldmap, f_vf_flow, f_vf_fluid, f_vf_glow, f_vf_lbm, f_vf_optical_flow, f_vf_prism, f_vf_repulse, f_vf_seeds, f_vf_stamp, f_vf_streak, f_vf_vortex, f_vf_vortex_multi, f_vf_vorticity, f_vf_warp, f_wave_field, f_wc, f_weave | |
+| demo_sampleplatter | untriaged | |  | f_caustic, f_channel_grader, f_chladni, f_droste, f_grain, f_halftone, f_hue_processor, f_ks, f_lens, f_luma_processor, f_masonry, f_mobius, f_ngon, f_poincare, f_quasi, f_separate, f_sirds, f_stereo, f_stipple, f_texrouter, f_tf_aniso_blur, f_tf_axisflow, f_tf_glyph, f_tf_hatch, f_tf_sharpen, f_tf_smooth, f_tf_tensormap, f_tone_curve, f_util_profile, f_util_vary, f_vf_advect, f_vf_ch, f_vf_chroma, f_vf_erode, f_vf_fieldmap, f_vf_flow, f_vf_fluid, f_vf_glow, f_vf_lbm, f_vf_lk, f_vf_prism, f_vf_repulse, f_vf_seeds, f_vf_stamp, f_vf_streak, f_vf_vortex, f_vf_vortex_multi, f_vf_vorticity, f_vf_warp, f_wave_field, f_wc, f_weave | |
 | demo_seeds | untriaged | | yes | f_vf_fieldmap, f_vf_seeds | |
 | demo_seeds2 | untriaged | | yes | f_stereo, f_vf_repulse, f_vf_seeds, f_weave | |
 | demo_sirds | untriaged | |  | f_grain, f_sirds, f_stereo | |
@@ -185,7 +185,7 @@ Concepts and intent: `.specify/demos/spec.md`.
 | demo_weave-advect | untriaged | | yes | f_weave | |
 | example_axisflow_combed_weave | untriaged | |  | f_tf_axisflow, f_tf_tensormap, f_vf_warp, f_weave | |
 | example_camera_pulsed_web | untriaged | |  | f_hue_processor, f_tone_curve, f_wc | |
-| example_optical_flow_memory | untriaged | |  | f_vf_advect, f_vf_fluid, f_vf_optical_flow, f_wc | |
+| example_optical_flow_memory | untriaged | |  | f_vf_advect, f_vf_fluid, f_vf_lk, f_wc | |
 | demo_a_decorrelate | unbuilt | | | f_a_decorrelate | stub 2026-11-21: no demo uses this patcher |
 | demo_a_purr | unbuilt | | | f_a_purr | stub 2026-11-21: no demo uses this patcher |
 | demo_a_ripple | unbuilt | | | f_a_ripple | stub 2026-11-21: no demo uses this patcher |

@@ -1,4 +1,4 @@
-# f_vf_optical_flow — Idea
+# f_vf_lk — Idea
 
 _Last updated: 2026-07-17_
 _Status: Concept — cheap frame-diff approximation tested and ruled out (structural reason, see below); real Lucas-Kanade-style optical flow is the only remaining path if this gets built, not yet specced_
@@ -9,7 +9,7 @@ Estimates the motion field between two consecutive frames of an input texture an
 
 ## Why it's interesting
 
-Every other f_vf_ generator produces fields defined by parameters or input scalar textures. f_vf_optical_flow produces a field that is *derived from motion in the image itself* — the field is emergent from the source content rather than imposed on it. Feeding this back into f_vf_warp or f_vf_glow creates self-referential effects where the image's own movement drives its distortion.
+Every other f_vf_ generator produces fields defined by parameters or input scalar textures. f_vf_lk produces a field that is *derived from motion in the image itself* — the field is emergent from the source content rather than imposed on it. Feeding this back into f_vf_warp or f_vf_glow creates self-referential effects where the image's own movement drives its distortion.
 
 Also useful for connecting live video or external texture sources into the f_vecfield pipeline — camera input, video playback, generative animation all become field sources automatically.
 

@@ -2,7 +2,7 @@
 
 **Status:** idea only, not specced, not scheduled. Surfaced 2026-07-17
 mid-session while scratch-testing the frame-diff → `f_vf_fieldmap`
-approach for `f_vf_optical_flow`. Not naming-locked.
+approach for `f_vf_lk`. Not naming-locked.
 
 ## Core idea
 
@@ -109,7 +109,7 @@ that problem.
 - No spec, no plan, no build. Captured per standing rule (valuable
   architectural discussion goes into docs by default, not left to
   session-log compression).
-- Relationship to the `f_vf_optical_flow` idea file is "inspired by,
+- Relationship to the `f_vf_lk` idea file is "inspired by,
   potentially useful alongside" — not a dependency in either
   direction. Frame-diff → `f_vf_fieldmap` remains the primary
   scratch-test path for optical flow; `f_vf_channelmap` is a separate,

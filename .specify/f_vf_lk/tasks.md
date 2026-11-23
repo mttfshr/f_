@@ -1,3 +1,5 @@
+> Renamed 2026-11-22 (Matt): `f_vf_optical_flow` -> `f_vf_lk`, title Lucas Kanade. Paths below that say `f_vf_optical_flow` / `vf_optical_flow` are the old names.
+
 # Tasks: f_vf_optical_flow
 
 **Spec**: `.specify/f_vf_optical_flow/spec.md`

@@ -81,7 +81,7 @@ Keep the curl-scalar split in the spike scope so the decision has full informati
 
 ### `f_tf_motion` — joins the jacobian spike
 
-The same strain math applied to `f_vf_optical_flow`. Its contract is confirmed (not assumed):
+The same strain math applied to `f_vf_lk`. Its contract is confirmed (not assumed):
 out0 is a standard 0.5-centered vecfield, so no range adapter is needed; out1 carries a raw
 confidence determinant and a double-angle ambiguous axis (the aperture-problem signal), so gate
 on that instead of inventing confidence. Performance hook: a performer's movement axis becomes
@@ -172,4 +172,4 @@ ellipse to circle), `f_lens` (predicted always circles). Also feeds adaptive ant
 | A, painterly instrument | `tensormap -> smooth -> sharpen -> aniso_blur`, `glyph` as a sidecar tap | Nothing: all stages exist at tier 2. No whole-chain live check is recorded |
 | B, tensor engraving | `tensormap <-mix-> authored`, then `smooth -> hatch` | `f_tf_mix`, `f_tf_authored` (hatch and glyph exist; glyph is the lighter stand-in) |
 | C, flow structure | `f_vf_fluid -> jacobian -> smooth -> aniso_blur` / `glint` | `f_tf_jacobian`; `glint` optional. Lowest priority, most novel output |
-| D, motion instrument | `f_vf_optical_flow -> motion -> smooth -> hatch` | `f_tf_motion`. Camera-driven by how the scene moves, not what it looks like |
+| D, motion instrument | `f_vf_lk -> motion -> smooth -> hatch` | `f_tf_motion`. Camera-driven by how the scene moves, not what it looks like |

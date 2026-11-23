@@ -183,7 +183,7 @@
 					"lockeddragscroll": 0,
 					"lockedsize": 0,
 					"maxclass": "bpatcher",
-					"name": "f_vf_optical_flow.maxpat",
+					"name": "f_vf_lk.maxpat",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"offset": [
@@ -200,7 +200,7 @@
 						190.0,
 						130.0
 					],
-					"varname": "f_vf_optical_flow",
+					"varname": "f_vf_lk",
 					"viewvisibility": 1
 				}
 			},

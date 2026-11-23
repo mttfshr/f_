@@ -45,7 +45,7 @@
                             "expression": "themecolor.live_control_fg"
                         }
                     },
-                    "text": "Optical Flow",
+                    "text": "Lucas Kanade",
                     "varname": "autohelp_top_digest[4]"
                 }
             },
@@ -182,7 +182,7 @@
                     "lockeddragscroll": 0,
                     "lockedsize": 0,
                     "maxclass": "bpatcher",
-                    "name": "f_vf_optical_flow.maxpat",
+                    "name": "f_vf_lk.maxpat",
                     "numinlets": 1,
                     "numoutlets": 2,
                     "offset": [
@@ -199,7 +199,7 @@
                         154.0,
                         91.0
                     ],
-                    "varname": "f_vf_optical_flow",
+                    "varname": "f_vf_lk",
                     "viewvisibility": 1
                 }
             },

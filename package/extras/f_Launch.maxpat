@@ -13,7 +13,7 @@
 			100.0,
 			100.0,
 			960.0,
-			334.0
+			362.0
 		],
 		"gridsize": [
 			15.0,
@@ -50,7 +50,7 @@
 							0.0,
 							26.0,
 							960.0,
-							308.0
+							336.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [
@@ -486,7 +486,7 @@
 										150.0,
 										22.0
 									],
-									"text": "f_quasi",
+									"text": "f_ngon",
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
@@ -511,7 +511,7 @@
 										230.0,
 										22.0
 									],
-									"text": "loadunique f_quasi.maxhelp"
+									"text": "loadunique f_ngon.maxhelp"
 								}
 							},
 							{
@@ -526,7 +526,7 @@
 										150.0,
 										20.0
 									],
-									"text": "Shepard-zoom quasicrystal generator: endless zoom, banded pattern; gradient vecfield and potential outlets",
+									"text": "Regular N-gon generator / mask, live-modulatable vertex count; not yet confirmed or documented",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
@@ -555,7 +555,7 @@
 										150.0,
 										22.0
 									],
-									"text": "f_stipple",
+									"text": "f_quasi",
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
@@ -580,7 +580,7 @@
 										230.0,
 										22.0
 									],
-									"text": "loadunique f_stipple.maxhelp"
+									"text": "loadunique f_quasi.maxhelp"
 								}
 							},
 							{
@@ -595,7 +595,7 @@
 										150.0,
 										20.0
 									],
-									"text": "2D hash field stipple texture",
+									"text": "Shepard-zoom quasicrystal generator: endless zoom, banded pattern; gradient vecfield and potential outlets",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
@@ -624,7 +624,7 @@
 										150.0,
 										22.0
 									],
-									"text": "f_vf_seeds",
+									"text": "f_stipple",
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
@@ -649,7 +649,7 @@
 										230.0,
 										22.0
 									],
-									"text": "loadunique f_vf_seeds.maxhelp"
+									"text": "loadunique f_stipple.maxhelp"
 								}
 							},
 							{
@@ -664,7 +664,7 @@
 										150.0,
 										20.0
 									],
-									"text": "Discrete mark placement and orientation from a vecfield and shape tex -- Voronoi-style seeds with overlap",
+									"text": "2D hash field stipple texture",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
@@ -693,7 +693,7 @@
 										150.0,
 										22.0
 									],
-									"text": "f_weave",
+									"text": "f_vf_seeds",
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
@@ -718,7 +718,7 @@
 										230.0,
 										22.0
 									],
-									"text": "loadunique f_weave.maxhelp"
+									"text": "loadunique f_vf_seeds.maxhelp"
 								}
 							},
 							{
@@ -733,11 +733,80 @@
 										150.0,
 										20.0
 									],
-									"text": "Parametric distance-field line texture with per-line phase variation; optional across and along inlets",
+									"text": "Discrete mark placement and orientation from a vecfield and shape tex -- Voronoi-style seeds with overlap",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
 										266.0,
+										720.0,
+										20.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "obj-30",
+									"maxclass": "textbutton",
+									"numinlets": 1,
+									"numoutlets": 3,
+									"outlettype": [
+										"",
+										"",
+										"int"
+									],
+									"parameter_enable": 0,
+									"fontsize": 12.0,
+									"patching_rect": [
+										20.0,
+										620.0,
+										150.0,
+										22.0
+									],
+									"text": "f_weave",
+									"presentation": 1,
+									"presentation_rect": [
+										10.0,
+										292.0,
+										210.0,
+										22.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "obj-31",
+									"maxclass": "message",
+									"numinlets": 2,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										20.0,
+										648.0,
+										230.0,
+										22.0
+									],
+									"text": "loadunique f_weave.maxhelp"
+								}
+							},
+							{
+								"box": {
+									"id": "obj-32",
+									"maxclass": "comment",
+									"numinlets": 1,
+									"numoutlets": 0,
+									"patching_rect": [
+										260.0,
+										620.0,
+										150.0,
+										20.0
+									],
+									"text": "Parametric distance-field line texture with per-line phase variation; optional across and along inlets",
+									"presentation": 1,
+									"presentation_rect": [
+										230.0,
+										294.0,
 										720.0,
 										20.0
 									]
@@ -936,6 +1005,30 @@
 										0
 									]
 								}
+							},
+							{
+								"patchline": {
+									"source": [
+										"obj-30",
+										0
+									],
+									"destination": [
+										"obj-31",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"source": [
+										"obj-31",
+										0
+									],
+									"destination": [
+										"obj-1",
+										0
+									]
+								}
 							}
 						]
 					}
@@ -969,7 +1062,7 @@
 							0.0,
 							26.0,
 							960.0,
-							308.0
+							336.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [
@@ -1224,7 +1317,7 @@
 										150.0,
 										22.0
 									],
-									"text": "f_ngon",
+									"text": "f_poincare",
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
@@ -1249,7 +1342,7 @@
 										230.0,
 										22.0
 									],
-									"text": "loadunique f_ngon.maxhelp"
+									"text": "loadunique f_poincare.maxhelp"
 								}
 							},
 							{
@@ -1264,7 +1357,7 @@
 										150.0,
 										20.0
 									],
-									"text": "Regular N-gon generator / mask, live-modulatable vertex count; not yet confirmed or documented",
+									"text": "Poincare disk tiling: folds a texture into a hyperbolic {p,q} tiling, Whole or Sliver, with a camera",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
@@ -1293,7 +1386,7 @@
 										150.0,
 										22.0
 									],
-									"text": "f_poincare",
+									"text": "f_sirds",
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
@@ -1318,7 +1411,7 @@
 										230.0,
 										22.0
 									],
-									"text": "loadunique f_poincare.maxhelp"
+									"text": "loadunique f_sirds.maxhelp"
 								}
 							},
 							{
@@ -1333,7 +1426,7 @@
 										150.0,
 										20.0
 									],
-									"text": "Poincare disk tiling: folds a texture into a hyperbolic {p,q} tiling, Whole or Sliver, with a camera",
+									"text": "Single Image Random Dot Stereogram -- real-time strips; a depth texture displaces a repeating pattern",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
@@ -1362,7 +1455,7 @@
 										150.0,
 										22.0
 									],
-									"text": "f_sirds",
+									"text": "f_stereo",
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
@@ -1387,7 +1480,7 @@
 										230.0,
 										22.0
 									],
-									"text": "loadunique f_sirds.maxhelp"
+									"text": "loadunique f_stereo.maxhelp"
 								}
 							},
 							{
@@ -1402,80 +1495,11 @@
 										150.0,
 										20.0
 									],
-									"text": "Single Image Random Dot Stereogram -- real-time strips; a depth texture displaces a repeating pattern",
-									"presentation": 1,
-									"presentation_rect": [
-										230.0,
-										154.0,
-										720.0,
-										20.0
-									]
-								}
-							},
-							{
-								"box": {
-									"id": "obj-20",
-									"maxclass": "textbutton",
-									"numinlets": 1,
-									"numoutlets": 3,
-									"outlettype": [
-										"",
-										"",
-										"int"
-									],
-									"parameter_enable": 0,
-									"fontsize": 12.0,
-									"patching_rect": [
-										20.0,
-										380.0,
-										150.0,
-										22.0
-									],
-									"text": "f_stereo",
-									"presentation": 1,
-									"presentation_rect": [
-										10.0,
-										180.0,
-										210.0,
-										22.0
-									]
-								}
-							},
-							{
-								"box": {
-									"id": "obj-21",
-									"maxclass": "message",
-									"numinlets": 2,
-									"numoutlets": 1,
-									"outlettype": [
-										""
-									],
-									"patching_rect": [
-										20.0,
-										408.0,
-										230.0,
-										22.0
-									],
-									"text": "loadunique f_stereo.maxhelp"
-								}
-							},
-							{
-								"box": {
-									"id": "obj-22",
-									"maxclass": "comment",
-									"numinlets": 1,
-									"numoutlets": 0,
-									"patching_rect": [
-										260.0,
-										380.0,
-										150.0,
-										20.0
-									],
 									"text": "Stereographic projection display layer",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
-										182.0,
+										154.0,
 										720.0,
 										20.0
 									]
@@ -1626,30 +1650,6 @@
 										0
 									]
 								}
-							},
-							{
-								"patchline": {
-									"source": [
-										"obj-20",
-										0
-									],
-									"destination": [
-										"obj-21",
-										0
-									]
-								}
-							},
-							{
-								"patchline": {
-									"source": [
-										"obj-21",
-										0
-									],
-									"destination": [
-										"obj-1",
-										0
-									]
-								}
 							}
 						]
 					}
@@ -1683,7 +1683,7 @@
 							0.0,
 							26.0,
 							960.0,
-							308.0
+							336.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [
@@ -2397,7 +2397,7 @@
 							0.0,
 							26.0,
 							960.0,
-							308.0
+							336.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [
@@ -2708,7 +2708,7 @@
 										150.0,
 										22.0
 									],
-									"text": "f_vf_optical_flow",
+									"text": "f_vf_lk",
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
@@ -2733,7 +2733,7 @@
 										230.0,
 										22.0
 									],
-									"text": "loadunique f_vf_optical_flow.maxhelp"
+									"text": "loadunique f_vf_lk.maxhelp"
 								}
 							},
 							{
@@ -3353,7 +3353,7 @@
 							0.0,
 							26.0,
 							960.0,
-							308.0
+							336.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [
@@ -4067,7 +4067,7 @@
 							0.0,
 							26.0,
 							960.0,
-							308.0
+							336.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [
@@ -4409,7 +4409,7 @@
 							0.0,
 							26.0,
 							960.0,
-							308.0
+							336.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [
@@ -4751,7 +4751,7 @@
 							0.0,
 							26.0,
 							960.0,
-							308.0
+							336.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [
@@ -5279,7 +5279,7 @@
 							0.0,
 							26.0,
 							960.0,
-							308.0
+							336.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [
@@ -5696,7 +5696,7 @@
 							0.0,
 							26.0,
 							960.0,
-							308.0
+							336.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [

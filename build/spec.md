@@ -119,7 +119,7 @@ patcher = {
 # "pix_target" (pix_chain node id) also decides the control's `param_connect`: it names that node's
 # @name, not the primary pix's (f_vf_advect's `separate` / `mode` drive the pass pix). A raw-object
 # pix_target keeps naming the primary pix. Fixed 2026-10-05: the builder used to name the primary pix
-# for every control, so f_vf_optical_flow's support-stage dials were bound to a pix without the Param.
+# for every control, so f_vf_lk's support-stage dials were bound to a pix without the Param.
 #
 # Optional "pix_wire": False on a control param: it keeps its route outlet and its widget but gets no
 # attrui and no cord to a pix; the module wires it itself via raw_boxes / raw_lines (f_grain's
@@ -737,7 +737,7 @@ prose — descriptions, notes, References block — from that doc, not from
 `spec.md`/`plan.md` directly. Skip the doc and the generator has nothing
 but mechanical param ranges to work with: a `.maxhelp` that's accurate but
 says nothing about why the module exists or what its honest limitations
-are. `f_vf_optical_flow.md` is the worked example of what this synthesis
+are. `f_vf_lk.md` is the worked example of what this synthesis
 should look like.
 
 **Enforcement:**

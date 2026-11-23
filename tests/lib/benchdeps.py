@@ -89,7 +89,7 @@ DATA = {
     "bench_caustic_codebox": _MACHINERY + _CAUSTIC,
     "bench_caustic_sheets": _MODULE_BENCH + _CAUSTIC + ["tests/bench/caustic_sheets_standalone.maxpat"],
     "bench_tf_tensormap": _MACHINERY + ["src/f_tf_tensormap/codebox_*.gen"],
-    "bench_vf_encode_limit": _MACHINERY + ["src/f_vf_repulse/definition.py", "src/f_vf_vortex_multi/definition.py", "src/f_vf_fieldmap/definition.py", "src/f_vf_optical_flow/codebox_*.gen"],
+    "bench_vf_encode_limit": _MACHINERY + ["src/f_vf_repulse/definition.py", "src/f_vf_vortex_multi/definition.py", "src/f_vf_fieldmap/definition.py", "src/f_vf_lk/codebox_*.gen"],
     "bench_tf_axisflow": _MACHINERY + ["src/f_tf_axisflow/codebox_*.gen"],
     "bench_tf_smooth": _MACHINERY + ["src/f_tf_smooth/codebox_*.gen"],
     "bench_tf_glyph": _MACHINERY + ["src/f_tf_glyph/codebox_*.gen"],

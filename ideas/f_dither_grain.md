@@ -84,7 +84,7 @@ shape than to `f_grain`'s single-input shape.
 
 ## Proposed Phase 0 scratch sequence
 
-Mirrors the isolation approach used for `f_vf_optical_flow`'s buildup —
+Mirrors the isolation approach used for `f_vf_lk`'s buildup —
 each phase confirms one variable before the next is added:
 
 - **Phase 0a** — regular grid of grains (`jitter=0`), no vecfield. Static
@@ -169,7 +169,7 @@ running.
   alternate mode, not just superseded) — not needed for Phase 0, but
   worth a note if the module ever tries to serve both cases.
 - Whether this ends up needing `pix_chain` (multi-stage, like
-  `f_vf_optical_flow`) or fits a single codebox like `f_grain` — depends
+  `f_vf_lk`) or fits a single codebox like `f_grain` — depends
   on whether the vecfield-driven shape/orientation math is cheap enough
   inline.
 - Module naming — `f_dither_grain` is a placeholder.

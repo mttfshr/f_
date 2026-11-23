@@ -1,4 +1,4 @@
-# f_vf_optical_flow patcher definition
+# f_vf_lk patcher definition
 # Input to build/build_patcher.py
 # Last updated: 2026-07-18
 
@@ -54,9 +54,9 @@
 CODEBOX_DIR = ""  # gen paths below are relative to this definition.py's own directory
 
 patcher = {
-    "name":        "f_vf_optical_flow",
+    "name":        "f_vf_lk",
     "prefix":      "opticalflow",
-    "title":       "Optical Flow",
+    "title":       "Lucas Kanade",
     "signal_type": "∇ out",
     "archetype":   "processor",
 

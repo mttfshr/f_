@@ -188,7 +188,7 @@ camera -> f_tf_tensormap -> f_tf_smooth -> f_tf_hatch (outlet 0 / 1)
 ```
 Chain-terminal renderer. Start with Density around 0.5-0.7 and Line 0-0.5, raise Floor until flat
 walls go black, raise Coh Floor only if directionless clutter remains. The full chains (B:
-`tensormap <-> f_tf_authored -> f_tf_mix -> f_tf_smooth -> hatch`; D: `f_vf_optical_flow ->
+`tensormap <-> f_tf_authored -> f_tf_mix -> f_tf_smooth -> hatch`; D: `f_vf_lk ->
 f_tf_motion -> f_tf_smooth -> hatch`) assemble as those modules land.
 
 ---

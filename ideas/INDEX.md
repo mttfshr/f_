@@ -77,7 +77,7 @@ substantially move a file in `ideas/`, update its entry here too.
 - **[f_vecfield.md](f_vecfield.md)** 🟢 — The family's type contract (float32,
   RG=XY, 0.5=zero) and roadmap hub. The roadmap
   sections predate most of the build-out: since then `f_vf_flow`, `f_vf_fluid`,
-  `f_vf_repulse`, `f_vf_optical_flow` (sources) and `f_vf_glow`, `f_vf_advect`,
+  `f_vf_repulse`, `f_vf_lk` (sources) and `f_vf_glow`, `f_vf_advect`,
   `f_vf_prism`, `f_vf_potential`, `f_vf_split` (consumers) joined the originals
   (`f_vf_vortex(_multi)`, `f_vf_fieldmap`, `f_caustic`, `f_vf_warp`, `f_vf_streak`).
   The README Patches table is the current module list; `f_vf_chroma` and
@@ -114,7 +114,7 @@ substantially move a file in `ideas/`, update its entry here too.
 - **[f_vf_channelmap.md](f_vf_channelmap.md)** ⚪ — Reinterpret any two
   texture channels directly as vecfield XY (no gradient math) — inverse of
   `f_vf_split`. Supersedes and absorbs the deleted `f_vf_normal.md`.
-- **[f_vf_optical_flow.md](f_vf_optical_flow.md)** 🟢 — Derive a vecfield from
+- **[f_vf_lk.md](f_vf_lk.md)** 🟢 — Derive a vecfield from
   motion between frames. Built as Lucas-Kanade (confidence-gated, aperture-problem
   fill, two outlets). The note is the pre-build idea plus the record of the cheap
   frame-diff approximation being **tested and ruled out** (2026-07-17, structural
@@ -589,7 +589,7 @@ there, then the chapter-specific files for depth.
   image pushed by per-block motion from the live input, a `key` trigger as the I-frame
   (skip it at a cut to mosh), `hold` to repeat the motion (bloom), residual and intra-block
   chance. Optional second inlet lets one shot's motion drag another's pixels. Try a chain
-  first (`f_vf_optical_flow` → block quantize → `f_vf_advect`). Captured 2026-11-14.
+  first (`f_vf_lk` → block quantize → `f_vf_advect`). Captured 2026-11-14.
 - **[variable_framerate.md](variable_framerate.md)** ⚪ — Captured 2026-10-18 from "can
   breath or an oscillator drive the frame rate?". Separates render rate (`jit.world`
   `fps` / `interval`, capped at the display refresh with vsync, slower is allowed;

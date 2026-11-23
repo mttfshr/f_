@@ -1436,7 +1436,7 @@
 						92.0,
 						21.0
 					],
-					"text": "Optical Flow"
+					"text": "Lucas Kanade"
 				}
 			},
 			{

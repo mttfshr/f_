@@ -27,7 +27,7 @@ motion blur (`perceptron_v2`); that overlaps `glow_profile_and_afterimage.md`.
 - `f_tf_smooth`: one-pole smoother, **tensor space only**.
 - `f_vf_advect`: accumulation along a vecfield, not difference from memory.
 - `f_vf_temporal_smooth.md` (parked) is the vecfield sibling of a plain-texture one-pole.
-- `f_vf_optical_flow` ruled out frame differencing as a *motion-field* estimator; a
+- `f_vf_lk` ruled out frame differencing as a *motion-field* estimator; a
   display or drive signal is a different use.
 - No plain-texture temporal adaptation, high-pass or band-pass.
 

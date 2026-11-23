@@ -164,7 +164,7 @@ The rest (inference, not tried):
   envelope on top. Each single operation exists as a plain mixer; this is the same
   stamp for any texture and vecfield pair (into `f_vf_advect`, `f_vf_ch` as oil,
   `f_vf_warp`, ...), not only ink, which fits Matt's taste for general tools.
-- **Natural source pair: a camera and its own motion.** `f_vf_optical_flow` of a
+- **Natural source pair: a camera and its own motion.** `f_vf_lk` of a
   camera is literally direction and force of motion, so camera luma on in0 and the
   optical flow on in1 stamps ink where things move and stirs along that motion.
 - **The curl constraint moves to the vecfield.** The section above (the impulse needs

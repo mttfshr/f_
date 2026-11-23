@@ -16,7 +16,7 @@
 # Wiring: routepass -> state in0 (automatic, primary); pix_wires supplies the
 # loop ["render",0,"state",1]. state out0 -> render in0; render out0 ->
 # module outlet 0 (outlet_source_override {0: "render"} + raw_lines, the
-# f_vf_optical_flow "real output node is not the primary" pattern).
+# f_vf_lk "real output node is not the primary" pattern).
 #
 # BYPASS: bypass_mode "param", bypass_target the state pix (primary): the
 # toggle drives `Param bypass_gate` in codebox_state.gen only, where bypass

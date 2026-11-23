@@ -237,6 +237,7 @@
                                 "Grain",
                                 "Kuramoto-Sivashinsky",
                                 "Masonry",
+                                "Ngon",
                                 "Quasi \u2207",
                                 "Seeds \u2207",
                                 "Stipple",
@@ -248,7 +249,7 @@
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_0_disp",
-                            "parameter_mmax": 8,
+                            "parameter_mmax": 9,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -283,6 +284,7 @@
                                 "grain",
                                 "ks",
                                 "masonry",
+                                "ngon",
                                 "quasi",
                                 "vf_seeds",
                                 "stipple",
@@ -294,7 +296,7 @@
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_0_file",
-                            "parameter_mmax": 8,
+                            "parameter_mmax": 9,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -396,7 +398,6 @@
                                 "Droste",
                                 "Lens",
                                 "Mobius",
-                                "Ngon",
                                 "Poincare",
                                 "SIRDS",
                                 "Stereo"
@@ -406,7 +407,7 @@
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_1_disp",
-                            "parameter_mmax": 6,
+                            "parameter_mmax": 5,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -440,7 +441,6 @@
                                 "droste",
                                 "lens",
                                 "mobius",
-                                "ngon",
                                 "poincare",
                                 "sirds",
                                 "stereo"
@@ -450,7 +450,7 @@
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_1_file",
-                            "parameter_mmax": 6,
+                            "parameter_mmax": 5,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -709,7 +709,7 @@
                                 "Flow \u2207",
                                 "Fluid \u2207",
                                 "Lattice Boltzmann \u2207",
-                                "Optical Flow \u2207",
+                                "Lucas Kanade \u2207",
                                 "Repulse \u2207",
                                 "Vortex \u2207",
                                 "Vortex Multi \u2207",
@@ -756,7 +756,7 @@
                                 "vf_flow",
                                 "vf_fluid",
                                 "vf_lbm",
-                                "vf_optical_flow",
+                                "vf_lk",
                                 "vf_repulse",
                                 "vf_vortex",
                                 "vf_vortex_multi",
@@ -1696,172 +1696,6 @@
                     ],
                     "text": "prepend addmod"
                 }
-            },
-            {
-                "box": {
-                    "fontface": 0,
-                    "fontname": "Ableton Sans Light",
-                    "fontsize": 12.0,
-                    "id": "obj-47",
-                    "maxclass": "comment",
-                    "numinlets": 1,
-                    "numoutlets": 0,
-                    "patching_rect": [
-                        3.0,
-                        415.0,
-                        176.0,
-                        21.0
-                    ],
-                    "presentation": 1,
-                    "presentation_rect": [
-                        2.0,
-                        415.0,
-                        89.66666933894157,
-                        21.0
-                    ],
-                    "text": "Recipes",
-                    "textcolor": [
-                        0.45098039215686275,
-                        0.47058823529411764,
-                        0.5764705882352941,
-                        1.0
-                    ]
-                }
-            },
-            {
-                "box": {
-                    "appearance": 1,
-                    "fontname": "Ableton Sans Light",
-                    "fontsize": 11.0,
-                    "id": "obj-48",
-                    "lcdcolor": [
-                        0.8,
-                        0.8,
-                        0.8,
-                        1.0
-                    ],
-                    "maxclass": "live.menu",
-                    "numinlets": 1,
-                    "numoutlets": 3,
-                    "outlettype": [
-                        "",
-                        "",
-                        "float"
-                    ],
-                    "parameter_enable": 1,
-                    "parameter_mappable": 0,
-                    "patching_rect": [
-                        3.0,
-                        1600.0,
-                        154.0,
-                        17.0
-                    ],
-                    "presentation": 1,
-                    "presentation_rect": [
-                        3.0,
-                        436.0,
-                        89.66666933894157,
-                        17.0
-                    ],
-                    "saved_attribute_attributes": {
-                        "lcdcolor": {
-                            "expression": "themecolor.live_arranger_grid_tiles"
-                        },
-                        "valueof": {
-                            "parameter_enum": [
-                                "Fieldmap Seeds",
-                                "Fieldmap Streak",
-                                "Fluid Caustic",
-                                "Chladni Glow",
-                                "Grain Warp",
-                                "Masonry Repulse",
-                                "Motion Prism",
-                                "Ngon Flow",
-                                "Repulse Caustic",
-                                "SIRDS",
-                                "Tensor Advect",
-                                "Vorticity Fluid"
-                            ],
-                            "parameter_initial": [
-                                0.0
-                            ],
-                            "parameter_invisible": 2,
-                            "parameter_longname": "f_module_10_disp",
-                            "parameter_mmax": 11,
-                            "parameter_modmode": 0,
-                            "parameter_shortname": "live.menu",
-                            "parameter_type": 2
-                        }
-                    },
-                    "varname": "live.menu[20]"
-                }
-            },
-            {
-                "box": {
-                    "id": "obj-49",
-                    "maxclass": "live.menu",
-                    "numinlets": 1,
-                    "numoutlets": 3,
-                    "outlettype": [
-                        "",
-                        "",
-                        "float"
-                    ],
-                    "parameter_enable": 1,
-                    "parameter_mappable": 0,
-                    "patching_rect": [
-                        3.0,
-                        2500.0,
-                        154.0,
-                        15.0
-                    ],
-                    "saved_attribute_attributes": {
-                        "valueof": {
-                            "parameter_enum": [
-                                "fieldmap_seeds",
-                                "fieldmap_streak",
-                                "fluid_caustic",
-                                "chladni_glow",
-                                "grain_warp",
-                                "masonry_repulse",
-                                "motion_prism",
-                                "ngon_flow",
-                                "repulse_caustic",
-                                "sirds",
-                                "tensor_advect",
-                                "vorticity_fluid"
-                            ],
-                            "parameter_initial": [
-                                0.0
-                            ],
-                            "parameter_invisible": 2,
-                            "parameter_longname": "f_module_10_file",
-                            "parameter_mmax": 11,
-                            "parameter_modmode": 0,
-                            "parameter_shortname": "live.menu",
-                            "parameter_type": 2
-                        }
-                    },
-                    "varname": "live.menu[21]"
-                }
-            },
-            {
-                "box": {
-                    "id": "obj-50",
-                    "maxclass": "newobj",
-                    "numinlets": 1,
-                    "numoutlets": 1,
-                    "outlettype": [
-                        ""
-                    ],
-                    "patching_rect": [
-                        3.0,
-                        3500.0,
-                        100.0,
-                        22.0
-                    ],
-                    "text": "prepend addrecipe"
-                }
             }
         ],
         "lines": [
@@ -2260,42 +2094,6 @@
                         1
                     ]
                 }
-            },
-            {
-                "patchline": {
-                    "source": [
-                        "obj-48",
-                        0
-                    ],
-                    "destination": [
-                        "obj-49",
-                        0
-                    ]
-                }
-            },
-            {
-                "patchline": {
-                    "source": [
-                        "obj-49",
-                        1
-                    ],
-                    "destination": [
-                        "obj-50",
-                        0
-                    ]
-                }
-            },
-            {
-                "patchline": {
-                    "source": [
-                        "obj-50",
-                        0
-                    ],
-                    "destination": [
-                        "obj-4",
-                        1
-                    ]
-                }
             }
         ],
         "parameters": {
@@ -2396,16 +2194,6 @@
             ],
             "obj-45": [
                 "f_module_9_file",
-                "live.menu",
-                0
-            ],
-            "obj-48": [
-                "f_module_10_disp",
-                "live.menu",
-                0
-            ],
-            "obj-49": [
-                "f_module_10_file",
                 "live.menu",
                 0
             ],

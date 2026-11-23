@@ -1,6 +1,6 @@
 """
-vf_optical_flow_mirror.py -- NumPy mirror of f_vf_optical_flow's Stage C, a hand translation
-of src/f_vf_optical_flow/codebox_stage_c.gen (the shipped codebox), float32, in the
+vf_lk_mirror.py -- NumPy mirror of f_vf_lk's Stage C, a hand translation
+of src/f_vf_lk/codebox_stage_c.gen (the shipped codebox), float32, in the
 codebox's own order of operations.
 
 Stage C is a pure per-pixel function: the codebox samples in1 (Sxx, Syy, Sxy) and in2

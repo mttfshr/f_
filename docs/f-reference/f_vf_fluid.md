@@ -11,7 +11,7 @@ A spectral (FFT) incompressible-flow **velocity solver**. A force vecfield goes 
 
 It does **not** move any texture. Dye and image transport are left to the consumers: feed Fluid's outlet to the vecfield inlet of `f_vf_advect`, `f_vf_warp`, `f_vf_glow`, `f_vf_streak` and friends.
 
-Typical use: a force producer (`f_vf_optical_flow` on video is the most expressive; `f_vf_vortex`, `f_vf_flow` and `f_vf_repulse` are cleaner) → `f_vf_fluid` → one or more consumers.
+Typical use: a force producer (`f_vf_lk` on video is the most expressive; `f_vf_vortex`, `f_vf_flow` and `f_vf_repulse` are cleaner) → `f_vf_fluid` → one or more consumers.
 
 The solver is a fixed 256×256 grid regardless of render size, on a periodic unit square. Only the final encode stage follows the render resolution, so the outlet is always a normal render-size f_vecfield.
 

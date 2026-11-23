@@ -78,7 +78,7 @@ def test_the_menu_patcher_is_wired_the_way_f_addmod_expects():
     boxes = {b["box"]["id"]: b["box"] for b in p["boxes"]}
     menu = g.load_menu()
     live = [b for b in boxes.values() if b["maxclass"] == "live.menu"]
-    _eq("two live.menu per category plus two for Recipes (display and file)", len(live), 2 * (len(menu.CATEGORIES) + 1))
+    _eq("two live.menu per category, plus two for Recipes when there are recipes (display and file)", len(live), 2 * (len(menu.CATEGORIES) + (1 if menu.RECIPES else 0)))
     for slot, (label, items) in enumerate(menu.CATEGORIES):
         disp = [b for b in live if b["saved_attribute_attributes"]["valueof"]["parameter_longname"] == f"f_module_{slot}_disp"][0]
         file = [b for b in live if b["saved_attribute_attributes"]["valueof"]["parameter_longname"] == f"f_module_{slot}_file"][0]
@@ -96,17 +96,20 @@ def test_the_menu_patcher_is_wired_the_way_f_addmod_expects():
     _eq("each file menu's second outlet -> prepend addmod -> gate inlet 1",
         all(any(s[0] == i and d == ("obj-4", 1) for s, d in cords) for i in prepends) and len(prepends) == len(menu.CATEGORIES), True)
     rprepends = [i for i, b in boxes.items() if b.get("text") == "prepend addrecipe"]
-    _eq("the Recipes file menu -> prepend addrecipe -> gate inlet 1 (one only)",
-        len(rprepends) == 1 and any(s[0] == rprepends[0] and d == ("obj-4", 1) for s, d in cords), True)
-    slot = len(menu.CATEGORIES)
-    rdisp = [b for b in live if b["saved_attribute_attributes"]["valueof"]["parameter_longname"] == f"f_module_{slot}_disp"][0]
-    rfile = [b for b in live if b["saved_attribute_attributes"]["valueof"]["parameter_longname"] == f"f_module_{slot}_file"][0]
-    _eq("Recipes: the display menu lists the recipe names",
-        rdisp["saved_attribute_attributes"]["valueof"]["parameter_enum"], [d for d, _ in menu.RECIPES])
-    _eq("Recipes: the file menu lists the recipe keys",
-        rfile["saved_attribute_attributes"]["valueof"]["parameter_enum"], [g.recipe_key(d) for d, _ in menu.RECIPES])
     labels = {b["text"]: b for b in boxes.values() if b["maxclass"] == "comment" and b.get("presentation")}
-    _eq("Recipes is the last label, grey", ("Recipes" in labels, labels["Recipes"]["textcolor"] == g.GREY_TEXT), (True, True))
+    if not menu.RECIPES:          # switched off 2026-11-22 (Matt); menu._RECIPES_PARKED keeps the list
+        _eq("no Recipes dropdown while RECIPES is empty", (len(rprepends), "Recipes" in {b["text"] for b in boxes.values() if b["maxclass"] == "comment"}), (0, False))
+    else:
+        _eq("the Recipes file menu -> prepend addrecipe -> gate inlet 1 (one only)",
+            len(rprepends) == 1 and any(s[0] == rprepends[0] and d == ("obj-4", 1) for s, d in cords), True)
+        slot = len(menu.CATEGORIES)
+        rdisp = [b for b in live if b["saved_attribute_attributes"]["valueof"]["parameter_longname"] == f"f_module_{slot}_disp"][0]
+        rfile = [b for b in live if b["saved_attribute_attributes"]["valueof"]["parameter_longname"] == f"f_module_{slot}_file"][0]
+        _eq("Recipes: the display menu lists the recipe names",
+            rdisp["saved_attribute_attributes"]["valueof"]["parameter_enum"], [d for d, _ in menu.RECIPES])
+        _eq("Recipes: the file menu lists the recipe keys",
+            rfile["saved_attribute_attributes"]["valueof"]["parameter_enum"], [g.recipe_key(d) for d, _ in menu.RECIPES])
+        _eq("Recipes is the last label, grey", ("Recipes" in labels, labels["Recipes"]["textcolor"] == g.GREY_TEXT), (True, True))
     ys = sorted(b["presentation_rect"][1] for k, b in labels.items() if k != "f_")
     _eq("the last label sits at the slot pitch and the whole menu fits the panel",
         (ys[-1] == g.MENU_TOP + g.SLOT * (len(ys) - 1), ys[-1] + g.SLOT_CONTENT <= g.PANEL_H), (True, True))
@@ -446,14 +449,14 @@ def test_check_reports_a_stale_file_and_write_fixes_it():
 
 def test_recipes_are_checked_and_written_to_the_js():
     menu = g.load_menu()
-    _eq("recipes exist and every one has at least two menu modules", all(len(m) >= 2 for _, m in menu.RECIPES) and menu.RECIPES != [], True)
+    _eq("every recipe (live, or parked while RECIPES is empty) has at least two menu modules", all(len(m) >= 2 for _, m in (menu.RECIPES or menu._RECIPES_PARKED)), True)
     _eq("recipe keys are unique", len({g.recipe_key(d) for d, _ in menu.RECIPES}), len(menu.RECIPES))
     js = g.OUT_JS.read_text()
     for display, mods in menu.RECIPES:
         row = ", ".join('"' + x + '"' for x in mods)
         _eq(f"f_addmod.js has recipe {display!r}", f'"{g.recipe_key(display)}": [{row}]' in js, True)
     _eq("f_addmod.js defines addrecipe", "function addrecipe(key)" in js, True)
-    good = list(menu.RECIPES)
+    good = list(menu.RECIPES or menu._RECIPES_PARKED)
     for what, bad, needle in (
             ("a recipe naming a module that is not in the menu", good + [("Bad", ["vf_fieldmap", "nope"])], "'nope', which is not a menu module"),
             ("a one-module recipe", good + [("Lonely", ["vf_fieldmap"])], "needs at least two"),

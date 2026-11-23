@@ -75,7 +75,7 @@ BYPASS_EXPECT = {
         2: ("const", (0.0, 0.0, 0.0, 1.0), 0.0),        # mask: black, A = 1
         3: ("const", (0.0, 0.0, 0.0, 1.0), 0.0),        # seed coord: black, A = 1
     },
-    "f_vf_optical_flow": {2: ("const", (0.0, 0.5, 0.5, 1.0), 1e-6)},   # confidence: neutral; out1 is the source frame (implicit)
+    "f_vf_lk": {2: ("const", (0.0, 0.5, 0.5, 1.0), 1e-6)},   # confidence: neutral; out1 is the source frame (implicit)
     "f_vf_prism": {2: IN1, 3: ("vec", 2, 0.0042)},     # out3: the vecfield input (neutral 0.5 if unconnected)
     "f_caustic": {2: IN1},
     "f_vf_split": {2: IN1},
@@ -183,9 +183,9 @@ def bypass_issues(name, info, n, bypassed):
 # only (feedback loops stay warm / intermediate stages need no gating):
 # f_vf_advect (plan.md: feedback keeps running through bypass),
 # f_vf_seeds (ADR 8: bypass applied only at the composite stage),
-# f_vf_optical_flow (per-stage bypass Params, see codebox_stage_e.gen header).
+# f_vf_lk (per-stage bypass Params, see codebox_stage_e.gen header).
 # Any change is a GPU-cost decision, not a bug.
-PARTIAL_BYPASS_BY_DESIGN = {"f_vf_advect", "f_vf_seeds", "f_vf_optical_flow",
+PARTIAL_BYPASS_BY_DESIGN = {"f_vf_advect", "f_vf_seeds", "f_vf_lk",
                             "f_tf_tensormap",   # bypass_gate on stage_c only; stages A/B keep running (spec: Parameters)
                             "f_tf_hatch",       # bypass_gate on stage e3 only; E1/E2 keep decoding (spec: Parameters)
                             "f_tf_aniso_blur",  # single codebox; bypass_gate inside the pass (spec: bypass = passthrough of inlet 1)
@@ -195,7 +195,7 @@ PARTIAL_BYPASS_BY_DESIGN = {"f_vf_advect", "f_vf_seeds", "f_vf_optical_flow",
                             "f_vf_stamp"}     # single codebox; bypass_gate inside the pass (spec G5)
 
 # Processors whose bypass is DOCUMENTED to output a neutral field, not to pass the input through,
-# so the strict `out1 == in1 under bypass` check does not apply. (f_vf_optical_flow left this set
+# so the strict `out1 == in1 under bypass` check does not apply. (f_vf_lk left this set
 # 2026-11-06: Matt's rule is that it passes inlet 0 through on out1.)
 NEUTRAL_BYPASS_BY_DESIGN = {"f_tf_tensormap", "f_tf_axisflow", "f_vf_ch",
                             "f_vf_flow", "f_vf_fieldmap", "f_vf_potential",

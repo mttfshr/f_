@@ -45,6 +45,7 @@ CATEGORIES = [
         ("Grain", "grain", N),
         ("Kuramoto-Sivashinsky", "ks", N),
         ("Masonry", "masonry", N),
+        ("Ngon", "ngon", N),
         ("Quasi", "quasi", V),
         ("Seeds", "vf_seeds", V),
         ("Stipple", "stipple", N),
@@ -55,7 +56,6 @@ CATEGORIES = [
         ("Droste", "droste", N),
         ("Lens", "lens", N),
         ("Mobius", "mobius", N),
-        ("Ngon", "ngon", N),
         ("Poincare", "poincare", N),
         ("SIRDS", "sirds", N),
         ("Stereo", "stereo", N),
@@ -74,7 +74,7 @@ CATEGORIES = [
         ("Flow", "vf_flow", V),
         ("Fluid", "vf_fluid", V),
         ("Lattice Boltzmann", "vf_lbm", V),
-        ("Optical Flow", "vf_optical_flow", V),
+        ("Lucas Kanade", "vf_lk", V),
         ("Repulse", "vf_repulse", V),
         ("Vortex", "vf_vortex", V),
         ("Vortex Multi", "vf_vortex_multi", V),
@@ -125,14 +125,18 @@ CATEGORIES = [
 # must be one of the menu modules above and a recipe needs at least two.  Most come from the module sets in
 # package/examples/f_demo_*.maxpat (ordered along the signal path from docs/f-reference/module-inventory.md);
 # "Tensor Advect" is not from a demo.  Added 2026-10-22; prune or reorder freely.
-RECIPES = [
+# Switched off 2026-11-22 (Matt: remove the Recipes section for now, revisit soon). The list is kept below as
+# _RECIPES_PARKED; set RECIPES = _RECIPES_PARKED to bring the dropdown back (no other change is needed here).
+RECIPES = []
+
+_RECIPES_PARKED = [
     ("Fieldmap Seeds", ["vf_fieldmap", "vf_seeds"]),                              # f_demo_seeds
     ("Fieldmap Streak", ["vf_fieldmap", "vf_streak"]),                            # f_demo_streak
     ("Fluid Caustic", ["ngon", "vf_fieldmap", "vf_fluid", "caustic"]),            # f_demo_caustic2
     ("Chladni Glow", ["chladni", "vf_fieldmap", "vf_glow"]),                      # f_demo_chladni
     ("Grain Warp", ["grain", "vf_fieldmap", "vf_warp"]),                          # f_demo_warp
     ("Masonry Repulse", ["masonry", "vf_repulse", "vf_advect"]),                  # f_demo_repulse
-    ("Motion Prism", ["masonry", "vf_optical_flow", "vf_prism"]),                 # f_demo_prism-masonry
+    ("Motion Prism", ["masonry", "vf_lk", "vf_prism"]),                 # f_demo_prism-masonry
     ("Ngon Flow", ["ngon", "vf_flow", "vf_advect"]),                              # f_demo_ngon
     ("Repulse Caustic", ["vf_repulse", "caustic", "lens"]),                       # f_demo_lens
     ("SIRDS", ["grain", "sirds", "stereo"]),                                      # f_demo_sirds

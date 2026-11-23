@@ -29,7 +29,7 @@ Characteristic: outputs are not "textures that look like arrows" but **jointly c
 Data flow (source-of-geometry spread, four producers one consumer):
 
 - Branch A: `vs_wfg_3` (or any scalar texture) → `f_vf_fieldmap` (geometry from texture gradient).
-- Branch B: video input → `f_vf_optical_flow` (geometry from actual motion, confidence output).
+- Branch B: video input → `f_vf_lk` (geometry from actual motion, confidence output).
 - Branch C: `f_vf_vortex` (geometry from a single parametric singularity, mod-textures on cx/cy/convergence/curl).
 - Branch D: scalar texture → `f_tf_tensormap` (structure tensor) → `f_tf_axisflow` (seam-free vecfield along image edges).
 
@@ -135,7 +135,7 @@ Characteristic: gen~/pfft~ modules with **no GL context**, driven by MSP cables,
 | Generators/Discrete | f_grain, f_masonry, f_weave, f_stipple, f_vf_seeds | Arranged marks, shared param vocabulary |
 | Geometry/UV | f_droste, f_mobius, f_lens, f_stereo, f_sirds, f_ngon⚠, f_cmap⚠ | Stateless analytic coordinate warps |
 | Color/Tone | f_channel_grader, f_hue_processor, f_luma_processor, f_tone_curve, f_cmap⚠ | Terminal, tonal segmentation, pixel-value only |
-| ∇ Fields | f_vf_vortex, f_vf_vortex_multi, f_vf_fieldmap, f_vf_flow, f_vf_repulse, f_vf_optical_flow, f_vf_fluid, f_vf_ch, f_vf_lbm, f_vf_vorticity, f_wave_field, f_chladni (partly) | Coherent jointly-computed RG vecfield producers |
+| ∇ Fields | f_vf_vortex, f_vf_vortex_multi, f_vf_fieldmap, f_vf_flow, f_vf_repulse, f_vf_lk, f_vf_fluid, f_vf_ch, f_vf_lbm, f_vf_vorticity, f_wave_field, f_chladni (partly) | Coherent jointly-computed RG vecfield producers |
 | ∇ Effects | f_vf_warp, f_vf_streak, f_vf_glow, f_vf_chroma, f_vf_prism, f_vf_advect, f_caustic | Shared-field consumers, differing accumulation operator |
 | T_ Fields | f_tf_tensormap, f_tf_smooth, f_tf_sharpen | Structure (axis+anisotropy) signal, angle-doubled, NOT vecfield |
 | T_ Effects | f_tf_aniso_blur, f_tf_glyph, f_tf_hatch | Axis-aligned renderers, axis-blind or bridged |
@@ -270,8 +270,8 @@ Two additional example data flows per patcher, beyond the family-level chains ab
 1. Attraction variant: camera → `f_vf_repulse` with negative `gain` → `f_caustic` — brightness attracts, caustic sheets converge on the subject.
 2. Warp-away portrait: `f_vf_repulse` → `f_vf_warp` (source = same camera) — the surroundings close in on its bright regions, which shrink (warp reads along the vector, so content moves against it); composite `mix_pct` crossfades the two truths.
 
-**f_vf_optical_flow**
-1. Motion streaks: camera → `f_vf_optical_flow` → `f_vf_streak` (source = camera) — motion blur in the true motion direction, aperture-problem handled.
+**f_vf_lk**
+1. Motion streaks: camera → `f_vf_lk` → `f_vf_streak` (source = camera) — motion blur in the true motion direction, aperture-problem handled.
 2. Motion memory: vecfield out0 → `f_vf_fluid` force → `f_vf_advect` — after the motion stops, the fluid keeps the momentum; confidence out1 → `vs_comparator` gates where the fluid is force-fed.
 
 **f_vf_fluid**
@@ -358,7 +358,7 @@ Two additional example data flows per patcher, beyond the family-level chains ab
 
 **f_vf_split**
 1. Axis-separated control: `f_vf_fluid` → `f_vf_split` → X scalar to `f_weave` along inlet, Y scalar to offset — horizontal flow rate and vertical drift modulated independently.
-2. Scalar-only consumers: `f_vf_optical_flow` out0 → `f_vf_split` → Y scalar → `f_stipple` processor mode — motion's vertical component becomes dither density.
+2. Scalar-only consumers: `f_vf_lk` out0 → `f_vf_split` → Y scalar → `f_stipple` processor mode — motion's vertical component becomes dither density.
 
 **f_tf_axisflow** — see T_ fields/effects above; both its modes are exercised there.
 

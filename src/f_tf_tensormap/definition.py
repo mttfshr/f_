@@ -4,7 +4,7 @@
 #
 # ARCHITECTURE NOTE -- primary node vs. real output node
 #
-# Same shape as f_vf_optical_flow (see its definition.py): the source texture
+# Same shape as f_vf_lk (see its definition.py): the source texture
 # must reach stage_a (the primary), but the real outlets come from stage_c, the
 # last node. So both outlets are redirected to stage_c via outlet_source_override
 # (suppresses the automatic primary->outlet wire) + raw_lines (supplies the real

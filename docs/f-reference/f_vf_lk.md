@@ -1,4 +1,6 @@
-# f_vf_optical_flow
+# f_vf_lk (Lucas Kanade)
+
+_Renamed 2026-11-22 from `f_vf_optical_flow` (Matt); title Lucas Kanade. The prefix `opticalflow` and the `#0_of_*` object names are unchanged._
 
 **Type:** Processor (f_vecfield generator, from source texture motion)
 **Status:** Functional, with known honest limitations (see Notes)
@@ -94,7 +96,7 @@ The initial build (per ADR-2) deliberately deferred masking — raw confidence s
 ## Signal chain recipes
 
 ### Basic motion-reactive processing
-- `f_vf_optical_flow` on live camera or played-back footage → `f_vf_advect` (temporal smoothing/momentum on top of Stage D's own accumulation) → `f_vf_prism` or `f_vf_glow` for the visible effect
+- `f_vf_lk` on live camera or played-back footage → `f_vf_advect` (temporal smoothing/momentum on top of Stage D's own accumulation) → `f_vf_prism` or `f_vf_glow` for the visible effect
 
 ### Confidence-aware compositing
 - Use out1's `x` channel directly as a luma-style mask to composite the source only where real motion was detected with confidence, independent of what out0's own masking already did to the vecfield itself

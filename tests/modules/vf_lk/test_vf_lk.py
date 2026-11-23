@@ -1,7 +1,7 @@
 """
-Tier-1 tests for f_vf_optical_flow Stage C (closed-form 2x2 Lucas-Kanade solve).
-Mirror: vf_optical_flow_mirror.stage_c, a hand translation of the shipped codebox
-(src/f_vf_optical_flow/codebox_stage_c.gen). Ground truth is independent:
+Tier-1 tests for f_vf_lk Stage C (closed-form 2x2 Lucas-Kanade solve).
+Mirror: vf_lk_mirror.stage_c, a hand translation of the shipped codebox
+(src/f_vf_lk/codebox_stage_c.gen). Ground truth is independent:
 
   - recovery of a known translation (u0, v0) from sums built, per the brief, as
     Sxx = sum Ix^2, Sxy = sum Ix Iy, Sxt = sum Ix It with It = -(Ix u0 + Iy v0):
@@ -33,7 +33,7 @@ import numpy as np
 
 from harness import check, note, run  # noqa: E402
 import gpu_sim as g  # noqa: E402
-from vf_optical_flow_mirror import F32, stage_c  # noqa: E402
+from vf_lk_mirror import F32, stage_c  # noqa: E402
 
 N = 16
 

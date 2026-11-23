@@ -60,13 +60,13 @@ part a real codec cannot do and the most performable.
 
 ## Overlap with what f_ has (read from `module-inventory.md`, not opened)
 
-- `f_vf_optical_flow` gives a per-pixel Lucas-Kanade field. Quantized to blocks, it might
+- `f_vf_lk` gives a per-pixel Lucas-Kanade field. Quantized to blocks, it might
   supply step 1. Unchecked: whether a 5×5 single-scale LK sees motion large enough for a cut
   (its own note flags fast motion as its limit), and whether block matching (SAD search over
   ±N px) is cheaper and more codec-like. Block matching is likely to look more "wrong" in the
   right way: it picks bad matches, codecs do too.
 - `f_vf_advect` is frame-to-frame advection with feedback. A first sketch might be
-  `f_vf_optical_flow → block quantize → f_vf_advect` with decay at 1 and no injection after
+  `f_vf_lk → block quantize → f_vf_advect` with decay at 1 and no injection after
   the key. Differences: advect is smooth and semi-Lagrangian, mosh wants nearest-sample block
   translation; advect has no key or residual. Try the chain before writing a module.
 - `ideas/f_adapt.md` (concept): its frame-difference memory is the cut detector for `auto key`.
