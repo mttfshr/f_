@@ -823,13 +823,7 @@
 			{
 				"box": {
 					"id": "obj-20",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "Fixed point X position",
 					"numinlets": 1,
@@ -841,22 +835,19 @@
 					"param_connect": "vf_vortex_pix::cx",
 					"parameter_enable": 1,
 					"patching_rect": [
-						46.5,
+						38.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						4.0,
-						38.0,
-						27.0,
-						43.0
+						100.0,
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								0.5
@@ -872,10 +863,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "cx"
 				}
 			},
@@ -915,7 +902,7 @@
 					"presentation": 1,
 					"presentation_rect": [
 						-7.5,
-						20.0,
+						82.0,
 						50.0,
 						18.0
 					],
@@ -927,13 +914,7 @@
 			{
 				"box": {
 					"id": "obj-23",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "Fixed point Y position",
 					"numinlets": 1,
@@ -945,22 +926,19 @@
 					"param_connect": "vf_vortex_pix::cy",
 					"parameter_enable": 1,
 					"patching_rect": [
-						118.5,
+						110.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						41.0,
-						38.0,
-						27.0,
-						43.0
+						100.0,
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								0.5
@@ -976,10 +954,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "cy"
 				}
 			},
@@ -1019,7 +993,7 @@
 					"presentation": 1,
 					"presentation_rect": [
 						29.5,
-						20.0,
+						82.0,
 						50.0,
 						18.0
 					],
@@ -1056,7 +1030,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						78.0,
+						4.0,
 						38.0,
 						27.0,
 						43.0
@@ -1122,7 +1096,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						66.5,
+						-7.5,
 						20.0,
 						50.0,
 						18.0
@@ -1160,7 +1134,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						115.0,
+						41.0,
 						38.0,
 						27.0,
 						43.0
@@ -1226,7 +1200,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						103.5,
+						29.5,
 						20.0,
 						50.0,
 						18.0
@@ -1239,13 +1213,7 @@
 			{
 				"box": {
 					"id": "obj-32",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "Exponential falloff rate. 0=uniform field",
 					"numinlets": 1,
@@ -1257,22 +1225,19 @@
 					"param_connect": "vf_vortex_pix::falloff",
 					"parameter_enable": 1,
 					"patching_rect": [
-						334.5,
+						326.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						152.0,
-						38.0,
-						27.0,
-						43.0
+						78.0,
+						100.0,
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								2.0
@@ -1288,10 +1253,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "falloff"
 				}
 			},
@@ -1330,8 +1291,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						140.5,
-						20.0,
+						66.5,
+						82.0,
 						50.0,
 						18.0
 					],
@@ -1343,13 +1304,7 @@
 			{
 				"box": {
 					"id": "obj-35",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "cx modulation depth (inlet 1)",
 					"numinlets": 1,
@@ -1361,22 +1316,19 @@
 					"param_connect": "vf_vortex_pix::cx_amt",
 					"parameter_enable": 1,
 					"patching_rect": [
-						406.5,
+						398.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						4.0,
+						115.0,
 						100.0,
-						27.0,
-						43.0
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								0.0
@@ -1392,10 +1344,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "cx_amt"
 				}
 			},
@@ -1434,7 +1382,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						-7.5,
+						103.5,
 						82.0,
 						50.0,
 						18.0
@@ -1447,13 +1395,7 @@
 			{
 				"box": {
 					"id": "obj-38",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "cy modulation depth (inlet 2)",
 					"numinlets": 1,
@@ -1465,22 +1407,19 @@
 					"param_connect": "vf_vortex_pix::cy_amt",
 					"parameter_enable": 1,
 					"patching_rect": [
-						478.5,
+						470.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						41.0,
+						152.0,
 						100.0,
-						27.0,
-						43.0
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								0.0
@@ -1496,10 +1435,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "cy_amt"
 				}
 			},
@@ -1538,7 +1473,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						29.5,
+						140.5,
 						82.0,
 						50.0,
 						18.0
@@ -1551,13 +1486,7 @@
 			{
 				"box": {
 					"id": "obj-41",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "convergence modulation depth (inlet 3)",
 					"numinlets": 1,
@@ -1569,22 +1498,19 @@
 					"param_connect": "vf_vortex_pix::convergence_amt",
 					"parameter_enable": 1,
 					"patching_rect": [
-						550.5,
+						542.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						78.0,
-						100.0,
-						27.0,
-						43.0
+						4.0,
+						138.0,
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								0.0
@@ -1600,10 +1526,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "convergence_amt"
 				}
 			},
@@ -1642,8 +1564,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						66.5,
-						82.0,
+						-7.5,
+						120.0,
 						50.0,
 						18.0
 					],
@@ -1655,13 +1577,7 @@
 			{
 				"box": {
 					"id": "obj-44",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "curl modulation depth (inlet 4)",
 					"numinlets": 1,
@@ -1673,22 +1589,19 @@
 					"param_connect": "vf_vortex_pix::curl_amt",
 					"parameter_enable": 1,
 					"patching_rect": [
-						622.5,
+						614.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						115.0,
-						100.0,
-						27.0,
-						43.0
+						41.0,
+						138.0,
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								0.0
@@ -1704,10 +1617,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "curl_amt"
 				}
 			},
@@ -1746,8 +1655,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						103.5,
-						82.0,
+						29.5,
+						120.0,
 						50.0,
 						18.0
 					],

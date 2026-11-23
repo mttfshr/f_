@@ -680,7 +680,7 @@
 					"presentation": 1,
 					"presentation_rect": [
 						4.0,
-						38.0,
+						100.0,
 						34.0,
 						15.0
 					],
@@ -739,7 +739,7 @@
 					"presentation": 1,
 					"presentation_rect": [
 						-7.5,
-						20.0,
+						82.0,
 						50.0,
 						18.0
 					],
@@ -751,13 +751,7 @@
 			{
 				"box": {
 					"id": "obj-23",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "Caustic brightness scale. Renamed from intensity 2026-07-12 to match the library-wide gain/mix naming convention. The scatter applies an internal constant (k_sheets) so this reads comparably to the old soft-mode gain. Range menu added 2026-10-08 (Matt).",
 					"numinlets": 1,
@@ -769,22 +763,19 @@
 					"param_connect": "#0_caustic_sheets::gain",
 					"parameter_enable": 1,
 					"patching_rect": [
-						118.5,
+						110.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						41.0,
-						38.0,
-						27.0,
-						43.0
+						100.0,
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								0.5
@@ -800,10 +791,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "gain"
 				}
 			},
@@ -843,7 +830,7 @@
 					"presentation": 1,
 					"presentation_rect": [
 						29.5,
-						20.0,
+						82.0,
 						50.0,
 						18.0
 					],
@@ -995,7 +982,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						78.0,
+						4.0,
 						38.0,
 						27.0,
 						43.0
@@ -1042,7 +1029,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						66.5,
+						-7.5,
 						20.0,
 						50.0,
 						18.0
@@ -1150,13 +1137,7 @@
 			{
 				"box": {
 					"id": "obj-29",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "Tone-curve exponent for the caustic layer's exposure curve, (v/(1+v))^expo -- lower compresses highlights harder, higher keeps more contrast. Was a fixed internal constant (0.7, the look-patch default) until 2026-10-10, now exposed.",
 					"numinlets": 1,
@@ -1168,22 +1149,19 @@
 					"param_connect": "#0_caustic_sheets::expo",
 					"parameter_enable": 1,
 					"patching_rect": [
-						262.5,
+						254.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						115.0,
-						38.0,
-						27.0,
-						43.0
+						78.0,
+						100.0,
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								0.7
@@ -1199,10 +1177,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "expo"
 				}
 			},
@@ -1241,8 +1215,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						103.5,
-						20.0,
+						66.5,
+						82.0,
 						50.0,
 						18.0
 					],
@@ -1274,8 +1248,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						148.0,
-						52.0,
+						115.0,
+						100.0,
 						45.0,
 						15.0
 					],
@@ -1320,8 +1294,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						140.5,
-						20.0,
+						103.5,
+						82.0,
 						50.0,
 						18.0
 					],

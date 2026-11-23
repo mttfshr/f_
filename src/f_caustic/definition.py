@@ -57,7 +57,7 @@ patcher = {
     "params": [
         {"name": "mix_pct",     "type": "float", "min": 0.0, "max": 100.0, "default": 0.0,  "label": "Mix", "widget": "numbox",
          "hint": "Dry/wet crossfade toward the fully-composited (source+caustic) state. Renamed from strength 2026-07-12, range capped to true 0-100% (dropping the old 0-1.5 extrapolation zone). Internal Param named mix_pct to avoid colliding with the codebox's mix() operator."},
-        {"name": "gain",        "type": "float", "min": 0.0, "max": 2.0, "default": 0.5,  "label": "Gain",
+        {"name": "gain",        "type": "float", "widget": "numbox", "min": 0.0, "max": 2.0, "default": 0.5,  "label": "Gain",
          "range_tiers": [0.1, 1.0, 2.0],
          "hint": "Caustic brightness scale. Renamed from intensity 2026-07-12 to match the library-wide gain/mix naming convention. The scatter applies an internal constant (k_sheets) so this reads comparably to the old soft-mode gain. Range menu added 2026-10-08 (Matt)."},
         {"name": "scale",       "type": "float", "min": 0.0, "max": 1.0, "default": 0.3,  "label": "Scale",
@@ -65,7 +65,7 @@ patcher = {
                                  # not a Param on the composite codebox -- tapped directly at the dial's outlet
          "range_tiers": [1.0, 2.5],
          "hint": "The propagation distance of the scatter, in UV per unit field -- sheets fold over at larger values. Range menu added 2026-10-08 (Matt): default tier is the original 0-1, second tier opens 0-2.5; above 1.0 is less tested than the default range."},
-        {"name": "expo",        "type": "float", "min": 0.3, "max": 1.5, "default": 0.7,  "label": "Expo",
+        {"name": "expo",        "type": "float", "widget": "numbox", "min": 0.3, "max": 1.5, "default": 0.7,  "label": "Expo",
          "hint": "Tone-curve exponent for the caustic layer's exposure curve, (v/(1+v))^expo -- lower compresses highlights harder, higher keeps more contrast. Was a fixed internal constant (0.7, the look-patch default) until 2026-10-10, now exposed."},
         {"name": "edge",        "type": "menu", "options": ["Off", "Wrap", "Mirror", "Clamp"], "default": 0, "label": "Edge",
          "pix_wire": False,      # drives the scene's control entry like `scale` (a shader uniform), tapped at the menu's outlet
@@ -80,5 +80,16 @@ patcher = {
 
 
 # BEGIN overrides (build/capture.py rewrites only this block)
-patcher["overrides"] = {}
+patcher["overrides"] = {
+    "edge.ctl": {"presentation_rect": [115.0, 100.0, 45.0, 15.0]},
+    "edge.label": {"presentation_rect": [103.5, 82.0, 50.0, 18.0]},
+    "expo.ctl": {"presentation_rect": [78.0, 100.0, 34.0, 15.0]},
+    "expo.label": {"presentation_rect": [66.5, 82.0, 50.0, 18.0]},
+    "gain.ctl": {"presentation_rect": [41.0, 100.0, 34.0, 15.0]},
+    "gain.label": {"presentation_rect": [29.5, 82.0, 50.0, 18.0]},
+    "mix_pct.ctl": {"presentation_rect": [4.0, 100.0, 34.0, 15.0]},
+    "mix_pct.label": {"presentation_rect": [-7.5, 82.0, 50.0, 18.0]},
+    "scale.ctl": {"presentation_rect": [4.0, 38.0, 27.0, 43.0]},
+    "scale.label": {"presentation_rect": [-7.5, 20.0, 50.0, 18.0]},
+}
 # END overrides

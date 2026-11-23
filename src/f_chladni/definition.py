@@ -201,19 +201,19 @@ patcher = {
     "bypass_mode":        "param",
 
     "presentation_width":  227,
-    "presentation_height": 164,
+    "presentation_height": 160,
 
     "params": [
         {"name": "note",          "type": "float", "min": 0.0,     "max": 127.0,  "default": 60.0,  "label": "note",    "hint": "MIDI note (0-127) — selects Bessel mode via linear mapping"},
-        {"name": "amp",           "type": "float", "min": 0.0,     "max": 1.0,    "default": 1.0,   "label": "amp",     "hint": "Amplitude envelope — scales output brightness"},
-        {"name": "dishradius",    "type": "float", "min": 0.1,     "max": 4.0,    "default": 1.0,   "label": "radius",  "hint": "Plate radius — scales field in both view modes"},
-        {"name": "reflectamt",    "type": "float", "min": 0.0,     "max": 1.0,    "default": 0.0,   "label": "reflect", "hint": "Boundary reflection amount — adds reflected wave"},
+        {"name": "amp",           "type": "float", "widget": "numbox", "min": 0.0,     "max": 1.0,    "default": 1.0,   "label": "amp",     "hint": "Amplitude envelope — scales output brightness"},
+        {"name": "dishradius",    "type": "float", "widget": "numbox", "min": 0.1,     "max": 4.0,    "default": 1.0,   "label": "radius",  "hint": "Plate radius — scales field in both view modes"},
+        {"name": "reflectamt",    "type": "float", "widget": "numbox", "min": 0.0,     "max": 1.0,    "default": 0.0,   "label": "reflect", "hint": "Boundary reflection amount — adds reflected wave"},
         {"name": "linesharpness", "type": "float", "min": 0.1,     "max": 100.0,  "default": 10.0,  "label": "sharp",   "hint": "Nodal line sharpness — higher = thinner lines"},
         {"name": "ph0",           "type": "float", "min": -6.2832, "max": 6.2832, "default": 0.0,   "label": "phase",   "hint": "Global phase offset — rotates nodal pattern"},
-        {"name": "spread",        "type": "float", "min": 0.1,     "max": 1.0,    "default": 0.3,   "label": "spread",  "hint": "Mode B falloff width — 0.1=snap 0.5=broad. Only acts when mode = 1 (Mode A has no spread)"},
-        {"name": "mode",          "type": "float", "min": 0.0,     "max": 1.0,    "default": 0.0,   "label": "mode",    "hint": "0=linear interp between modes  1=Gaussian resonance snap"},
-        {"name": "view_mode",     "type": "float", "min": 0.0,     "max": 1.0,    "default": 0.0,   "label": "view",    "hint": "0=circular plate  1=unwrapped strip"},
-        {"name": "gain",          "type": "float", "min": 0.0,     "max": 20.0,   "default": 1.0,   "label": "gain",    "hint": "Scales out3 (raw modal magnitude) — no hard ceiling on effective range"},
+        {"name": "spread",        "type": "float", "widget": "numbox", "min": 0.1,     "max": 1.0,    "default": 0.3,   "label": "spread",  "hint": "Mode B falloff width — 0.1=snap 0.5=broad. Only acts when mode = 1 (Mode A has no spread)"},
+        {"name": "mode",          "type": "float", "widget": "numbox", "min": 0.0,     "max": 1.0,    "default": 0.0,   "label": "mode",    "hint": "0=linear interp between modes  1=Gaussian resonance snap"},
+        {"name": "view_mode",     "type": "float", "widget": "numbox", "min": 0.0,     "max": 1.0,    "default": 0.0,   "label": "view",    "hint": "0=circular plate  1=unwrapped strip"},
+        {"name": "gain",          "type": "float", "widget": "numbox", "min": 0.0,     "max": 20.0,   "default": 1.0,   "label": "gain",    "hint": "Scales out3 (raw modal magnitude) — no hard ceiling on effective range"},
         {"name": "bypass",        "type": "bypass"},
     ],
 
@@ -225,3 +225,28 @@ patcher = {
 
     "codebox": CODEBOX,
 }
+
+# BEGIN overrides (build/capture.py rewrites only this block)
+patcher["overrides"] = {
+    "amp.ctl": {"presentation_rect": [4.0, 100.0, 34.0, 15.0]},
+    "amp.label": {"presentation_rect": [-7.5, 82.0, 50.0, 18.0]},
+    "dishradius.ctl": {"presentation_rect": [41.0, 100.0, 34.0, 15.0]},
+    "dishradius.label": {"presentation_rect": [29.5, 82.0, 50.0, 18.0]},
+    "gain.ctl": {"presentation_rect": [4.0, 138.0, 34.0, 15.0]},
+    "gain.label": {"presentation_rect": [-7.5, 120.0, 50.0, 18.0]},
+    "linesharpness.ctl": {"presentation_rect": [41.0, 38.0, 27.0, 43.0]},
+    "linesharpness.label": {"presentation_rect": [29.5, 20.0, 50.0, 18.0]},
+    "mode.ctl": {"presentation_rect": [152.0, 100.0, 34.0, 15.0]},
+    "mode.label": {"presentation_rect": [140.5, 82.0, 50.0, 18.0]},
+    "note.ctl": {"presentation_rect": [4.0, 38.0, 27.0, 43.0]},
+    "note.label": {"presentation_rect": [-7.5, 20.0, 50.0, 18.0]},
+    "ph0.ctl": {"presentation_rect": [78.0, 38.0, 27.0, 43.0]},
+    "ph0.label": {"presentation_rect": [66.5, 20.0, 50.0, 18.0]},
+    "reflectamt.ctl": {"presentation_rect": [78.0, 100.0, 34.0, 15.0]},
+    "reflectamt.label": {"presentation_rect": [66.5, 82.0, 50.0, 18.0]},
+    "spread.ctl": {"presentation_rect": [115.0, 100.0, 34.0, 15.0]},
+    "spread.label": {"presentation_rect": [103.5, 82.0, 50.0, 18.0]},
+    "view_mode.ctl": {"presentation_rect": [189.0, 100.0, 34.0, 15.0]},
+    "view_mode.label": {"presentation_rect": [177.5, 82.0, 50.0, 18.0]},
+}
+# END overrides

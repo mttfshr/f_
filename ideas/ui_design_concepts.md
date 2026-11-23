@@ -1,6 +1,6 @@
 # UI and design concepts for f_ panels (toward a design skill)
 
-## Status: OPEN for discussion, started 2026-11-01. Nothing here is decided.
+## Status: OPEN for discussion, started 2026-11-01. Nothing here is decided, except the widget-role rules in "Rules Matt has confirmed" (2026-11-22).
 
 **Aim (Matt, 2026-11-01):** talk through UI and design concepts until we can write a skill that describes the best
 set of design concepts for us, so a panel (a new module, or a rework like `f_weave`) comes out clear without
@@ -91,6 +91,17 @@ Each is a question, with what we know. Add, strike or reword freely.
     How strict, and is it worth regenerating old panels?
 14. **Front/back panels.** When is a second face worth the toggle, given the scratch-build JS side effect?
 15. **Dials versus numboxes versus menus for the same thing.** What decides: precision, speed, range, discrete values?
+
+## Rules Matt has confirmed: widget roles (2026-11-22)
+
+From the primary / secondary spike (`.specify/ui_primary_params/`, its spec has the full wording and the evidence). Soft defaults for a panel's widgets, not laws; an exception is fine when layout, readout or control type calls for one. They answer concept 15 (what decides dial versus numbox) and part of concept 6.
+
+1. **Role.** A **primary** param sets the character of the effect (it changes what the effect *is*, it is reached for live, or other params depend on it): a **dial**. A **secondary** param scales, tunes or is set once: a **number box**. A module usually has few primaries (0 to 5).
+2. **Soft typing, applied first.** (a) A discrete choice with few values (about 8 or fewer) is a menu or stepper; a large int (an index such as `seed`, `taps`) is a number box. (b) Companion amounts are number boxes: `mix_pct`, `gain` (even when primary), and mod depths (`*_mod`, `*_m`, `*_amt`). (c) Circular quantities are dials: angle, rotation, hue. Everything else follows rule 1. A group of one kind (an HSL triple, a per-plate column) may share one widget.
+3. **Spatial.** Number boxes generally do not go on the first row: the dial row comes first, so the panel's character reads before its refinement.
+4. **Scope.** Applies to new panels and to modules with no substantive layout customization yet. A module that already has real layout work (a rect-moving `overrides` block, hidden controls, a back panel, `columns`) is left alone, and when in doubt it is left alone. This answers the "old modules too?" question below.
+
+**Evidence, stated plainly:** Matt looked at role-based layouts of 8 untouched modules in Max (`f_vf_advect`, `f_vf_glow`, `f_stipple`, `f_quasi`, `f_vf_seeds`, `f_vf_vortex`, `f_tf_hatch`, `f_vf_ch`; built by Claude from its own offline reading of each module's hints and docs, scratch only) and said they all look great. The independent checks the spike specified (Matt's blind marks, the NumPy sweeps) were not run, so the claim that params split into stable primaries is accepted on the look, not measured. Known gaps: the top row looks sparse when a module has one or two primaries (`f_vf_glow` has one dial); a primary `gain` becomes a number box by rule 2; the per-plate angles in `f_halftone` (circular but secondary) are the case where rules 1 and 2 disagree. `f_quasi`'s cyclic `zoom` and `drift` might count as circular; left to Matt. Tension with the 2026-11-18 Live-style finding (`ideas/m4l_ui_design.md`, number boxes where the value must be readable) is handled by "exception is fine".
 
 ## Constraints any concept has to live inside
 

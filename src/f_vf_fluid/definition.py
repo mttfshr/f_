@@ -35,7 +35,7 @@ patcher = {
     "signal_type":        "∇ in/out",
 
     "presentation_width":  190,
-    "presentation_height": 150,
+    "presentation_height": 122,
 
     # processor: the force vecfield arrives on the primary inlet and, when
     # bypassed, passes straight through (see bypass_gate below)
@@ -49,7 +49,7 @@ patcher = {
         {"name": "force", "type": "float", "min": 0.0, "max": 0.2, "default": 0.02,
          "label": "Force",
          "hint": "Velocity gained per frame from the force input at full scale"},
-        {"name": "dt", "type": "float", "min": 0.0, "max": 0.05, "default": 0.01,
+        {"name": "dt", "type": "float", "widget": "numbox", "min": 0.0, "max": 0.05, "default": 0.01,
          "label": "dt",
          "hint": "Self-advection step and the time step of viscosity/drag"},
         {"name": "viscosity", "type": "float", "min": 0.0, "max": 1.0, "default": 0.085,
@@ -58,13 +58,13 @@ patcher = {
         {"name": "project", "type": "float", "min": 0.0, "max": 1.0, "default": 1.0,
          "label": "Project",
          "hint": "0 = compressible (shock fronts), 1 = divergence-free swirl"},
-        {"name": "drag", "type": "float", "min": 0.0, "max": 5.0, "default": 0.5,
+        {"name": "drag", "type": "float", "widget": "numbox", "min": 0.0, "max": 5.0, "default": 0.5,
          "label": "Drag",
          "hint": "Linear damping; keeps sustained or uniform force bounded"},
-        {"name": "gain", "type": "float", "min": 0.0, "max": 10.0, "default": 1.0,
+        {"name": "gain", "type": "float", "widget": "numbox", "min": 0.0, "max": 10.0, "default": 1.0,
          "label": "Gain",
          "hint": "Output scale applied to the velocity before encoding (clamped to the vecfield range)"},
-        {"name": "drift", "type": "float", "min": 0.0, "max": 1.0, "default": 1.0,
+        {"name": "drift", "type": "float", "widget": "numbox", "min": 0.0, "max": 1.0, "default": 1.0,
          "label": "Drift",
          "hint": "How much frame-wide drift (the uniform part of the flow) is allowed to build up. 1 = all of it (the original behavior), 0 = none (the average flow is zeroed every frame), in between it fades out over a few dozen frames. Swirls are untouched."},
         {"name": "taps", "type": "int", "min": 1, "max": 16, "default": 8,
@@ -135,3 +135,22 @@ _STAGES_OF = {"force": "adv", "dt": ["adv", "spec"], "viscosity": "spec", "proje
 for _p in patcher["params"]:
     if _p["name"] in _STAGES_OF:
         _p["pix_target"] = _STAGES_OF[_p["name"]]
+
+# BEGIN overrides (build/capture.py rewrites only this block)
+patcher["overrides"] = {
+    "drag.ctl": {"presentation_rect": [41.0, 100.0, 34.0, 15.0]},
+    "drag.label": {"presentation_rect": [29.5, 82.0, 50.0, 18.0]},
+    "drift.ctl": {"presentation_rect": [115.0, 100.0, 34.0, 15.0]},
+    "drift.label": {"presentation_rect": [103.5, 82.0, 50.0, 18.0]},
+    "dt.ctl": {"presentation_rect": [4.0, 100.0, 34.0, 15.0]},
+    "dt.label": {"presentation_rect": [-7.5, 82.0, 50.0, 18.0]},
+    "force.ctl": {"presentation_rect": [4.0, 38.0, 27.0, 43.0]},
+    "force.label": {"presentation_rect": [-7.5, 20.0, 50.0, 18.0]},
+    "gain.ctl": {"presentation_rect": [78.0, 100.0, 34.0, 15.0]},
+    "gain.label": {"presentation_rect": [66.5, 82.0, 50.0, 18.0]},
+    "project.ctl": {"presentation_rect": [78.0, 38.0, 27.0, 43.0]},
+    "project.label": {"presentation_rect": [66.5, 20.0, 50.0, 18.0]},
+    "viscosity.ctl": {"presentation_rect": [41.0, 38.0, 27.0, 43.0]},
+    "viscosity.label": {"presentation_rect": [29.5, 20.0, 50.0, 18.0]},
+}
+# END overrides

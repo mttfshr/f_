@@ -533,14 +533,14 @@
 						760.0,
 						260.0,
 						190.0,
-						150.0
+						160.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						0.0,
 						0.0,
 						190.0,
-						150.0
+						160.0
 					],
 					"proportion": 0.5
 				}
@@ -1046,13 +1046,7 @@
 			{
 				"box": {
 					"id": "obj-26",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "How much of the source is added each frame. A still source settles at Inject / (1 - Decay), whatever Trail is set to",
 					"numinlets": 1,
@@ -1064,22 +1058,19 @@
 					"param_connect": "#0_advect_pix::injection",
 					"parameter_enable": 1,
 					"patching_rect": [
-						190.5,
+						182.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						78.0,
-						38.0,
-						27.0,
-						43.0
+						4.0,
+						100.0,
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								0.02
@@ -1090,16 +1081,11 @@
 							"parameter_mmax": 0.2,
 							"parameter_mmin": 0.0,
 							"parameter_modmode": 3,
-							"parameter_exponent": 3.0,
 							"parameter_shortname": "injection",
 							"parameter_type": 0,
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "injection"
 				}
 			},
@@ -1138,8 +1124,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						66.5,
-						20.0,
+						-7.5,
+						82.0,
 						50.0,
 						18.0
 					],
@@ -1151,13 +1137,7 @@
 			{
 				"box": {
 					"id": "obj-29",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"numinlets": 1,
 					"numoutlets": 2,
@@ -1168,22 +1148,19 @@
 					"param_connect": "#0_advect_pix::gain",
 					"parameter_enable": 1,
 					"patching_rect": [
-						262.5,
+						254.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						115.0,
-						38.0,
-						27.0,
-						43.0
+						41.0,
+						100.0,
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								1.0
@@ -1199,10 +1176,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "gain"
 				}
 			},
@@ -1241,8 +1214,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						103.5,
-						20.0,
+						29.5,
+						82.0,
 						50.0,
 						18.0
 					],
@@ -1273,8 +1246,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						152.0,
-						38.0,
+						78.0,
+						100.0,
 						34.0,
 						15.0
 					],
@@ -1332,8 +1305,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						140.5,
-						20.0,
+						66.5,
+						82.0,
 						50.0,
 						18.0
 					],
@@ -1345,13 +1318,7 @@
 			{
 				"box": {
 					"id": "obj-35",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"numinlets": 1,
 					"numoutlets": 2,
@@ -1362,22 +1329,19 @@
 					"param_connect": "#0_advect_pass::separate",
 					"parameter_enable": 1,
 					"patching_rect": [
-						406.5,
+						398.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						4.0,
+						115.0,
 						100.0,
-						27.0,
-						43.0
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								0.0
@@ -1393,10 +1357,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "separate"
 				}
 			},
@@ -1435,7 +1395,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						-7.5,
+						103.5,
 						82.0,
 						50.0,
 						18.0
@@ -1467,8 +1427,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						37.0,
-						114.0,
+						4.0,
+						138.0,
 						45.0,
 						15.0
 					],
@@ -1531,8 +1491,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						29.5,
-						82.0,
+						-7.5,
+						120.0,
 						50.0,
 						18.0
 					],
@@ -1544,13 +1504,7 @@
 			{
 				"box": {
 					"id": "obj-41",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "How many times longer trails last than Decay alone makes them: 0 = off (exactly the classic loop), 1 = twice as long, 3 = four times, 9 = ten times. The settled brightness stays the same, so longer trails do not wash out. Has no effect at Decay 1.0 (nothing fades there)",
 					"numinlets": 1,
@@ -1562,22 +1516,19 @@
 					"param_connect": "#0_advect_pix::trail",
 					"parameter_enable": 1,
 					"patching_rect": [
-						550.5,
+						542.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						78.0,
-						100.0,
-						27.0,
-						43.0
+						138.0,
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								0.0
@@ -1588,16 +1539,11 @@
 							"parameter_mmax": 120.0,
 							"parameter_mmin": 0.0,
 							"parameter_modmode": 3,
-							"parameter_exponent": 3.0,
 							"parameter_shortname": "trail",
 							"parameter_type": 0,
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "trail"
 				}
 			},
@@ -1637,7 +1583,7 @@
 					"presentation": 1,
 					"presentation_rect": [
 						66.5,
-						82.0,
+						120.0,
 						50.0,
 						18.0
 					],

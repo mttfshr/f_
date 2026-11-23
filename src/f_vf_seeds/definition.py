@@ -100,28 +100,28 @@ _PARAMS = [
     _ui("stretch", 0.0, 1.0, 0.0, "Stretch",
         "Aspect ratio \u2014 0=circular/square, increasing elongates along field direction", _RENDER),
     _ui("strength", 0.0, 1.0, 1.0, "Strength",
-        "Vecfield influence on mark orientation (0=rightward, 1=full field)", _RENDER),
-    _ui("mag_weight", 0.0, 1.0, 0.0, "Mag\u2192Wt", "Field magnitude \u2192 mark weight modulation depth", _RENDER),
+        "Vecfield influence on mark orientation (0=rightward, 1=full field)", _RENDER, widget="numbox"),
+    _ui("mag_weight", 0.0, 1.0, 0.0, "Mag\u2192Wt", "Field magnitude \u2192 mark weight modulation depth", _RENDER, widget="numbox"),
     _ui("field_priority", 0.0, 1.0, 0.0, "Field Pri",
         "Seed selection: 0=nearest-distance (Voronoi, original behavior), 1=field-magnitude-only "
-        "(degenerate at exactly 1.0 \u2014 see docs)", _AB),
+        "(degenerate at exactly 1.0 \u2014 see docs)", _AB, widget="numbox"),
     _ui("field_gain", -1.5, 1.5, 0.0, "Field Gain",
         "Field-priority scale \u2014 useful window varies by vecfield source (Flow ~0.2, Repulse ~0.8, "
         "Vortex ~1.5).", _AB, range_tiers=[0.2, 0.8, 1.5],
-        range_menu_outlet=2),                # the shipped range menu feeds its `sel` from the float outlet
+        range_menu_outlet=2, widget="numbox"),                # the shipped range menu feeds its `sel` from the float outlet
     # bomb: its attrui is bound directly to active_blend on the bombing half (Stage 1b); the dial keeps
     # showing "Bomb". (An earlier `route bomb` -> `prepend active_blend` chain silently dropped the value
     # in Max -- plan.md's addendum.)
     _ui("bomb", 0.0, 1.0, 0.0, "Bomb",
         "Second-sample-per-cell toggle \u2014 behaves as on/off, not a graded fader (see spec.md Evolution 2). "
         "Its attrui is bound directly to active_blend on Stage 1b \u2014 the dial itself keeps showing "
-        "\"Bomb\".", ["1b"], pix_attr="active_blend"),
-    _ui("phase", -1.0, 1.0, 0.0, "Phase", "Scroll marks along field direction (connect LFO for motion)", _RENDER),
-    _ui("size_mod", -1.0, 1.0, 0.0, "Size Mod", "Mod tex \u2192 size modulation depth (bipolar)", _RENDER),
-    _ui("stretch_mod", -1.0, 1.0, 0.0, "Str Mod", "Mod tex \u2192 stretch modulation depth (bipolar)", _RENDER),
+        "\"Bomb\".", ["1b"], pix_attr="active_blend", widget="numbox"),
+    _ui("phase", -1.0, 1.0, 0.0, "Phase", "Scroll marks along field direction (connect LFO for motion)", _RENDER, widget="numbox"),
+    _ui("size_mod", -1.0, 1.0, 0.0, "Size Mod", "Mod tex \u2192 size modulation depth (bipolar)", _RENDER, widget="numbox"),
+    _ui("stretch_mod", -1.0, 1.0, 0.0, "Str Mod", "Mod tex \u2192 stretch modulation depth (bipolar)", _RENDER, widget="numbox"),
     _ui("color_mode", 0.0, 1.0, 0.0, "Color Mode",
         "Blend between shape tex's own color (0) and the color driving texture sampled at each seed's "
-        "position (1).", _RENDER),
+        "position (1).", _RENDER, widget="numbox"),
 ]
 
 patcher = {
@@ -214,3 +214,34 @@ patcher = {
         "element_box": {f"{p['name']}.label": {"varname": None} for p in _PARAMS},
     },
 }
+
+# BEGIN overrides (build/capture.py rewrites only this block)
+patcher["overrides"] = {
+    "bomb.ctl": {"presentation_rect": [152.0, 100.0, 34.0, 15.0]},
+    "bomb.label": {"presentation_rect": [140.5, 82.0, 50.0, 18.0]},
+    "color_mode.ctl": {"presentation_rect": [115.0, 138.0, 34.0, 15.0]},
+    "color_mode.label": {"presentation_rect": [103.5, 120.0, 50.0, 18.0]},
+    "density.ctl": {"presentation_rect": [4.0, 38.0, 27.0, 43.0]},
+    "density.label": {"presentation_rect": [-7.5, 20.0, 50.0, 18.0]},
+    "field_gain.ctl": {"presentation_rect": [115.0, 100.0, 34.0, 15.0]},
+    "field_gain.label": {"presentation_rect": [103.5, 82.0, 50.0, 18.0]},
+    "field_priority.ctl": {"presentation_rect": [78.0, 100.0, 34.0, 15.0]},
+    "field_priority.label": {"presentation_rect": [66.5, 82.0, 50.0, 18.0]},
+    "jitter.ctl": {"presentation_rect": [41.0, 38.0, 27.0, 43.0]},
+    "jitter.label": {"presentation_rect": [29.5, 20.0, 50.0, 18.0]},
+    "mag_weight.ctl": {"presentation_rect": [41.0, 100.0, 34.0, 15.0]},
+    "mag_weight.label": {"presentation_rect": [29.5, 82.0, 50.0, 18.0]},
+    "phase.ctl": {"presentation_rect": [4.0, 138.0, 34.0, 15.0]},
+    "phase.label": {"presentation_rect": [-7.5, 120.0, 50.0, 18.0]},
+    "size.ctl": {"presentation_rect": [78.0, 38.0, 27.0, 43.0]},
+    "size.label": {"presentation_rect": [66.5, 20.0, 50.0, 18.0]},
+    "size_mod.ctl": {"presentation_rect": [41.0, 138.0, 34.0, 15.0]},
+    "size_mod.label": {"presentation_rect": [29.5, 120.0, 50.0, 18.0]},
+    "strength.ctl": {"presentation_rect": [4.0, 100.0, 34.0, 15.0]},
+    "strength.label": {"presentation_rect": [-7.5, 82.0, 50.0, 18.0]},
+    "stretch.ctl": {"presentation_rect": [115.0, 38.0, 27.0, 43.0]},
+    "stretch.label": {"presentation_rect": [103.5, 20.0, 50.0, 18.0]},
+    "stretch_mod.ctl": {"presentation_rect": [78.0, 138.0, 34.0, 15.0]},
+    "stretch_mod.label": {"presentation_rect": [66.5, 120.0, 50.0, 18.0]},
+}
+# END overrides

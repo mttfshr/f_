@@ -35,7 +35,7 @@ patcher = {
 
     # Presentation
     "presentation_width":  190,
-    "presentation_height": 150,
+    "presentation_height": 160,
 
     # Archetype — processor: source texture on in0
     "archetype": "processor",
@@ -99,22 +99,22 @@ patcher = {
         {"name": "decay",     "type": "float", "min": 0.8, "max": 1.5,  "default": 0.97, "label": "Decay", "hint": "How much of the last frame survives each frame. Above 1.0 it amplifies (excitable). Trail stretches how long this takes"},
         # Inject: the exponent only changes the dial's feel (more travel for the small values that matter);
         # values, range and behavior are unchanged.  With Trail on it is the settled ink level: Inject / 0.03.
-        {"name": "injection", "type": "float", "min": 0.0, "max": 0.2,  "default": 0.02, "label": "Inject",
+        {"name": "injection", "type": "float", "widget": "numbox", "min": 0.0, "max": 0.2,  "default": 0.02, "label": "Inject",
          "exponent": 3.0,
          "hint": "How much of the source is added each frame. A still source settles at Inject / (1 - Decay), whatever Trail is set to"},
-        {"name": "gain",      "type": "float", "min": 0.0, "max": 4.0,  "default": 1.0,  "label": "Gain", "hint": None},
+        {"name": "gain",      "type": "float", "widget": "numbox", "min": 0.0, "max": 4.0,  "default": 1.0,  "label": "Gain", "hint": None},
         {
             "name": "mix_pct", "type": "float", "min": 0.0, "max": 100.0, "default": 100.0,
             "label": "Mix", "widget": "numbox", "route_name": "mix",
             "hint": "Wet/dry crossfade -- 0=source only, 100=fully advected",
         },
         # separate and mode live in the pass pix's codebox, not the primary's
-        {"name": "separate",  "type": "float", "min": -2.0, "max": 2.0, "default": 0.0, "label": "Separate",
+        {"name": "separate",  "type": "float", "widget": "numbox", "min": -2.0, "max": 2.0, "default": 0.0, "label": "Separate",
          "hint": None, "pix_target": "pass"},
         {"name": "mode",      "type": "menu", "options": ["Ride", "Hold", "Snap"], "default": 0,
          "label": "Mode", "hint": None, "pix_target": "pass"},
         # Trail goes last of the controls so every existing dial keeps its slot on the panel
-        {"name": "trail",     "type": "float", "min": 0.0, "max": 120.0, "default": 0.0, "label": "Trail",
+        {"name": "trail",     "type": "float", "widget": "numbox", "min": 0.0, "max": 120.0, "default": 0.0, "label": "Trail",
          "exponent": 3.0,
          "hint": "How many times longer trails last than Decay alone makes them: 0 = off (exactly the classic loop), 1 = twice as long, 3 = four times, 9 = ten times. The settled brightness stays the same, so longer trails do not wash out. Has no effect at Decay 1.0 (nothing fades there)"},
         {"name": "src_vecfield", "type": "internal"},
@@ -124,5 +124,21 @@ patcher = {
 
 # BEGIN overrides (build/capture.py rewrites only this block)
 patcher["overrides"] = {
+    "decay.ctl": {"presentation_rect": [41.0, 38.0, 27.0, 43.0]},
+    "decay.label": {"presentation_rect": [29.5, 20.0, 50.0, 18.0]},
+    "dt.ctl": {"presentation_rect": [4.0, 38.0, 27.0, 43.0]},
+    "dt.label": {"presentation_rect": [-7.5, 20.0, 50.0, 18.0]},
+    "gain.ctl": {"presentation_rect": [41.0, 100.0, 34.0, 15.0]},
+    "gain.label": {"presentation_rect": [29.5, 82.0, 50.0, 18.0]},
+    "injection.ctl": {"presentation_rect": [4.0, 100.0, 34.0, 15.0]},
+    "injection.label": {"presentation_rect": [-7.5, 82.0, 50.0, 18.0]},
+    "mix_pct.ctl": {"presentation_rect": [78.0, 100.0, 34.0, 15.0]},
+    "mix_pct.label": {"presentation_rect": [66.5, 82.0, 50.0, 18.0]},
+    "mode.ctl": {"presentation_rect": [4.0, 138.0, 45.0, 15.0]},
+    "mode.label": {"presentation_rect": [-7.5, 120.0, 50.0, 18.0]},
+    "separate.ctl": {"presentation_rect": [115.0, 100.0, 34.0, 15.0]},
+    "separate.label": {"presentation_rect": [103.5, 82.0, 50.0, 18.0]},
+    "trail.ctl": {"presentation_rect": [78.0, 138.0, 34.0, 15.0]},
+    "trail.label": {"presentation_rect": [66.5, 120.0, 50.0, 18.0]},
 }
 # END overrides

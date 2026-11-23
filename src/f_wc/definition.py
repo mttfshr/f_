@@ -47,7 +47,7 @@ patcher = {
     "title":              "Wilson-Cowan",
 
     "presentation_width":  272,             # T069: row 1 = 5 dials + Reset; row 2 = Grain + Output/Input/Space.
-    "presentation_height": 150,             # Width set by the header: title, type label, Freeze toggle, bypass.
+    "presentation_height": 160,             # Width set by the header: title, type label, Freeze toggle, bypass.
 
     "archetype": "source",
     "pix_type":  "float32",
@@ -65,19 +65,19 @@ patcher = {
         {"name": "pulse_depth", "type": "float", "min": 0.0, "max": 1.5, "default": 0.6,
          "label": "Depth", "pix_attr": "s_depth", "pix_target": "nl",
          "hint": "Pulse depth (excitability). 0.6 = the source; 0 fades the field out slowly; ~1.5 kills it fast"},
-        {"name": "pulse_period", "type": "float", "min": 30.0, "max": 600.0, "default": 147.0588,
+        {"name": "pulse_period", "type": "float", "widget": "numbox", "min": 30.0, "max": 600.0, "default": 147.0588,
          "label": "Period", "pix_attr": "s_period", "pix_target": "nl",
          "hint": "Internal pulse period in frames (used when the pulse inlet is unplugged). 147 = the source; under ~100 the field dies"},
         # Phase D T065 (Matt, 2026-10-25): Rate = slow motion by step skipping (the solver advances on a
         # fraction of the frames; the pulse clock counts solver steps), so the look is unchanged.
-        {"name": "sim_rate", "type": "float", "min": 0.05, "max": 1.0, "default": 1.0,
+        {"name": "sim_rate", "type": "float", "widget": "numbox", "min": 0.05, "max": 1.0, "default": 1.0,
          "label": "Rate", "pix_target": "nl",
          "hint": "Slow motion: 1 = the source speed; 0.5 = half speed, pulse and pattern together (same look)"},
         # Phase D T071 (Matt, 2026-10-25): how the pulse texture enters (only when it is plugged in).
-        {"name": "pulse_mix", "type": "float", "min": 0.0, "max": 1.0, "default": 1.0,
+        {"name": "pulse_mix", "type": "float", "widget": "numbox", "min": 0.0, "max": 1.0, "default": 1.0,
          "label": "P.Mix", "pix_target": "nl",
          "hint": "Pulse texture vs the internal wave: 1 = the texture is the pulse; 0 = ignored; between = blend"},
-        {"name": "pulse_gain", "type": "float", "min": 0.0, "max": 2.0, "default": 1.0,
+        {"name": "pulse_gain", "type": "float", "widget": "numbox", "min": 0.0, "max": 2.0, "default": 1.0,
          "label": "P.Gain", "pix_target": "nl",
          "hint": "Pulse texture brightness before it becomes the pulse: raise a dim image, tame a bright one"},
         # Phase D T072 (Matt, 2026-10-25): Grain = the blur's tap spacing (same 13 taps). Below 1 finer and
@@ -262,3 +262,26 @@ patcher["raw_lines"] = [
     _line(21, 0, "obj-5", 0), _line(22, 0, "obj-5", 0),     # -> enc: ow, oh
     _line(21, 0, _NL, 0), _line(22, 0, _NL, 0),             # -> nl: ow, oh (T073 Screen pulse; params only)
 ]
+
+# BEGIN overrides (build/capture.py rewrites only this block)
+patcher["overrides"] = {
+    "grain_scale.ctl": {"presentation_rect": [41.0, 38.0, 27.0, 43.0]},
+    "grain_scale.label": {"presentation_rect": [29.5, 20.0, 50.0, 18.0]},
+    "out_mode.ctl": {"presentation_rect": [152.0, 100.0, 45.0, 15.0]},
+    "out_mode.label": {"presentation_rect": [140.5, 82.0, 50.0, 18.0]},
+    "out_view.ctl": {"presentation_rect": [78.0, 138.0, 45.0, 15.0]},
+    "out_view.label": {"presentation_rect": [66.5, 120.0, 50.0, 18.0]},
+    "pulse_depth.ctl": {"presentation_rect": [4.0, 38.0, 27.0, 43.0]},
+    "pulse_depth.label": {"presentation_rect": [-7.5, 20.0, 50.0, 18.0]},
+    "pulse_gain.ctl": {"presentation_rect": [115.0, 100.0, 34.0, 15.0]},
+    "pulse_gain.label": {"presentation_rect": [103.5, 82.0, 50.0, 18.0]},
+    "pulse_mix.ctl": {"presentation_rect": [78.0, 100.0, 34.0, 15.0]},
+    "pulse_mix.label": {"presentation_rect": [66.5, 82.0, 50.0, 18.0]},
+    "pulse_period.ctl": {"presentation_rect": [4.0, 100.0, 34.0, 15.0]},
+    "pulse_period.label": {"presentation_rect": [-7.5, 82.0, 50.0, 18.0]},
+    "pulse_space.ctl": {"presentation_rect": [4.0, 138.0, 45.0, 15.0]},
+    "pulse_space.label": {"presentation_rect": [-7.5, 120.0, 50.0, 18.0]},
+    "sim_rate.ctl": {"presentation_rect": [41.0, 100.0, 34.0, 15.0]},
+    "sim_rate.label": {"presentation_rect": [29.5, 82.0, 50.0, 18.0]},
+}
+# END overrides

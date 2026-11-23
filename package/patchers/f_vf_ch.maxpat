@@ -1559,14 +1559,14 @@
 						843.5,
 						260.0,
 						190.0,
-						150.0
+						160.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						0.0,
 						0.0,
 						190.0,
-						150.0
+						160.0
 					],
 					"proportion": 0.5
 				}
@@ -2080,13 +2080,7 @@
 			{
 				"box": {
 					"id": "obj-23",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "Interface width in solver texels: small = crisp edge between the two flows, large = soft blend zone",
 					"numinlets": 1,
@@ -2098,22 +2092,19 @@
 					"param_connect": "#0_imm_spec::iface",
 					"parameter_enable": 1,
 					"patching_rect": [
-						118.5,
+						110.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						41.0,
-						38.0,
-						27.0,
-						43.0
+						4.0,
+						100.0,
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								4.0
@@ -2129,10 +2120,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "iface"
 				}
 			},
@@ -2171,8 +2158,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						29.5,
-						20.0,
+						-7.5,
+						82.0,
 						50.0,
 						18.0
 					],
@@ -2209,7 +2196,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						78.0,
+						41.0,
 						38.0,
 						27.0,
 						43.0
@@ -2275,7 +2262,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						66.5,
+						29.5,
 						20.0,
 						50.0,
 						18.0
@@ -2313,7 +2300,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						115.0,
+						78.0,
 						38.0,
 						27.0,
 						43.0
@@ -2379,7 +2366,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						103.5,
+						66.5,
 						20.0,
 						50.0,
 						18.0
@@ -2392,13 +2379,7 @@
 			{
 				"box": {
 					"id": "obj-32",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "Brightness the input-0 texture needs before it deposits anything: dim and mid-grey parts add nothing, only brighter parts do",
 					"numinlets": 1,
@@ -2410,22 +2391,19 @@
 					"param_connect": "#0_imm_adv::thresh",
 					"parameter_enable": 1,
 					"patching_rect": [
-						334.5,
+						326.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						152.0,
-						38.0,
-						27.0,
-						43.0
+						41.0,
+						100.0,
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								0.5
@@ -2441,10 +2419,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "thresh"
 				}
 			},
@@ -2483,8 +2457,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						140.5,
-						20.0,
+						29.5,
+						82.0,
 						50.0,
 						18.0
 					],
@@ -2496,13 +2470,7 @@
 			{
 				"box": {
 					"id": "obj-35",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "Slowly pulls the overall mix back toward Fill, so a held source settles into a balance instead of flooding the screen with B. 0 = off",
 					"numinlets": 1,
@@ -2514,22 +2482,19 @@
 					"param_connect": "#0_imm_spec::pull",
 					"parameter_enable": 1,
 					"patching_rect": [
-						406.5,
+						398.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						4.0,
+						78.0,
 						100.0,
-						27.0,
-						43.0
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								0.3
@@ -2545,10 +2510,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "pull"
 				}
 			},
@@ -2587,7 +2548,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						-7.5,
+						66.5,
 						82.0,
 						50.0,
 						18.0
@@ -2600,13 +2561,7 @@
 			{
 				"box": {
 					"id": "obj-38",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "Mean mix at reset, and the balance point Pull relaxes toward: negative = mostly A, positive = mostly B",
 					"numinlets": 1,
@@ -2618,22 +2573,19 @@
 					"param_connect": "#0_imm_pass::fill",
 					"parameter_enable": 1,
 					"patching_rect": [
-						478.5,
+						470.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						41.0,
-						100.0,
-						27.0,
-						43.0
+						4.0,
+						138.0,
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								0.0
@@ -2649,10 +2601,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "fill"
 				}
 			},
@@ -2710,8 +2658,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						29.5,
-						82.0,
+						-7.5,
+						120.0,
 						50.0,
 						18.0
 					],
@@ -2742,8 +2690,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						78.0,
-						100.0,
+						41.0,
+						138.0,
 						34.0,
 						15.0
 					],
@@ -2820,8 +2768,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						66.5,
-						82.0,
+						29.5,
+						120.0,
 						50.0,
 						18.0
 					],

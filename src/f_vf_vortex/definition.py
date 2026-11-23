@@ -27,17 +27,17 @@ patcher = {
 
     "params": [
         # Row 1: core field params
-        {"name": "cx",          "type": "float", "min": 0.0,  "max": 1.0,  "default": 0.5,  "label": "Cx",       "hint": "Fixed point X position"},
-        {"name": "cy",          "type": "float", "min": 0.0,  "max": 1.0,  "default": 0.5,  "label": "Cy",       "hint": "Fixed point Y position"},
+        {"name": "cx",          "type": "float", "widget": "numbox", "min": 0.0,  "max": 1.0,  "default": 0.5,  "label": "Cx",       "hint": "Fixed point X position"},
+        {"name": "cy",          "type": "float", "widget": "numbox", "min": 0.0,  "max": 1.0,  "default": 0.5,  "label": "Cy",       "hint": "Fixed point Y position"},
         {"name": "convergence", "type": "float", "min": -1.0, "max": 1.0,  "default": 0.5,  "label": "Converge", "hint": "Inward pull. 0=none, >0=sink, <0=source"},
         {"name": "curl",        "type": "float", "min": -1.0, "max": 1.0,  "default": 0.0,  "label": "Curl",     "hint": "Rotation. 0=none, >0=CCW, <0=CW"},
         # Row 2: falloff + modulation amounts
-        {"name": "falloff",          "type": "float", "min": 0.0, "max": 10.0, "default": 2.0,  "label": "Falloff",   "hint": "Exponential falloff rate. 0=uniform field"},
-        {"name": "cx_amt",           "type": "float", "min": 0.0, "max": 1.0,  "default": 0.0,  "label": "Cx Amt",    "hint": "cx modulation depth (inlet 1)"},
-        {"name": "cy_amt",           "type": "float", "min": 0.0, "max": 1.0,  "default": 0.0,  "label": "Cy Amt",    "hint": "cy modulation depth (inlet 2)"},
-        {"name": "convergence_amt",  "type": "float", "min": 0.0, "max": 1.0,  "default": 0.0,  "label": "Conv Amt",  "hint": "convergence modulation depth (inlet 3)"},
+        {"name": "falloff",          "type": "float", "widget": "numbox", "min": 0.0, "max": 10.0, "default": 2.0,  "label": "Falloff",   "hint": "Exponential falloff rate. 0=uniform field"},
+        {"name": "cx_amt",           "type": "float", "widget": "numbox", "min": 0.0, "max": 1.0,  "default": 0.0,  "label": "Cx Amt",    "hint": "cx modulation depth (inlet 1)"},
+        {"name": "cy_amt",           "type": "float", "widget": "numbox", "min": 0.0, "max": 1.0,  "default": 0.0,  "label": "Cy Amt",    "hint": "cy modulation depth (inlet 2)"},
+        {"name": "convergence_amt",  "type": "float", "widget": "numbox", "min": 0.0, "max": 1.0,  "default": 0.0,  "label": "Conv Amt",  "hint": "convergence modulation depth (inlet 3)"},
         # Row 3: curl_amt + bypass
-        {"name": "curl_amt",    "type": "float", "min": 0.0, "max": 1.0,  "default": 0.0,  "label": "Curl Amt",  "hint": "curl modulation depth (inlet 4)"},
+        {"name": "curl_amt",    "type": "float", "widget": "numbox", "min": 0.0, "max": 1.0,  "default": 0.0,  "label": "Curl Amt",  "hint": "curl modulation depth (inlet 4)"},
         {"name": "bypass",      "type": "bypass"},
     ],
 
@@ -93,3 +93,26 @@ field_out = vec(R, G, 0.5, 1.0);
 out1 = mix(field_out, vec(0.5, 0.5, 0.5, 1.0), bypass);
 """,
 }
+
+# BEGIN overrides (build/capture.py rewrites only this block)
+patcher["overrides"] = {
+    "convergence.ctl": {"presentation_rect": [4.0, 38.0, 27.0, 43.0]},
+    "convergence.label": {"presentation_rect": [-7.5, 20.0, 50.0, 18.0]},
+    "convergence_amt.ctl": {"presentation_rect": [4.0, 138.0, 34.0, 15.0]},
+    "convergence_amt.label": {"presentation_rect": [-7.5, 120.0, 50.0, 18.0]},
+    "curl.ctl": {"presentation_rect": [41.0, 38.0, 27.0, 43.0]},
+    "curl.label": {"presentation_rect": [29.5, 20.0, 50.0, 18.0]},
+    "curl_amt.ctl": {"presentation_rect": [41.0, 138.0, 34.0, 15.0]},
+    "curl_amt.label": {"presentation_rect": [29.5, 120.0, 50.0, 18.0]},
+    "cx.ctl": {"presentation_rect": [4.0, 100.0, 34.0, 15.0]},
+    "cx.label": {"presentation_rect": [-7.5, 82.0, 50.0, 18.0]},
+    "cx_amt.ctl": {"presentation_rect": [115.0, 100.0, 34.0, 15.0]},
+    "cx_amt.label": {"presentation_rect": [103.5, 82.0, 50.0, 18.0]},
+    "cy.ctl": {"presentation_rect": [41.0, 100.0, 34.0, 15.0]},
+    "cy.label": {"presentation_rect": [29.5, 82.0, 50.0, 18.0]},
+    "cy_amt.ctl": {"presentation_rect": [152.0, 100.0, 34.0, 15.0]},
+    "cy_amt.label": {"presentation_rect": [140.5, 82.0, 50.0, 18.0]},
+    "falloff.ctl": {"presentation_rect": [78.0, 100.0, 34.0, 15.0]},
+    "falloff.label": {"presentation_rect": [66.5, 82.0, 50.0, 18.0]},
+}
+# END overrides

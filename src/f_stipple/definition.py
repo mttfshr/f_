@@ -120,7 +120,7 @@ patcher = {
 
     # Presentation panel size
     "presentation_width":  191,
-    "presentation_height": 157,
+    "presentation_height": 160,
 
     "outlets": [
         {"comment": "composite"},
@@ -132,16 +132,16 @@ patcher = {
     # bypass is always last and handled specially (jsui)
     # internal params generate no UI objects
     "params": [
-        {"name": "freq",         "type": "float", "min": 0.0,   "max": 20.0,  "default": 2.0,  "label": "Freq",     "hint": "Hash field spatial frequency"},
+        {"name": "freq",         "type": "float", "widget": "numbox", "min": 0.0,   "max": 20.0,  "default": 2.0,  "label": "Freq",     "hint": "Hash field spatial frequency"},
         {"name": "coarseness",   "type": "float", "min": 1.0,   "max": 100.0, "default": 20.0, "label": "Coarse.",  "hint": "Grain period scale — higher = chunkier grains"},
         {"name": "anisotropy",   "type": "float", "min": 0.0,   "max": 4.0,   "default": 0.5,  "label": "Aniso.",   "hint": "0=isotropic grain  1=parallel lines  >1=expressive aliasing"},
         {"name": "angle",        "type": "float", "min": -360.0,"max": 360.0, "default": 0.0,  "label": "Angle",    "hint": "Orientation of along/across coordinate frame"},
-        {"name": "zoom",         "type": "float", "min": 0.1,   "max": 4.0,   "default": 1.0,  "label": "Zoom",     "hint": "Scales viewport into hash field — same character, bigger or smaller"},
+        {"name": "zoom",         "type": "float", "widget": "numbox", "min": 0.1,   "max": 4.0,   "default": 1.0,  "label": "Zoom",     "hint": "Scales viewport into hash field — same character, bigger or smaller"},
         {"name": "threshold",    "type": "float", "min": 0.0,   "max": 2.0,   "default": 0.5,  "label": "Thresh.",  "hint": "Dither bias / displacement amount"},
-        {"name": "colorize",     "type": "float", "min": 0.0,   "max": 1.0,   "default": 0.0,  "label": "Colorize", "hint": "0=monochrome dither output  1=inherit input color"},
-        {"name": "along_phase",  "type": "float", "min": -1.0,  "max": 1.0,   "default": 0.0,  "label": "Along",    "hint": "Hash field offset along angle axis; drive externally for drift"},
-        {"name": "across_phase", "type": "float", "min": -1.0,  "max": 1.0,   "default": 0.0,  "label": "Across",   "hint": "Hash field offset perpendicular to angle axis; drive externally for drift"},
-        {"name": "softness",     "type": "float", "min": 0.0,   "max": 2.0,   "default": 0.1,  "label": "Soft.",    "hint": "Smoothstep width at comparison boundary"},
+        {"name": "colorize",     "type": "float", "widget": "numbox", "min": 0.0,   "max": 1.0,   "default": 0.0,  "label": "Colorize", "hint": "0=monochrome dither output  1=inherit input color"},
+        {"name": "along_phase",  "type": "float", "widget": "numbox", "min": -1.0,  "max": 1.0,   "default": 0.0,  "label": "Along",    "hint": "Hash field offset along angle axis; drive externally for drift"},
+        {"name": "across_phase", "type": "float", "widget": "numbox", "min": -1.0,  "max": 1.0,   "default": 0.0,  "label": "Across",   "hint": "Hash field offset perpendicular to angle axis; drive externally for drift"},
+        {"name": "softness",     "type": "float", "widget": "numbox", "min": 0.0,   "max": 2.0,   "default": 0.1,  "label": "Soft.",    "hint": "Smoothstep width at comparison boundary"},
         {"name": "src_mode",     "type": "internal"},  # driven by vs_inState, not user-facing
         {"name": "bypass",       "type": "bypass"},    # always last; rendered as bypass_toggle.js jsui
     ],
@@ -181,3 +181,28 @@ patcher["raw_lines"] = [
     _line(1, 0, 2, 1),            # r draw -> the gate's data inlet
     _line(2, 0, _PIX, 0),         # gate -> the pix (a bang renders it, as f_quasi's `r draw` does)
 ]
+
+# BEGIN overrides (build/capture.py rewrites only this block)
+patcher["overrides"] = {
+    "across_phase.ctl": {"presentation_rect": [152.0, 100.0, 34.0, 15.0]},
+    "across_phase.label": {"presentation_rect": [140.5, 82.0, 50.0, 18.0]},
+    "along_phase.ctl": {"presentation_rect": [115.0, 100.0, 34.0, 15.0]},
+    "along_phase.label": {"presentation_rect": [103.5, 82.0, 50.0, 18.0]},
+    "angle.ctl": {"presentation_rect": [78.0, 38.0, 27.0, 43.0]},
+    "angle.label": {"presentation_rect": [66.5, 20.0, 50.0, 18.0]},
+    "anisotropy.ctl": {"presentation_rect": [41.0, 38.0, 27.0, 43.0]},
+    "anisotropy.label": {"presentation_rect": [29.5, 20.0, 50.0, 18.0]},
+    "coarseness.ctl": {"presentation_rect": [4.0, 38.0, 27.0, 43.0]},
+    "coarseness.label": {"presentation_rect": [-7.5, 20.0, 50.0, 18.0]},
+    "colorize.ctl": {"presentation_rect": [78.0, 100.0, 34.0, 15.0]},
+    "colorize.label": {"presentation_rect": [66.5, 82.0, 50.0, 18.0]},
+    "freq.ctl": {"presentation_rect": [4.0, 100.0, 34.0, 15.0]},
+    "freq.label": {"presentation_rect": [-7.5, 82.0, 50.0, 18.0]},
+    "softness.ctl": {"presentation_rect": [4.0, 138.0, 34.0, 15.0]},
+    "softness.label": {"presentation_rect": [-7.5, 120.0, 50.0, 18.0]},
+    "threshold.ctl": {"presentation_rect": [115.0, 38.0, 27.0, 43.0]},
+    "threshold.label": {"presentation_rect": [103.5, 20.0, 50.0, 18.0]},
+    "zoom.ctl": {"presentation_rect": [41.0, 100.0, 34.0, 15.0]},
+    "zoom.label": {"presentation_rect": [29.5, 82.0, 50.0, 18.0]},
+}
+# END overrides

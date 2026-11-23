@@ -35,7 +35,7 @@ patcher = {
     "title":              "Kuramoto-Sivashinsky",
 
     "presentation_width":  190,
-    "presentation_height": 110,
+    "presentation_height": 88,
 
     "archetype": "source",
     "pix_type":  "float32",
@@ -169,3 +169,14 @@ patcher["raw_lines"] = [
     _line(10, 0, 11, 0), _line(11, 0, 12, 0), _line(12, 0, 11, 1),    # draw -> [i] -> +1 -> [i]
     _line(11, 0, 13, 0), _line(13, 0, 14, 0), _line(14, 0, "obj-52", 0),   # sel 2 -> reseed 0 -> pass
 ]
+
+# BEGIN overrides (build/capture.py rewrites only this block)
+patcher["overrides"] = {
+    "rate.ctl": {"presentation_rect": [4.0, 38.0, 27.0, 43.0]},
+    "rate.label": {"presentation_rect": [-7.5, 20.0, 50.0, 18.0]},
+    "scale.ctl": {"presentation_rect": [41.0, 38.0, 27.0, 43.0]},
+    "scale.label": {"presentation_rect": [29.5, 20.0, 50.0, 18.0]},
+    "sharp.ctl": {"presentation_rect": [78.0, 38.0, 27.0, 43.0]},
+    "sharp.label": {"presentation_rect": [66.5, 20.0, 50.0, 18.0]},
+}
+# END overrides

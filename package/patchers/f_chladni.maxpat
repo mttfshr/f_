@@ -356,14 +356,14 @@
 						843.5,
 						260.0,
 						227.0,
-						164.0
+						160.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						0.0,
 						0.0,
 						227.0,
-						164.0
+						160.0
 					],
 					"proportion": 0.5
 				}
@@ -710,13 +710,7 @@
 			{
 				"box": {
 					"id": "obj-23",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "Amplitude envelope \u2014 scales output brightness",
 					"numinlets": 1,
@@ -728,22 +722,19 @@
 					"param_connect": "chladni_pix::amp",
 					"parameter_enable": 1,
 					"patching_rect": [
-						118.5,
+						110.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						41.0,
-						38.0,
-						27.0,
-						43.0
+						4.0,
+						100.0,
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								1.0
@@ -759,10 +750,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "amp"
 				}
 			},
@@ -801,8 +788,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						29.5,
-						20.0,
+						-7.5,
+						82.0,
 						50.0,
 						18.0
 					],
@@ -814,13 +801,7 @@
 			{
 				"box": {
 					"id": "obj-26",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "Plate radius \u2014 scales field in both view modes",
 					"numinlets": 1,
@@ -832,22 +813,19 @@
 					"param_connect": "chladni_pix::dishradius",
 					"parameter_enable": 1,
 					"patching_rect": [
-						190.5,
+						182.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						78.0,
-						38.0,
-						27.0,
-						43.0
+						41.0,
+						100.0,
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								1.0
@@ -863,10 +841,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "dishradius"
 				}
 			},
@@ -905,8 +879,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						66.5,
-						20.0,
+						29.5,
+						82.0,
 						50.0,
 						18.0
 					],
@@ -918,13 +892,7 @@
 			{
 				"box": {
 					"id": "obj-29",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "Boundary reflection amount \u2014 adds reflected wave",
 					"numinlets": 1,
@@ -936,22 +904,19 @@
 					"param_connect": "chladni_pix::reflectamt",
 					"parameter_enable": 1,
 					"patching_rect": [
-						262.5,
+						254.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						115.0,
-						38.0,
-						27.0,
-						43.0
+						78.0,
+						100.0,
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								0.0
@@ -967,10 +932,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "reflectamt"
 				}
 			},
@@ -1009,8 +970,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						103.5,
-						20.0,
+						66.5,
+						82.0,
 						50.0,
 						18.0
 					],
@@ -1047,7 +1008,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						152.0,
+						41.0,
 						38.0,
 						27.0,
 						43.0
@@ -1113,7 +1074,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						140.5,
+						29.5,
 						20.0,
 						50.0,
 						18.0
@@ -1151,8 +1112,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						4.0,
-						100.0,
+						78.0,
+						38.0,
 						27.0,
 						43.0
 					],
@@ -1217,8 +1178,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						-7.5,
-						82.0,
+						66.5,
+						20.0,
 						50.0,
 						18.0
 					],
@@ -1230,13 +1191,7 @@
 			{
 				"box": {
 					"id": "obj-38",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "Mode B falloff width \u2014 0.1=snap 0.5=broad. Only acts when mode = 1 (Mode A has no spread)",
 					"numinlets": 1,
@@ -1248,22 +1203,19 @@
 					"param_connect": "chladni_pix::spread",
 					"parameter_enable": 1,
 					"patching_rect": [
-						478.5,
+						470.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						41.0,
+						115.0,
 						100.0,
-						27.0,
-						43.0
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								0.3
@@ -1279,10 +1231,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "spread"
 				}
 			},
@@ -1321,7 +1269,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						29.5,
+						103.5,
 						82.0,
 						50.0,
 						18.0
@@ -1334,13 +1282,7 @@
 			{
 				"box": {
 					"id": "obj-41",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "0=linear interp between modes  1=Gaussian resonance snap",
 					"numinlets": 1,
@@ -1352,22 +1294,19 @@
 					"param_connect": "chladni_pix::mode",
 					"parameter_enable": 1,
 					"patching_rect": [
-						550.5,
+						542.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						78.0,
+						152.0,
 						100.0,
-						27.0,
-						43.0
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								0.0
@@ -1383,10 +1322,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "mode"
 				}
 			},
@@ -1425,7 +1360,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						66.5,
+						140.5,
 						82.0,
 						50.0,
 						18.0
@@ -1438,13 +1373,7 @@
 			{
 				"box": {
 					"id": "obj-44",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "0=circular plate  1=unwrapped strip",
 					"numinlets": 1,
@@ -1456,22 +1385,19 @@
 					"param_connect": "chladni_pix::view_mode",
 					"parameter_enable": 1,
 					"patching_rect": [
-						622.5,
+						614.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						115.0,
+						189.0,
 						100.0,
-						27.0,
-						43.0
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								0.0
@@ -1487,10 +1413,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "view_mode"
 				}
 			},
@@ -1529,7 +1451,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						103.5,
+						177.5,
 						82.0,
 						50.0,
 						18.0
@@ -1542,13 +1464,7 @@
 			{
 				"box": {
 					"id": "obj-47",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "Scales out3 (raw modal magnitude) \u2014 no hard ceiling on effective range",
 					"numinlets": 1,
@@ -1560,22 +1476,19 @@
 					"param_connect": "chladni_pix::gain",
 					"parameter_enable": 1,
 					"patching_rect": [
-						694.5,
+						686.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						152.0,
-						100.0,
-						27.0,
-						43.0
+						4.0,
+						138.0,
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								1.0
@@ -1591,10 +1504,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "gain"
 				}
 			},
@@ -1633,8 +1542,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						140.5,
-						82.0,
+						-7.5,
+						120.0,
 						50.0,
 						18.0
 					],

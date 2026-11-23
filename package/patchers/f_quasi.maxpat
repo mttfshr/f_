@@ -355,14 +355,14 @@
 						771.5,
 						260.0,
 						227.0,
-						164.0
+						122.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						0.0,
 						0.0,
 						227.0,
-						164.0
+						122.0
 					],
 					"proportion": 0.5
 				}
@@ -642,13 +642,7 @@
 			{
 				"box": {
 					"id": "obj-20",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "Pattern scale, cyclic: one full turn is one octave and wraps with no seam. The clock adds to this",
 					"numinlets": 1,
@@ -660,22 +654,19 @@
 					"param_connect": "#0_quasi_pix::zoom",
 					"parameter_enable": 1,
 					"patching_rect": [
-						46.5,
+						38.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						4.0,
-						38.0,
-						27.0,
-						43.0
+						100.0,
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								0.0
@@ -691,10 +682,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "zoom"
 				}
 			},
@@ -734,7 +721,7 @@
 					"presentation": 1,
 					"presentation_rect": [
 						-7.5,
-						20.0,
+						82.0,
 						50.0,
 						18.0
 					],
@@ -746,13 +733,7 @@
 			{
 				"box": {
 					"id": "obj-23",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "Zoom clock: octaves per frame, either direction. 0 freezes the zoom exactly",
 					"numinlets": 1,
@@ -764,22 +745,19 @@
 					"param_connect": "#0_quasi_pix::zoom_rate",
 					"parameter_enable": 1,
 					"patching_rect": [
-						118.5,
+						110.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						41.0,
-						38.0,
-						27.0,
-						43.0
+						100.0,
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								0.002
@@ -795,10 +773,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "zoom_rate"
 				}
 			},
@@ -819,7 +793,7 @@
 					"presentation": 1,
 					"presentation_rect": [
 						29.5,
-						20.0,
+						82.0,
 						50.0,
 						18.0
 					],
@@ -831,13 +805,7 @@
 			{
 				"box": {
 					"id": "obj-26",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "Phase of the waves, cyclic: one full turn is the identical frame. The clock adds to this",
 					"numinlets": 1,
@@ -849,22 +817,19 @@
 					"param_connect": "#0_quasi_pix::drift",
 					"parameter_enable": 1,
 					"patching_rect": [
-						190.5,
+						182.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						78.0,
-						38.0,
-						27.0,
-						43.0
+						100.0,
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								0.0
@@ -880,10 +845,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "drift"
 				}
 			},
@@ -923,7 +884,7 @@
 					"presentation": 1,
 					"presentation_rect": [
 						66.5,
-						20.0,
+						82.0,
 						50.0,
 						18.0
 					],
@@ -935,13 +896,7 @@
 			{
 				"box": {
 					"id": "obj-29",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "Drift clock: turns per frame, either direction. 0 freezes the phase exactly",
 					"numinlets": 1,
@@ -953,22 +908,19 @@
 					"param_connect": "#0_quasi_pix::drift_rate",
 					"parameter_enable": 1,
 					"patching_rect": [
-						262.5,
+						254.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						115.0,
-						38.0,
-						27.0,
-						43.0
+						100.0,
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								0.001
@@ -984,10 +936,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "drift_rate"
 				}
 			},
@@ -1008,7 +956,7 @@
 					"presentation": 1,
 					"presentation_rect": [
 						103.5,
-						20.0,
+						82.0,
 						50.0,
 						18.0
 					],
@@ -1045,7 +993,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						152.0,
+						4.0,
 						38.0,
 						27.0,
 						43.0
@@ -1111,7 +1059,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						140.5,
+						-7.5,
 						20.0,
 						50.0,
 						18.0
@@ -1149,8 +1097,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						4.0,
-						100.0,
+						41.0,
+						38.0,
 						27.0,
 						43.0
 					],
@@ -1215,8 +1163,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						-7.5,
-						82.0,
+						29.5,
+						20.0,
 						50.0,
 						18.0
 					],
@@ -1228,13 +1176,7 @@
 			{
 				"box": {
 					"id": "obj-38",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "Contour count in the look outlet",
 					"numinlets": 1,
@@ -1246,22 +1188,19 @@
 					"param_connect": "#0_quasi_pix::bands",
 					"parameter_enable": 1,
 					"patching_rect": [
-						478.5,
+						470.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						41.0,
+						152.0,
 						100.0,
-						27.0,
-						43.0
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								5.0
@@ -1277,10 +1216,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "bands"
 				}
 			},
@@ -1319,7 +1254,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						29.5,
+						140.5,
 						82.0,
 						50.0,
 						18.0
@@ -1358,7 +1293,7 @@
 					"presentation": 1,
 					"presentation_rect": [
 						78.0,
-						100.0,
+						38.0,
 						27.0,
 						43.0
 					],
@@ -1424,7 +1359,7 @@
 					"presentation": 1,
 					"presentation_rect": [
 						66.5,
-						82.0,
+						20.0,
 						50.0,
 						18.0
 					],
@@ -1436,13 +1371,7 @@
 			{
 				"box": {
 					"id": "obj-44",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "Strength of the vecfield outlet (unbounded in use: the bounded field only fills part of the range at 1)",
 					"numinlets": 1,
@@ -1454,22 +1383,19 @@
 					"param_connect": "#0_quasi_pix::gain",
 					"parameter_enable": 1,
 					"patching_rect": [
-						622.5,
+						614.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						115.0,
+						189.0,
 						100.0,
-						27.0,
-						43.0
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								1.0
@@ -1485,10 +1411,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "gain"
 				}
 			},
@@ -1527,7 +1449,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						103.5,
+						177.5,
 						82.0,
 						50.0,
 						18.0

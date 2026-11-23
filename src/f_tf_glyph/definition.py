@@ -36,7 +36,7 @@ patcher = {
     "bypass_mode": "param",
 
     "presentation_width":  190,
-    "presentation_height": 150,
+    "presentation_height": 122,
 
     "codebox": (_HERE / "codebox_glyph.gen").open(newline="").read(),
 
@@ -87,21 +87,21 @@ patcher = {
                     "PROVISIONAL (TG020).",
         },
         {
-            "name": "thickness", "type": "float",
+            "name": "thickness", "type": "float", "widget": "numbox",
             "min": 0.0, "max": 1.0, "default": 0.15,
             "label": "Thickness",
             "hint": "Stroke weight of the ellipse ring, as a fraction of the radius. "
                     "PROVISIONAL (TG020).",
         },
         {
-            "name": "softness", "type": "float",
+            "name": "softness", "type": "float", "widget": "numbox",
             "min": 0.0, "max": 1.0, "default": 0.1,
             "label": "Softness",
             "hint": "Edge falloff, independent of thickness (f_weave convention). "
                     "PROVISIONAL (TG020).",
         },
         {
-            "name": "gate", "type": "float",
+            "name": "gate", "type": "float", "widget": "numbox",
             "min": 0.0, "max": 1.0, "default": 0.05,
             "label": "Gate",
             "hint": "Draw threshold on the delivered trace: cells below it stay empty "
@@ -109,7 +109,7 @@ patcher = {
                     "tensors render empty). PROVISIONAL (TG020).",
         },
         {
-            "name": "max_aspect", "type": "float",
+            "name": "max_aspect", "type": "float", "widget": "numbox",
             "min": 1.0, "max": 32.0, "default": 8.0,
             "label": "Max Aspect",
             "hint": "Clamp on the ellipse aspect so near-degenerate tensors do not "
@@ -125,3 +125,20 @@ patcher = {
 # 190 px grid (the frame was 154 x 84 and cropped the right dials and the second row).
 # (2026-10-30: the Width / Height numboxes are gone; the builder lays out the six that remain.)
 patcher["overrides"] = {}
+
+# BEGIN overrides (build/capture.py rewrites only this block)
+patcher["overrides"] = {
+    "gate.ctl": {"presentation_rect": [115.0, 100.0, 34.0, 15.0]},
+    "gate.label": {"presentation_rect": [103.5, 82.0, 50.0, 18.0]},
+    "glyph_scale.ctl": {"presentation_rect": [4.0, 100.0, 34.0, 15.0]},
+    "glyph_scale.label": {"presentation_rect": [-7.5, 82.0, 50.0, 18.0]},
+    "grid.ctl": {"presentation_rect": [4.0, 38.0, 27.0, 43.0]},
+    "grid.label": {"presentation_rect": [-7.5, 20.0, 50.0, 18.0]},
+    "max_aspect.ctl": {"presentation_rect": [152.0, 100.0, 34.0, 15.0]},
+    "max_aspect.label": {"presentation_rect": [140.5, 82.0, 50.0, 18.0]},
+    "softness.ctl": {"presentation_rect": [78.0, 100.0, 34.0, 15.0]},
+    "softness.label": {"presentation_rect": [66.5, 82.0, 50.0, 18.0]},
+    "thickness.ctl": {"presentation_rect": [41.0, 100.0, 34.0, 15.0]},
+    "thickness.label": {"presentation_rect": [29.5, 82.0, 50.0, 18.0]},
+}
+# END overrides

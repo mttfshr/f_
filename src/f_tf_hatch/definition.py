@@ -51,7 +51,7 @@ patcher = {
     },
 
     "presentation_width":  190,
-    "presentation_height": 150,
+    "presentation_height": 122,
 
     "pix_chain": [
         {
@@ -153,7 +153,7 @@ patcher = {
             "pix_target": "e2",
         },
         {
-            "name": "contrast", "type": "float",
+            "name": "contrast", "type": "float", "widget": "numbox",
             "min": 0.0, "max": 1.0, "default": 0.5,
             "hint": "Stroke brightness gain (0.6x at 0 to 2x at 1). PROVISIONAL.",
             "label": "Contrast",
@@ -167,7 +167,7 @@ patcher = {
             "pix_target": "e3",
         },
         {
-            "name": "structure_floor", "type": "float",
+            "name": "structure_floor", "type": "float", "widget": "numbox",
             "min": 0.0, "max": 1.0, "default": 0.1,
             "hint": "Structure floor: where there is too little structure to mark, draw nothing. Reads the tensormap's trace scale (trace x its Strength; strong structure is ~1), squared for finer control at the low end. 0 = marks wherever any structure exists. Not strength-invariant: calibrate with the tensormap's Strength. PROVISIONAL default.",
             "label": "Floor",
@@ -181,7 +181,7 @@ patcher = {
             "pix_target": "e1",
         },
         {
-            "name": "coh_floor", "type": "float",
+            "name": "coh_floor", "type": "float", "widget": "numbox",
             "min": 0.0, "max": 1.0, "default": 0.0,
             "hint": "Where the tensor loses its direction (low coherence) the output goes black and strokes end, instead of smearing "
                     "into clouds: below this coherence a path stops contributing and the pixel fades to black (ramped over the 0.2 below it). "
@@ -203,5 +203,24 @@ patcher = {
 }
 
 # Layout: the library's 5-column, 190 px grid (controls run to x ~ 180, two dial rows).
-patcher["overrides"] = {}
+
+# BEGIN overrides (build/capture.py rewrites only this block)
+patcher["overrides"] = {
+    "angle_offset.ctl": {"presentation_rect": [152.0, 38.0, 27.0, 43.0]},
+    "angle_offset.label": {"presentation_rect": [140.5, 20.0, 50.0, 18.0]},
+    "coh_floor.ctl": {"presentation_rect": [78.0, 100.0, 34.0, 15.0]},
+    "coh_floor.label": {"presentation_rect": [66.5, 82.0, 50.0, 18.0]},
+    "contrast.ctl": {"presentation_rect": [4.0, 100.0, 34.0, 15.0]},
+    "contrast.label": {"presentation_rect": [-7.5, 82.0, 50.0, 18.0]},
+    "density.ctl": {"presentation_rect": [78.0, 38.0, 27.0, 43.0]},
+    "density.label": {"presentation_rect": [66.5, 20.0, 50.0, 18.0]},
+    "grain.ctl": {"presentation_rect": [41.0, 38.0, 27.0, 43.0]},
+    "grain.label": {"presentation_rect": [29.5, 20.0, 50.0, 18.0]},
+    "line_hard.ctl": {"presentation_rect": [115.0, 38.0, 27.0, 43.0]},
+    "line_hard.label": {"presentation_rect": [103.5, 20.0, 50.0, 18.0]},
+    "reach.ctl": {"presentation_rect": [4.0, 38.0, 27.0, 43.0]},
+    "reach.label": {"presentation_rect": [-7.5, 20.0, 50.0, 18.0]},
+    "structure_floor.ctl": {"presentation_rect": [41.0, 100.0, 34.0, 15.0]},
+    "structure_floor.label": {"presentation_rect": [29.5, 82.0, 50.0, 18.0]},
+}
 # END overrides

@@ -829,14 +829,14 @@
 						760.0,
 						260.0,
 						190.0,
-						150.0
+						122.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						0.0,
 						0.0,
 						190.0,
-						150.0
+						122.0
 					],
 					"proportion": 0.5
 				}
@@ -1447,13 +1447,7 @@
 			{
 				"box": {
 					"id": "obj-29",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "Stroke brightness gain (0.6x at 0 to 2x at 1). PROVISIONAL.",
 					"numinlets": 1,
@@ -1465,22 +1459,19 @@
 					"param_connect": "#0_hatch_stage_e3::contrast",
 					"parameter_enable": 1,
 					"patching_rect": [
-						262.5,
+						254.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						115.0,
-						38.0,
-						27.0,
-						43.0
+						4.0,
+						100.0,
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								0.5
@@ -1496,10 +1487,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "contrast"
 				}
 			},
@@ -1538,8 +1525,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						103.5,
-						20.0,
+						-7.5,
+						82.0,
 						50.0,
 						18.0
 					],
@@ -1576,7 +1563,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						152.0,
+						115.0,
 						38.0,
 						27.0,
 						43.0
@@ -1642,7 +1629,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						140.5,
+						103.5,
 						20.0,
 						50.0,
 						18.0
@@ -1655,13 +1642,7 @@
 			{
 				"box": {
 					"id": "obj-35",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "Structure floor: where there is too little structure to mark, draw nothing. Reads the tensormap's trace scale (trace x its Strength; strong structure is ~1), squared for finer control at the low end. 0 = marks wherever any structure exists. Not strength-invariant: calibrate with the tensormap's Strength. PROVISIONAL default.",
 					"numinlets": 1,
@@ -1673,22 +1654,19 @@
 					"param_connect": "#0_hatch_stage_e1::structure_floor",
 					"parameter_enable": 1,
 					"patching_rect": [
-						406.5,
+						398.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						4.0,
+						41.0,
 						100.0,
-						27.0,
-						43.0
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								0.1
@@ -1704,10 +1682,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "structure_floor"
 				}
 			},
@@ -1746,7 +1720,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						-7.5,
+						29.5,
 						82.0,
 						50.0,
 						18.0
@@ -1784,8 +1758,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						41.0,
-						100.0,
+						152.0,
+						38.0,
 						27.0,
 						43.0
 					],
@@ -1850,8 +1824,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						29.5,
-						82.0,
+						140.5,
+						20.0,
 						50.0,
 						18.0
 					],
@@ -1863,13 +1837,7 @@
 			{
 				"box": {
 					"id": "obj-41",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "Where the tensor loses its direction (low coherence) the output goes black and strokes end, instead of smearing into clouds: below this coherence a path stops contributing and the pixel fades to black (ramped over the 0.2 below it). Floor gates by structure STRENGTH; this gates by DIRECTION. 0 = off (the plain look).",
 					"numinlets": 1,
@@ -1881,22 +1849,19 @@
 					"param_connect": "#0_hatch_stage_e2::coh_floor",
 					"parameter_enable": 1,
 					"patching_rect": [
-						550.5,
+						542.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						78.0,
 						100.0,
-						27.0,
-						43.0
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								0.0
@@ -1912,10 +1877,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "coh_floor"
 				}
 			},

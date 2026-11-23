@@ -1,0 +1,4178 @@
+{
+ "f_a_decorrelate": [
+  {
+   "name": "band",
+   "type": "int",
+   "widget": "dial",
+   "min": 1,
+   "max": 7,
+   "default": 6,
+   "label": "Band",
+   "ui": true
+  },
+  {
+   "name": "mod_type",
+   "type": "menu",
+   "widget": "menu",
+   "min": null,
+   "max": null,
+   "default": 0,
+   "label": "Mod",
+   "ui": true
+  },
+  {
+   "name": "depth",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 1.0,
+   "label": "Depth",
+   "ui": true
+  },
+  {
+   "name": "tmr",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.1,
+   "max": 4.0,
+   "default": 1.0,
+   "label": "TMR",
+   "ui": true
+  },
+  {
+   "name": "smr_mean",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 12.0,
+   "default": 4.5,
+   "label": "SMR Mean",
+   "ui": true
+  },
+  {
+   "name": "smr_range",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 12.0,
+   "default": 3.0,
+   "label": "SMR Range",
+   "ui": true
+  },
+  {
+   "name": "smr_cycle",
+   "type": "float",
+   "widget": "dial",
+   "min": 1.0,
+   "max": 60.0,
+   "default": 8.0,
+   "label": "SMR Cycle",
+   "ui": true
+  },
+  {
+   "name": "q",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 6.283185307,
+   "default": 0.0,
+   "label": "Phase q",
+   "ui": true
+  },
+  {
+   "name": "p",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 6.283185307,
+   "default": 0.0,
+   "label": "Phase p",
+   "ui": true
+  },
+  {
+   "name": "mix",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 1.0,
+   "label": "Mix",
+   "ui": true
+  },
+  {
+   "name": "gain",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.5,
+   "default": 1.0,
+   "label": "Gain",
+   "ui": true
+  }
+ ],
+ "f_a_purr": [
+  {
+   "name": "rate_hz",
+   "type": "float",
+   "widget": "dial",
+   "min": 1,
+   "max": 200,
+   "default": 25,
+   "label": "Rate Hz",
+   "ui": true
+  },
+  {
+   "name": "rate_jit",
+   "type": "float",
+   "widget": "dial",
+   "min": 0,
+   "max": 0.2,
+   "default": 0.05,
+   "label": "Rate Jit",
+   "ui": true
+  },
+  {
+   "name": "amp_jit",
+   "type": "float",
+   "widget": "dial",
+   "min": 0,
+   "max": 0.2,
+   "default": 0.05,
+   "label": "Amp Jit",
+   "ui": true
+  },
+  {
+   "name": "jit_tau",
+   "type": "float",
+   "widget": "dial",
+   "min": 0,
+   "max": 10,
+   "default": 0,
+   "label": "Jit Tau",
+   "ui": true
+  },
+  {
+   "name": "decay_ms",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.2,
+   "max": 200,
+   "default": 3.7,
+   "label": "Decay ms",
+   "ui": true
+  },
+  {
+   "name": "decay_jit",
+   "type": "float",
+   "widget": "dial",
+   "min": 0,
+   "max": 0.9,
+   "default": 0.6,
+   "label": "Decay Jit",
+   "ui": true
+  },
+  {
+   "name": "tilt",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.02,
+   "max": 1,
+   "default": 0.5,
+   "label": "Tilt",
+   "ui": true
+  },
+  {
+   "name": "res_hz",
+   "type": "float",
+   "widget": "dial",
+   "min": 20,
+   "max": 400,
+   "default": 215.5,
+   "label": "Res Hz",
+   "ui": true
+  },
+  {
+   "name": "res_q",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.5,
+   "max": 0.999,
+   "default": 0.9919,
+   "label": "Res Q",
+   "ui": true
+  },
+  {
+   "name": "breath_hz",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.05,
+   "max": 2,
+   "default": 0.32,
+   "label": "Breath Hz",
+   "ui": true
+  },
+  {
+   "name": "breath_skew",
+   "type": "float",
+   "widget": "dial",
+   "min": -1,
+   "max": 1,
+   "default": 0.79,
+   "label": "Skew",
+   "ui": true
+  },
+  {
+   "name": "breath_depth",
+   "type": "float",
+   "widget": "dial",
+   "min": 0,
+   "max": 1,
+   "default": 0.3,
+   "label": "Depth",
+   "ui": true
+  },
+  {
+   "name": "breath_rate_mod",
+   "type": "float",
+   "widget": "dial",
+   "min": -0.5,
+   "max": 0.5,
+   "default": 0.464,
+   "label": "Rate Mod",
+   "ui": true
+  },
+  {
+   "name": "breath_shape",
+   "type": "float",
+   "widget": "dial",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "label": "Shape",
+   "ui": true
+  },
+  {
+   "name": "breath_jit",
+   "type": "float",
+   "widget": "dial",
+   "min": 0,
+   "max": 0.3,
+   "default": 0,
+   "label": "Breath Jit",
+   "ui": true
+  },
+  {
+   "name": "run_prob",
+   "type": "float",
+   "widget": "dial",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "label": "Run Prob",
+   "ui": true
+  },
+  {
+   "name": "run_oct",
+   "type": "float",
+   "widget": "dial",
+   "min": 0,
+   "max": 1.5,
+   "default": 0.6,
+   "label": "Run Oct",
+   "ui": true
+  },
+  {
+   "name": "breath_noise",
+   "type": "float",
+   "widget": "dial",
+   "min": 0,
+   "max": 1,
+   "default": 0.15,
+   "label": "Noise",
+   "ui": true
+  },
+  {
+   "name": "breath_src",
+   "type": "float",
+   "widget": "dial",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "label": "Src",
+   "ui": true
+  },
+  {
+   "name": "breath_src_ms",
+   "type": "float",
+   "widget": "dial",
+   "min": 1,
+   "max": 2000,
+   "default": 50,
+   "label": "Src ms",
+   "ui": true
+  },
+  {
+   "name": "ph_gain",
+   "type": "float",
+   "widget": "dial",
+   "min": -1,
+   "max": 1,
+   "default": 0,
+   "label": "Ph Gain",
+   "ui": true
+  },
+  {
+   "name": "ph_tilt",
+   "type": "float",
+   "widget": "dial",
+   "min": -1,
+   "max": 1,
+   "default": 0,
+   "label": "Ph Tilt",
+   "ui": true
+  },
+  {
+   "name": "ph_res",
+   "type": "float",
+   "widget": "dial",
+   "min": -1,
+   "max": 1,
+   "default": 0,
+   "label": "Ph Res",
+   "ui": true
+  },
+  {
+   "name": "ph_rate",
+   "type": "float",
+   "widget": "dial",
+   "min": -1,
+   "max": 1,
+   "default": 0,
+   "label": "Ph Rate",
+   "ui": true
+  },
+  {
+   "name": "gain",
+   "type": "float",
+   "widget": "dial",
+   "min": 0,
+   "max": 1,
+   "default": 0.3,
+   "label": "Gain",
+   "ui": true
+  }
+ ],
+ "f_a_ripple": [
+  {
+   "name": "band",
+   "type": "int",
+   "widget": "dial",
+   "min": 1,
+   "max": 7,
+   "default": 6,
+   "label": "Band",
+   "ui": true
+  },
+  {
+   "name": "mod_type",
+   "type": "menu",
+   "widget": "menu",
+   "min": null,
+   "max": null,
+   "default": 0,
+   "label": "Mod",
+   "ui": true
+  },
+  {
+   "name": "depth",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 1.0,
+   "label": "Depth",
+   "ui": true
+  },
+  {
+   "name": "tmr",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.1,
+   "max": 256.0,
+   "default": 1.0,
+   "label": "TMR",
+   "ui": true
+  },
+  {
+   "name": "smr_mean",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 12.0,
+   "default": 4.5,
+   "label": "SMR Mean",
+   "ui": true
+  },
+  {
+   "name": "smr_range",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 12.0,
+   "default": 3.0,
+   "label": "SMR Range",
+   "ui": true
+  },
+  {
+   "name": "smr_cycle",
+   "type": "float",
+   "widget": "dial",
+   "min": 1.0,
+   "max": 60.0,
+   "default": 8.0,
+   "label": "SMR Cycle",
+   "ui": true
+  },
+  {
+   "name": "pm_turns",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.5,
+   "max": 8.0,
+   "default": 0.5,
+   "label": "PM Turns",
+   "ui": true
+  },
+  {
+   "name": "f0_lo",
+   "type": "float",
+   "widget": "dial",
+   "min": 50.0,
+   "max": 400.0,
+   "default": 96.0,
+   "label": "F0 Lo",
+   "ui": true
+  },
+  {
+   "name": "f0_hi",
+   "type": "float",
+   "widget": "dial",
+   "min": 50.0,
+   "max": 400.0,
+   "default": 256.0,
+   "label": "F0 Hi",
+   "ui": true
+  },
+  {
+   "name": "stim_dur",
+   "type": "float",
+   "widget": "dial",
+   "min": 1.0,
+   "max": 30.0,
+   "default": 4.0,
+   "label": "Duration",
+   "ui": true
+  },
+  {
+   "name": "ramp_pct",
+   "type": "float",
+   "widget": "dial",
+   "min": 5.0,
+   "max": 50.0,
+   "default": 25.0,
+   "label": "Ramp %",
+   "ui": true
+  },
+  {
+   "name": "hearing_profile",
+   "type": "menu",
+   "widget": "menu",
+   "min": null,
+   "max": null,
+   "default": 0,
+   "label": "Hearing",
+   "ui": true
+  },
+  {
+   "name": "gain",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.1,
+   "label": "Gain",
+   "ui": true
+  }
+ ],
+ "f_caustic": [
+  {
+   "name": "mix_pct",
+   "type": "float",
+   "widget": "numbox",
+   "min": 0.0,
+   "max": 100.0,
+   "default": 0.0,
+   "label": "Mix",
+   "ui": true
+  },
+  {
+   "name": "gain",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 2.0,
+   "default": 0.5,
+   "label": "Gain",
+   "ui": true
+  },
+  {
+   "name": "scale",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.3,
+   "label": "Scale",
+   "ui": true
+  },
+  {
+   "name": "expo",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.3,
+   "max": 1.5,
+   "default": 0.7,
+   "label": "Expo",
+   "ui": true
+  },
+  {
+   "name": "edge",
+   "type": "menu",
+   "widget": "menu",
+   "min": null,
+   "max": null,
+   "default": 0,
+   "label": "Edge",
+   "ui": true
+  }
+ ],
+ "f_channel_grader": [
+  {
+   "name": "r_lift",
+   "type": "float",
+   "widget": "dial",
+   "min": -1.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": null,
+   "ui": true
+  },
+  {
+   "name": "r_gamma",
+   "type": "float",
+   "widget": "dial",
+   "min": -1.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": null,
+   "ui": true
+  },
+  {
+   "name": "r_gain",
+   "type": "float",
+   "widget": "dial",
+   "min": -1.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": null,
+   "ui": true
+  },
+  {
+   "name": "g_lift",
+   "type": "float",
+   "widget": "dial",
+   "min": -1.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": null,
+   "ui": true
+  },
+  {
+   "name": "g_gamma",
+   "type": "float",
+   "widget": "dial",
+   "min": -1.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": null,
+   "ui": true
+  },
+  {
+   "name": "g_gain",
+   "type": "float",
+   "widget": "dial",
+   "min": -1.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": null,
+   "ui": true
+  },
+  {
+   "name": "b_lift",
+   "type": "float",
+   "widget": "dial",
+   "min": -1.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": null,
+   "ui": true
+  },
+  {
+   "name": "b_gamma",
+   "type": "float",
+   "widget": "dial",
+   "min": -1.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": null,
+   "ui": true
+  },
+  {
+   "name": "b_gain",
+   "type": "float",
+   "widget": "dial",
+   "min": -1.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": null,
+   "ui": true
+  },
+  {
+   "name": "m_lift",
+   "type": "float",
+   "widget": "dial",
+   "min": -1.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": null,
+   "ui": true
+  },
+  {
+   "name": "m_gamma",
+   "type": "float",
+   "widget": "dial",
+   "min": -1.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": null,
+   "ui": true
+  },
+  {
+   "name": "m_gain",
+   "type": "float",
+   "widget": "dial",
+   "min": -1.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": null,
+   "ui": true
+  }
+ ],
+ "f_chladni": [
+  {
+   "name": "note",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 127.0,
+   "default": 60.0,
+   "label": "note",
+   "ui": true
+  },
+  {
+   "name": "amp",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 1.0,
+   "label": "amp",
+   "ui": true
+  },
+  {
+   "name": "dishradius",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.1,
+   "max": 4.0,
+   "default": 1.0,
+   "label": "radius",
+   "ui": true
+  },
+  {
+   "name": "reflectamt",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "reflect",
+   "ui": true
+  },
+  {
+   "name": "linesharpness",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.1,
+   "max": 100.0,
+   "default": 10.0,
+   "label": "sharp",
+   "ui": true
+  },
+  {
+   "name": "ph0",
+   "type": "float",
+   "widget": "dial",
+   "min": -6.2832,
+   "max": 6.2832,
+   "default": 0.0,
+   "label": "phase",
+   "ui": true
+  },
+  {
+   "name": "spread",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.1,
+   "max": 1.0,
+   "default": 0.3,
+   "label": "spread",
+   "ui": true
+  },
+  {
+   "name": "mode",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "mode",
+   "ui": true
+  },
+  {
+   "name": "view_mode",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "view",
+   "ui": true
+  },
+  {
+   "name": "gain",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 20.0,
+   "default": 1.0,
+   "label": "gain",
+   "ui": true
+  }
+ ],
+ "f_droste": [
+  {
+   "name": "zoom",
+   "type": "float",
+   "widget": "dial",
+   "min": 1.1,
+   "max": 100.0,
+   "default": 2.0,
+   "label": "Zoom",
+   "ui": true
+  },
+  {
+   "name": "n_arms",
+   "type": "float",
+   "widget": "dial",
+   "min": 1.0,
+   "max": 16.0,
+   "default": 1.0,
+   "label": "Arms",
+   "ui": true
+  },
+  {
+   "name": "twist",
+   "type": "float",
+   "widget": "dial",
+   "min": -8.0,
+   "max": 8.0,
+   "default": 0.0,
+   "label": "Twist",
+   "ui": true
+  },
+  {
+   "name": "rotation",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "Rot",
+   "ui": true
+  }
+ ],
+ "f_grain": [
+  {
+   "name": "density",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.5,
+   "label": "Dens",
+   "ui": true
+  },
+  {
+   "name": "gain",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 2.0,
+   "default": 1.0,
+   "label": "Gain",
+   "ui": true
+  },
+  {
+   "name": "persistence",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 1.0,
+   "label": "Freeze",
+   "ui": true
+  },
+  {
+   "name": "fade",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 4.0,
+   "default": 0.0,
+   "label": "Fade",
+   "ui": true
+  },
+  {
+   "name": "size",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "Size",
+   "ui": true
+  },
+  {
+   "name": "size_var",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "S.var",
+   "ui": true
+  },
+  {
+   "name": "shape",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.5,
+   "label": "Shape",
+   "ui": true
+  },
+  {
+   "name": "softness",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "Soft",
+   "ui": true
+  },
+  {
+   "name": "jitter",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 2.0,
+   "default": 0.0,
+   "label": "Jitter",
+   "ui": true
+  },
+  {
+   "name": "ch_diverge",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "Color",
+   "ui": true
+  },
+  {
+   "name": "luma_gate",
+   "type": "float",
+   "widget": "dial",
+   "min": -1.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "L.gate",
+   "ui": true
+  },
+  {
+   "name": "displace",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 0.5,
+   "default": 0.0,
+   "label": "Displ",
+   "ui": true
+  },
+  {
+   "name": "mix_pct",
+   "type": "float",
+   "widget": "numbox",
+   "min": 0.0,
+   "max": 100.0,
+   "default": 100.0,
+   "label": "Mix",
+   "ui": true
+  }
+ ],
+ "f_halftone": [
+  {
+   "name": "screen",
+   "type": "menu",
+   "widget": "menu",
+   "min": null,
+   "max": null,
+   "default": 0,
+   "label": "Screen",
+   "ui": true
+  },
+  {
+   "name": "plate_mode",
+   "type": "menu",
+   "widget": "menu",
+   "min": null,
+   "max": null,
+   "default": 0,
+   "label": "Plate",
+   "ui": true
+  },
+  {
+   "name": "pitch",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.009,
+   "max": 0.2,
+   "default": 0.012,
+   "label": "Pitch",
+   "ui": true
+  },
+  {
+   "name": "scale_r",
+   "type": "float",
+   "widget": "numbox",
+   "min": 0.25,
+   "max": 4.0,
+   "default": 1.0,
+   "label": "Scale R",
+   "ui": true
+  },
+  {
+   "name": "scale_g",
+   "type": "float",
+   "widget": "numbox",
+   "min": 0.25,
+   "max": 4.0,
+   "default": 1.0,
+   "label": "Scale G",
+   "ui": true
+  },
+  {
+   "name": "scale_b",
+   "type": "float",
+   "widget": "numbox",
+   "min": 0.25,
+   "max": 4.0,
+   "default": 1.0,
+   "label": "Scale B",
+   "ui": true
+  },
+  {
+   "name": "softness",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.1,
+   "label": "Soft",
+   "ui": true
+  },
+  {
+   "name": "dot_shape",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "Shape",
+   "ui": true
+  },
+  {
+   "name": "jitter",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "Jitter",
+   "ui": true
+  },
+  {
+   "name": "seed",
+   "type": "int",
+   "widget": "dial",
+   "min": 1,
+   "max": 256,
+   "default": 1,
+   "label": "Seed",
+   "ui": true
+  },
+  {
+   "name": "levels",
+   "type": "int",
+   "widget": "dial",
+   "min": 2,
+   "max": 16,
+   "default": 2,
+   "label": "Levels",
+   "ui": true
+  },
+  {
+   "name": "level",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.5,
+   "label": "Level",
+   "ui": true
+  },
+  {
+   "name": "bayer_cell",
+   "type": "text_button",
+   "widget": "text_button",
+   "min": null,
+   "max": null,
+   "default": 1,
+   "label": "Read",
+   "ui": true
+  },
+  {
+   "name": "angle_r",
+   "type": "float",
+   "widget": "numbox",
+   "min": 0.0,
+   "max": 180.0,
+   "default": 15.0,
+   "label": "Angle R",
+   "ui": true
+  },
+  {
+   "name": "angle_g",
+   "type": "float",
+   "widget": "numbox",
+   "min": 0.0,
+   "max": 180.0,
+   "default": 75.0,
+   "label": "Angle G",
+   "ui": true
+  },
+  {
+   "name": "angle_b",
+   "type": "float",
+   "widget": "numbox",
+   "min": 0.0,
+   "max": 180.0,
+   "default": 45.0,
+   "label": "Angle B",
+   "ui": true
+  },
+  {
+   "name": "phase_r_x",
+   "type": "float",
+   "widget": "numbox",
+   "min": -1.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "R x",
+   "ui": true
+  },
+  {
+   "name": "phase_r_y",
+   "type": "float",
+   "widget": "numbox",
+   "min": -1.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "R y",
+   "ui": true
+  },
+  {
+   "name": "phase_g_x",
+   "type": "float",
+   "widget": "numbox",
+   "min": -1.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "G x",
+   "ui": true
+  },
+  {
+   "name": "phase_g_y",
+   "type": "float",
+   "widget": "numbox",
+   "min": -1.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "G y",
+   "ui": true
+  },
+  {
+   "name": "phase_b_x",
+   "type": "float",
+   "widget": "numbox",
+   "min": -1.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "B x",
+   "ui": true
+  },
+  {
+   "name": "phase_b_y",
+   "type": "float",
+   "widget": "numbox",
+   "min": -1.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "B y",
+   "ui": true
+  },
+  {
+   "name": "plate_out",
+   "type": "text_button",
+   "widget": "text_button",
+   "min": null,
+   "max": null,
+   "default": 0,
+   "label": "Out",
+   "ui": true
+  }
+ ],
+ "f_hue_processor": [
+  {
+   "name": "sat_amt",
+   "type": "float",
+   "widget": "dial",
+   "min": -1.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "Sat",
+   "ui": true
+  },
+  {
+   "name": "lum_shift",
+   "type": "float",
+   "widget": "dial",
+   "min": -1.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "Lum",
+   "ui": true
+  },
+  {
+   "name": "hue_shift",
+   "type": "float",
+   "widget": "dial",
+   "min": -180.0,
+   "max": 180.0,
+   "default": 0.0,
+   "label": null,
+   "ui": true
+  }
+ ],
+ "f_ks": [
+  {
+   "name": "rate",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 0.0625,
+   "default": 0.05,
+   "label": "Rate",
+   "ui": true
+  },
+  {
+   "name": "scale",
+   "type": "float",
+   "widget": "dial",
+   "min": 25.0,
+   "max": 100.0,
+   "default": 50.0,
+   "label": "Scale",
+   "ui": true
+  },
+  {
+   "name": "sharp",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "Sharp",
+   "ui": true
+  }
+ ],
+ "f_lens": [
+  {
+   "name": "aberration",
+   "type": "float",
+   "widget": "dial",
+   "min": -1.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "Aberr",
+   "ui": true
+  },
+  {
+   "name": "distortion",
+   "type": "float",
+   "widget": "dial",
+   "min": -1.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "Distort",
+   "ui": true
+  },
+  {
+   "name": "transmission",
+   "type": "float",
+   "widget": "dial",
+   "min": -1.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "Trans",
+   "ui": true
+  },
+  {
+   "name": "aberration_mod",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "Aberr Mod",
+   "ui": true
+  },
+  {
+   "name": "distortion_mod",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "Dist Mod",
+   "ui": true
+  },
+  {
+   "name": "transmission_mod",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "Trans Mod",
+   "ui": true
+  },
+  {
+   "name": "surface_mod",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 5.0,
+   "default": 0.0,
+   "label": "Surf Mod",
+   "ui": true
+  },
+  {
+   "name": "ghost",
+   "type": "float",
+   "widget": "dial",
+   "min": -1.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "Ghost",
+   "ui": true
+  },
+  {
+   "name": "ghost_count",
+   "type": "float",
+   "widget": "numbox",
+   "min": 1.0,
+   "max": 4.0,
+   "default": 3.0,
+   "label": "Ghost Ct",
+   "ui": true
+  },
+  {
+   "name": "ghost_spacing",
+   "type": "float",
+   "widget": "dial",
+   "min": -1.0,
+   "max": 1.0,
+   "default": 0.3,
+   "label": "Ghost Sp",
+   "ui": true
+  },
+  {
+   "name": "halation",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "Halation",
+   "ui": true
+  },
+  {
+   "name": "halation_threshold",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.7,
+   "label": "Hal Thresh",
+   "ui": true
+  }
+ ],
+ "f_luma_processor": [
+  {
+   "name": "sat_amt",
+   "type": "float",
+   "widget": "dial",
+   "min": -1.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "Sat",
+   "ui": true
+  },
+  {
+   "name": "lum_shift",
+   "type": "float",
+   "widget": "dial",
+   "min": -1.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "Lum",
+   "ui": true
+  },
+  {
+   "name": "hue_shift",
+   "type": "float",
+   "widget": "dial",
+   "min": -180.0,
+   "max": 180.0,
+   "default": 0.0,
+   "label": null,
+   "ui": true
+  }
+ ],
+ "f_masonry": [
+  {
+   "name": "courses",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 100.0,
+   "default": 8.0,
+   "label": "Courses",
+   "ui": true
+  },
+  {
+   "name": "bond",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 100.0,
+   "default": 8.0,
+   "label": "Bond",
+   "ui": true
+  },
+  {
+   "name": "offset",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "Offset",
+   "ui": true
+  },
+  {
+   "name": "angle",
+   "type": "float",
+   "widget": "dial",
+   "min": -360.0,
+   "max": 360.0,
+   "default": 0.0,
+   "label": "Angle",
+   "ui": true
+  },
+  {
+   "name": "skip",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 1.0,
+   "label": "Skip",
+   "ui": true
+  },
+  {
+   "name": "regularity",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 1.0,
+   "label": "Regular",
+   "ui": true
+  },
+  {
+   "name": "drift",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 4.0,
+   "default": 0.0,
+   "label": "Drift",
+   "ui": true
+  },
+  {
+   "name": "phase",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "Phase",
+   "ui": true
+  },
+  {
+   "name": "speed_var",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 10.0,
+   "default": 0.0,
+   "label": "Speed Var",
+   "ui": true
+  },
+  {
+   "name": "mortar",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.5,
+   "label": "Mortar",
+   "ui": true
+  },
+  {
+   "name": "softness",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "Softness",
+   "ui": true
+  },
+  {
+   "name": "width",
+   "type": "float",
+   "widget": "dial",
+   "min": -2.0,
+   "max": 2.0,
+   "default": 0.5,
+   "label": "Width",
+   "ui": true
+  },
+  {
+   "name": "roundness",
+   "type": "float",
+   "widget": "dial",
+   "min": -2.0,
+   "max": 2.0,
+   "default": 0.0,
+   "label": "Round",
+   "ui": true
+  },
+  {
+   "name": "course_color",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "C.Color",
+   "ui": true
+  },
+  {
+   "name": "brick_color",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "B.Color",
+   "ui": true
+  },
+  {
+   "name": "course_seed",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 999.0,
+   "default": 0.0,
+   "label": "C.Seed",
+   "ui": true
+  },
+  {
+   "name": "brick_seed",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 999.0,
+   "default": 0.0,
+   "label": "B.Seed",
+   "ui": true
+  }
+ ],
+ "f_mobius": [
+  {
+   "name": "cx",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.5,
+   "label": "cx",
+   "ui": true
+  },
+  {
+   "name": "cy",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.5,
+   "label": "cy",
+   "ui": true
+  },
+  {
+   "name": "rotate",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "rot",
+   "ui": true
+  },
+  {
+   "name": "zoom",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.5,
+   "label": "zoom",
+   "ui": true
+  },
+  {
+   "name": "invert",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 10.0,
+   "default": 0.0,
+   "label": "inv",
+   "ui": true
+  }
+ ],
+ "f_ngon": [
+  {
+   "name": "n_mirrors",
+   "type": "float",
+   "widget": "dial",
+   "min": 2.0,
+   "max": 18.0,
+   "default": 6.0,
+   "label": "N Mirrors",
+   "ui": true
+  },
+  {
+   "name": "rotation",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 6.2831853,
+   "default": 0.0,
+   "label": "Rotation",
+   "ui": true
+  },
+  {
+   "name": "scale",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 2.0,
+   "default": 1.0,
+   "label": "Scale",
+   "ui": true
+  }
+ ],
+ "f_poincare": [
+  {
+   "name": "fold_mode",
+   "type": "text_button",
+   "widget": "text_button",
+   "min": null,
+   "max": null,
+   "default": 0,
+   "label": "Mode",
+   "ui": true
+  },
+  {
+   "name": "p_sides",
+   "type": "int",
+   "widget": "dial",
+   "min": 3,
+   "max": 10,
+   "default": 4,
+   "label": "p",
+   "ui": true
+  },
+  {
+   "name": "q_vertex",
+   "type": "int",
+   "widget": "dial",
+   "min": 3,
+   "max": 10,
+   "default": 5,
+   "label": "q",
+   "ui": true
+  },
+  {
+   "name": "tile_scale",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.05,
+   "max": 1.0,
+   "default": 0.26,
+   "label": "Scale",
+   "ui": true
+  },
+  {
+   "name": "cam_x",
+   "type": "float",
+   "widget": "dial",
+   "min": -0.99,
+   "max": 0.99,
+   "default": 0.0,
+   "label": "Cam x",
+   "ui": true
+  },
+  {
+   "name": "cam_y",
+   "type": "float",
+   "widget": "dial",
+   "min": -0.99,
+   "max": 0.99,
+   "default": 0.0,
+   "label": "Cam y",
+   "ui": true
+  },
+  {
+   "name": "rot",
+   "type": "float",
+   "widget": "dial",
+   "min": -3.1416,
+   "max": 3.1416,
+   "default": 0.0,
+   "label": "Rot",
+   "ui": true
+  }
+ ],
+ "f_quasi": [
+  {
+   "name": "zoom",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "Zoom",
+   "ui": true
+  },
+  {
+   "name": "zoom_rate",
+   "type": "float",
+   "widget": "dial",
+   "min": -0.02,
+   "max": 0.02,
+   "default": 0.002,
+   "label": "Z.rate",
+   "ui": true
+  },
+  {
+   "name": "drift",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "Drift",
+   "ui": true
+  },
+  {
+   "name": "drift_rate",
+   "type": "float",
+   "widget": "dial",
+   "min": -0.02,
+   "max": 0.02,
+   "default": 0.001,
+   "label": "D.rate",
+   "ui": true
+  },
+  {
+   "name": "density",
+   "type": "float",
+   "widget": "dial",
+   "min": 1.0,
+   "max": 12.0,
+   "default": 4.0,
+   "label": "Dens",
+   "ui": true
+  },
+  {
+   "name": "envelope",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.25,
+   "max": 0.7,
+   "default": 0.5,
+   "label": "Env",
+   "ui": true
+  },
+  {
+   "name": "bands",
+   "type": "float",
+   "widget": "dial",
+   "min": 1.0,
+   "max": 12.0,
+   "default": 5.0,
+   "label": "Bands",
+   "ui": true
+  },
+  {
+   "name": "angle",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 180.0,
+   "default": 0.0,
+   "label": "Angle",
+   "ui": true
+  },
+  {
+   "name": "gain",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 8.0,
+   "default": 1.0,
+   "label": "Gain",
+   "ui": true
+  }
+ ],
+ "f_separate": [
+  {
+   "name": "n_inks",
+   "type": "int",
+   "widget": "dial",
+   "min": 1,
+   "max": 3,
+   "default": 3,
+   "label": "Inks",
+   "ui": true
+  },
+  {
+   "name": "sep_mode",
+   "type": "menu",
+   "widget": "menu",
+   "min": null,
+   "max": null,
+   "default": 0,
+   "label": "Mode",
+   "ui": true
+  },
+  {
+   "name": "ink1_h",
+   "type": "float",
+   "widget": "numbox",
+   "min": 0.0,
+   "max": 360.0,
+   "default": 15.0,
+   "label": "H 1",
+   "ui": true
+  },
+  {
+   "name": "ink1_s",
+   "type": "float",
+   "widget": "numbox",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 1.0,
+   "label": "S 1",
+   "ui": true
+  },
+  {
+   "name": "ink1_l",
+   "type": "float",
+   "widget": "numbox",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.5,
+   "label": "L 1",
+   "ui": true
+  },
+  {
+   "name": "gain1",
+   "type": "float",
+   "widget": "numbox",
+   "min": 0.0,
+   "max": 2.0,
+   "default": 1.0,
+   "label": "Gain 1",
+   "ui": true
+  },
+  {
+   "name": "ink2_h",
+   "type": "float",
+   "widget": "numbox",
+   "min": 0.0,
+   "max": 360.0,
+   "default": 180.0,
+   "label": "H 2",
+   "ui": true
+  },
+  {
+   "name": "ink2_s",
+   "type": "float",
+   "widget": "numbox",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 1.0,
+   "label": "S 2",
+   "ui": true
+  },
+  {
+   "name": "ink2_l",
+   "type": "float",
+   "widget": "numbox",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.3,
+   "label": "L 2",
+   "ui": true
+  },
+  {
+   "name": "gain2",
+   "type": "float",
+   "widget": "numbox",
+   "min": 0.0,
+   "max": 2.0,
+   "default": 1.0,
+   "label": "Gain 2",
+   "ui": true
+  },
+  {
+   "name": "ink3_h",
+   "type": "float",
+   "widget": "numbox",
+   "min": 0.0,
+   "max": 360.0,
+   "default": 267.0,
+   "label": "H 3",
+   "ui": true
+  },
+  {
+   "name": "ink3_s",
+   "type": "float",
+   "widget": "numbox",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 1.0,
+   "label": "S 3",
+   "ui": true
+  },
+  {
+   "name": "ink3_l",
+   "type": "float",
+   "widget": "numbox",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.5,
+   "label": "L 3",
+   "ui": true
+  },
+  {
+   "name": "gain3",
+   "type": "float",
+   "widget": "numbox",
+   "min": 0.0,
+   "max": 2.0,
+   "default": 1.0,
+   "label": "Gain 3",
+   "ui": true
+  }
+ ],
+ "f_sirds": [
+  {
+   "name": "depth_factor",
+   "type": "float",
+   "widget": "dial",
+   "min": -0.3,
+   "max": 0.3,
+   "default": 0.0,
+   "label": "depth",
+   "ui": true
+  }
+ ],
+ "f_stereo": [
+  {
+   "name": "lon",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.5,
+   "label": "Lon",
+   "ui": true
+  },
+  {
+   "name": "lat",
+   "type": "float",
+   "widget": "dial",
+   "min": -1.0,
+   "max": 1.0,
+   "default": 0.5,
+   "label": "Lat",
+   "ui": true
+  },
+  {
+   "name": "spin",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "Spin",
+   "ui": true
+  },
+  {
+   "name": "proj",
+   "type": "float",
+   "widget": "dial",
+   "min": -2.0,
+   "max": 2.0,
+   "default": 0.0,
+   "label": "Proj",
+   "ui": true
+  },
+  {
+   "name": "circ",
+   "type": "text_button",
+   "widget": "text_button",
+   "min": null,
+   "max": null,
+   "default": 1,
+   "label": "Circ",
+   "ui": true
+  }
+ ],
+ "f_stipple": [
+  {
+   "name": "freq",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 20.0,
+   "default": 2.0,
+   "label": "Freq",
+   "ui": true
+  },
+  {
+   "name": "coarseness",
+   "type": "float",
+   "widget": "dial",
+   "min": 1.0,
+   "max": 100.0,
+   "default": 20.0,
+   "label": "Coarse.",
+   "ui": true
+  },
+  {
+   "name": "anisotropy",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 4.0,
+   "default": 0.5,
+   "label": "Aniso.",
+   "ui": true
+  },
+  {
+   "name": "angle",
+   "type": "float",
+   "widget": "dial",
+   "min": -360.0,
+   "max": 360.0,
+   "default": 0.0,
+   "label": "Angle",
+   "ui": true
+  },
+  {
+   "name": "zoom",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.1,
+   "max": 4.0,
+   "default": 1.0,
+   "label": "Zoom",
+   "ui": true
+  },
+  {
+   "name": "threshold",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 2.0,
+   "default": 0.5,
+   "label": "Thresh.",
+   "ui": true
+  },
+  {
+   "name": "colorize",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "Colorize",
+   "ui": true
+  },
+  {
+   "name": "along_phase",
+   "type": "float",
+   "widget": "dial",
+   "min": -1.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "Along",
+   "ui": true
+  },
+  {
+   "name": "across_phase",
+   "type": "float",
+   "widget": "dial",
+   "min": -1.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "Across",
+   "ui": true
+  },
+  {
+   "name": "softness",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 2.0,
+   "default": 0.1,
+   "label": "Soft.",
+   "ui": true
+  }
+ ],
+ "f_texrouter": [],
+ "f_tf_aniso_blur": [
+  {
+   "name": "strength_scale",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 2.0,
+   "default": 0.5,
+   "label": "Strength",
+   "ui": true
+  },
+  {
+   "name": "length",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 48.0,
+   "default": 4.0,
+   "label": "Length",
+   "ui": true
+  },
+  {
+   "name": "width_gate",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.5,
+   "label": "Width Gate",
+   "ui": true
+  },
+  {
+   "name": "floor_pct",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.25,
+   "label": "Floor",
+   "ui": true
+  },
+  {
+   "name": "strength",
+   "type": "float",
+   "widget": "dial",
+   "min": 1.0,
+   "max": 1000.0,
+   "default": 100.0,
+   "label": "T-Map Strength",
+   "ui": true
+  }
+ ],
+ "f_tf_axisflow": [
+  {
+   "name": "mode",
+   "type": "menu",
+   "widget": "menu",
+   "min": null,
+   "max": null,
+   "default": 0,
+   "label": "Mode",
+   "ui": true
+  },
+  {
+   "name": "angle",
+   "type": "float",
+   "widget": "dial",
+   "min": -180.0,
+   "max": 180.0,
+   "default": 0.0,
+   "label": "Angle",
+   "ui": true
+  },
+  {
+   "name": "gain",
+   "type": "float",
+   "widget": "dial",
+   "min": -4.0,
+   "max": 4.0,
+   "default": 1.0,
+   "label": "Gain",
+   "ui": true
+  },
+  {
+   "name": "gate",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 1.0,
+   "label": "Gate",
+   "ui": true
+  }
+ ],
+ "f_tf_glyph": [
+  {
+   "name": "grid",
+   "type": "float",
+   "widget": "dial",
+   "min": 2.0,
+   "max": 256.0,
+   "default": 24.0,
+   "label": "Grid",
+   "ui": true
+  },
+  {
+   "name": "glyph_scale",
+   "type": "float",
+   "widget": "numbox",
+   "min": 0.0,
+   "max": 2.0,
+   "default": 0.8,
+   "label": "Scale",
+   "ui": true
+  },
+  {
+   "name": "thickness",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.15,
+   "label": "Thickness",
+   "ui": true
+  },
+  {
+   "name": "softness",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.1,
+   "label": "Softness",
+   "ui": true
+  },
+  {
+   "name": "gate",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.05,
+   "label": "Gate",
+   "ui": true
+  },
+  {
+   "name": "max_aspect",
+   "type": "float",
+   "widget": "dial",
+   "min": 1.0,
+   "max": 32.0,
+   "default": 8.0,
+   "label": "Max Aspect",
+   "ui": true
+  }
+ ],
+ "f_tf_hatch": [
+  {
+   "name": "reach",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.5,
+   "label": "Length",
+   "ui": true
+  },
+  {
+   "name": "grain",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.5,
+   "label": "Grain",
+   "ui": true
+  },
+  {
+   "name": "density",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.7,
+   "label": "Density",
+   "ui": true
+  },
+  {
+   "name": "contrast",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.5,
+   "label": "Contrast",
+   "ui": true
+  },
+  {
+   "name": "line_hard",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "Line",
+   "ui": true
+  },
+  {
+   "name": "structure_floor",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.1,
+   "label": "Floor",
+   "ui": true
+  },
+  {
+   "name": "angle_offset",
+   "type": "float",
+   "widget": "dial",
+   "min": -1.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "Offset",
+   "ui": true
+  },
+  {
+   "name": "coh_floor",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "Coh Floor",
+   "ui": true
+  }
+ ],
+ "f_tf_sharpen": [
+  {
+   "name": "sharpen",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 4.0,
+   "default": 1.0,
+   "label": "Sharpen",
+   "ui": true
+  }
+ ],
+ "f_tf_smooth": [
+  {
+   "name": "release",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.5,
+   "label": "Release",
+   "ui": true
+  }
+ ],
+ "f_tf_tensormap": [
+  {
+   "name": "strength",
+   "type": "float",
+   "widget": "dial",
+   "min": 1.0,
+   "max": 1000.0,
+   "default": 100.0,
+   "label": "Strength",
+   "ui": true
+  },
+  {
+   "name": "radius",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 16.0,
+   "default": 3.0,
+   "label": "Radius",
+   "ui": true
+  }
+ ],
+ "f_tone_curve": [
+  {
+   "name": "shadows",
+   "type": "float",
+   "widget": "dial",
+   "min": -1.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": null,
+   "ui": true
+  },
+  {
+   "name": "midtones",
+   "type": "float",
+   "widget": "dial",
+   "min": -1.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": null,
+   "ui": true
+  },
+  {
+   "name": "highlights",
+   "type": "float",
+   "widget": "dial",
+   "min": -1.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": null,
+   "ui": true
+  },
+  {
+   "name": "edge_falloff",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "Falloff",
+   "ui": true
+  }
+ ],
+ "f_vf_advect": [
+  {
+   "name": "dt",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 0.05,
+   "default": 0.01,
+   "label": "dt",
+   "ui": true
+  },
+  {
+   "name": "decay",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.8,
+   "max": 1.5,
+   "default": 0.97,
+   "label": "Decay",
+   "ui": true
+  },
+  {
+   "name": "injection",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 0.2,
+   "default": 0.02,
+   "label": "Inject",
+   "ui": true
+  },
+  {
+   "name": "gain",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 4.0,
+   "default": 1.0,
+   "label": "Gain",
+   "ui": true
+  },
+  {
+   "name": "mix_pct",
+   "type": "float",
+   "widget": "numbox",
+   "min": 0.0,
+   "max": 100.0,
+   "default": 100.0,
+   "label": "Mix",
+   "ui": true
+  },
+  {
+   "name": "separate",
+   "type": "float",
+   "widget": "dial",
+   "min": -2.0,
+   "max": 2.0,
+   "default": 0.0,
+   "label": "Separate",
+   "ui": true
+  },
+  {
+   "name": "mode",
+   "type": "menu",
+   "widget": "menu",
+   "min": null,
+   "max": null,
+   "default": 0,
+   "label": "Mode",
+   "ui": true
+  },
+  {
+   "name": "trail",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 120.0,
+   "default": 0.0,
+   "label": "Trail",
+   "ui": true
+  }
+ ],
+ "f_vf_ch": [
+  {
+   "name": "dt",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 0.05,
+   "default": 0.01,
+   "label": "dt",
+   "ui": true
+  },
+  {
+   "name": "iface",
+   "type": "float",
+   "widget": "dial",
+   "min": 1.5,
+   "max": 12.0,
+   "default": 4.0,
+   "label": "Iface",
+   "ui": true
+  },
+  {
+   "name": "coarsen",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.3,
+   "label": "Coarsen",
+   "ui": true
+  },
+  {
+   "name": "inject",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.3,
+   "label": "Inject",
+   "ui": true
+  },
+  {
+   "name": "thresh",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 0.9,
+   "default": 0.5,
+   "label": "Thresh",
+   "ui": true
+  },
+  {
+   "name": "pull",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.3,
+   "label": "Pull",
+   "ui": true
+  },
+  {
+   "name": "fill",
+   "type": "float",
+   "widget": "dial",
+   "min": -0.6,
+   "max": 0.6,
+   "default": 0.0,
+   "label": "Fill",
+   "ui": true
+  },
+  {
+   "name": "mix_pct",
+   "type": "float",
+   "widget": "numbox",
+   "min": 0.0,
+   "max": 100.0,
+   "default": 50.0,
+   "label": "Mix",
+   "ui": true
+  },
+  {
+   "name": "taps",
+   "type": "int",
+   "widget": "dial",
+   "min": 1,
+   "max": 16,
+   "default": 2,
+   "label": "Taps",
+   "ui": false
+  }
+ ],
+ "f_vf_erode": [
+  {
+   "name": "polar_sw",
+   "type": "text_button",
+   "widget": "text_button",
+   "min": null,
+   "max": null,
+   "default": 0,
+   "label": "Polarity",
+   "ui": true
+  },
+  {
+   "name": "flow",
+   "type": "float",
+   "widget": "numbox",
+   "min": 0.0,
+   "max": 2.0,
+   "default": 0.4,
+   "label": "Flow",
+   "ui": true
+  },
+  {
+   "name": "push",
+   "type": "float",
+   "widget": "numbox",
+   "min": 0.0,
+   "max": 4.0,
+   "default": 1.0,
+   "label": "Push",
+   "ui": true
+  },
+  {
+   "name": "lift",
+   "type": "float",
+   "widget": "numbox",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.7,
+   "label": "Lift",
+   "ui": true
+  },
+  {
+   "name": "settle",
+   "type": "float",
+   "widget": "numbox",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.19,
+   "label": "Settle",
+   "ui": true
+  },
+  {
+   "name": "dry",
+   "type": "float",
+   "widget": "numbox",
+   "min": 0.0,
+   "max": 20.0,
+   "default": 1.6,
+   "label": "Dry",
+   "ui": true
+  },
+  {
+   "name": "speed",
+   "type": "float",
+   "widget": "numbox",
+   "min": 0.0,
+   "max": 4.0,
+   "default": 1.0,
+   "label": "Speed",
+   "ui": true
+  },
+  {
+   "name": "flood",
+   "type": "float",
+   "widget": "numbox",
+   "min": 0.0,
+   "max": 4.0,
+   "default": 1.0,
+   "label": "Flood",
+   "ui": true
+  },
+  {
+   "name": "feed",
+   "type": "float",
+   "widget": "numbox",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "Feed",
+   "ui": true
+  },
+  {
+   "name": "fade",
+   "type": "float",
+   "widget": "numbox",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.02,
+   "label": "Fade",
+   "ui": true
+  },
+  {
+   "name": "wet",
+   "type": "gate_button",
+   "widget": "gate_button",
+   "min": null,
+   "max": null,
+   "default": null,
+   "label": "Wet",
+   "ui": true
+  }
+ ],
+ "f_vf_fieldmap": [
+  {
+   "name": "gain",
+   "type": "float",
+   "widget": "dial",
+   "min": -10.0,
+   "max": 10.0,
+   "default": 4.0,
+   "label": "Gain",
+   "ui": true
+  },
+  {
+   "name": "scale",
+   "type": "float",
+   "widget": "dial",
+   "min": -0.05,
+   "max": 0.05,
+   "default": 0.004,
+   "label": "Scale",
+   "ui": true
+  },
+  {
+   "name": "rotate",
+   "type": "float",
+   "widget": "dial",
+   "min": -180.0,
+   "max": 180.0,
+   "default": 0.0,
+   "label": "Rotate",
+   "ui": true
+  },
+  {
+   "name": "thresh",
+   "type": "float",
+   "widget": "dial",
+   "min": -2.0,
+   "max": 2.0,
+   "default": 0.0,
+   "label": "Thresh",
+   "ui": true
+  }
+ ],
+ "f_vf_flow": [
+  {
+   "name": "angle",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "Angle",
+   "ui": true
+  },
+  {
+   "name": "spread",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.5,
+   "label": "Spread",
+   "ui": true
+  }
+ ],
+ "f_vf_fluid": [
+  {
+   "name": "force",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 0.2,
+   "default": 0.02,
+   "label": "Force",
+   "ui": true
+  },
+  {
+   "name": "dt",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 0.05,
+   "default": 0.01,
+   "label": "dt",
+   "ui": true
+  },
+  {
+   "name": "viscosity",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.085,
+   "label": "Visc",
+   "ui": true
+  },
+  {
+   "name": "project",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 1.0,
+   "label": "Project",
+   "ui": true
+  },
+  {
+   "name": "drag",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 5.0,
+   "default": 0.5,
+   "label": "Drag",
+   "ui": true
+  },
+  {
+   "name": "gain",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 10.0,
+   "default": 1.0,
+   "label": "Gain",
+   "ui": true
+  },
+  {
+   "name": "drift",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 1.0,
+   "label": "Drift",
+   "ui": true
+  },
+  {
+   "name": "taps",
+   "type": "int",
+   "widget": "dial",
+   "min": 1,
+   "max": 16,
+   "default": 8,
+   "label": "Taps",
+   "ui": false
+  }
+ ],
+ "f_vf_glow": [
+  {
+   "name": "radius",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 0.2,
+   "default": 0.01,
+   "label": "Radius",
+   "ui": true
+  },
+  {
+   "name": "falloff",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 0.05,
+   "default": 0.002,
+   "label": "Falloff",
+   "ui": true
+  },
+  {
+   "name": "gain",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.5,
+   "default": 0.8,
+   "label": "Gain",
+   "ui": true
+  },
+  {
+   "name": "mix_pct",
+   "type": "float",
+   "widget": "numbox",
+   "min": 0.0,
+   "max": 100.0,
+   "default": 0.0,
+   "label": "Mix",
+   "ui": true
+  },
+  {
+   "name": "color_mix",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "Color",
+   "ui": true
+  },
+  {
+   "name": "direction",
+   "type": "int",
+   "widget": "dial",
+   "min": 0,
+   "max": 2,
+   "default": 0,
+   "label": "Dir",
+   "ui": true
+  }
+ ],
+ "f_vf_lbm": [
+  {
+   "name": "omega",
+   "type": "float",
+   "widget": "dial",
+   "min": 1.0,
+   "max": 1.98,
+   "default": 1.97,
+   "label": "Omega",
+   "ui": true
+  },
+  {
+   "name": "inflow",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 0.1,
+   "default": 0.08,
+   "label": "Wind",
+   "ui": true
+  },
+  {
+   "name": "tilt",
+   "type": "float",
+   "widget": "dial",
+   "min": -30.0,
+   "max": 30.0,
+   "default": 0.0,
+   "label": "Tilt",
+   "ui": true
+  },
+  {
+   "name": "gain",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 10.0,
+   "default": 3.0,
+   "label": "Gain",
+   "ui": true
+  },
+  {
+   "name": "speed",
+   "type": "menu",
+   "widget": "menu",
+   "min": null,
+   "max": null,
+   "default": 0,
+   "label": "Speed",
+   "ui": true
+  }
+ ],
+ "f_vf_optical_flow": [
+  {
+   "name": "scale",
+   "type": "float",
+   "widget": "dial",
+   "min": -0.05,
+   "max": 0.05,
+   "default": 0.004,
+   "label": "Scale",
+   "ui": true
+  },
+  {
+   "name": "gain",
+   "type": "float",
+   "widget": "dial",
+   "min": -10.0,
+   "max": 10.0,
+   "default": 1.0,
+   "label": "Gain",
+   "ui": true
+  },
+  {
+   "name": "mask_lo",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 20.0,
+   "default": 0.0,
+   "label": "Mask Lo",
+   "ui": true
+  },
+  {
+   "name": "mask_hi",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 20.0,
+   "default": 1.0,
+   "label": "Mask Hi",
+   "ui": true
+  },
+  {
+   "name": "decay",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.5,
+   "default": 0.9,
+   "label": "Decay",
+   "ui": true
+  },
+  {
+   "name": "injection",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 2.0,
+   "default": 0.3,
+   "label": "Inject",
+   "ui": true
+  },
+  {
+   "name": "step",
+   "type": "float",
+   "widget": "dial",
+   "min": -0.1,
+   "max": 0.1,
+   "default": 0.0015,
+   "label": "Step",
+   "ui": true
+  },
+  {
+   "name": "reach",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 0.1,
+   "default": 0.01,
+   "label": "Reach",
+   "ui": true
+  },
+  {
+   "name": "mix_pct",
+   "type": "float",
+   "widget": "numbox",
+   "min": 0.0,
+   "max": 100.0,
+   "default": 100.0,
+   "label": "Mix",
+   "ui": true
+  }
+ ],
+ "f_vf_potential": [
+  {
+   "name": "dt",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 0.05,
+   "default": 0.01,
+   "label": "dt",
+   "ui": true
+  },
+  {
+   "name": "decay",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.8,
+   "max": 1.0,
+   "default": 0.98,
+   "label": "Decay",
+   "ui": true
+  },
+  {
+   "name": "strength",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 2.0,
+   "default": 1.0,
+   "label": "Strength",
+   "ui": true
+  }
+ ],
+ "f_vf_prism": [
+  {
+   "name": "reach",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 0.3,
+   "default": 0.05,
+   "label": "Reach",
+   "ui": true
+  },
+  {
+   "name": "spread",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 0.5,
+   "default": 0.1,
+   "label": "Spread",
+   "ui": true
+  },
+  {
+   "name": "threshold",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.7,
+   "label": "Threshold",
+   "ui": true
+  },
+  {
+   "name": "threshold_width",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 0.5,
+   "default": 0.1,
+   "label": "Gate Width",
+   "ui": true
+  },
+  {
+   "name": "feather",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 0.5,
+   "default": 0.1,
+   "label": "Feather",
+   "ui": true
+  },
+  {
+   "name": "gain",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 2.0,
+   "default": 1.0,
+   "label": "Gain",
+   "ui": true
+  },
+  {
+   "name": "mix_pct",
+   "type": "float",
+   "widget": "numbox",
+   "min": 0.0,
+   "max": 100.0,
+   "default": 100.0,
+   "label": "Mix",
+   "ui": true
+  }
+ ],
+ "f_vf_repulse": [
+  {
+   "name": "gain",
+   "type": "float",
+   "widget": "dial",
+   "min": -10.0,
+   "max": 10.0,
+   "default": 4.0,
+   "label": "Gain",
+   "ui": true
+  },
+  {
+   "name": "reach",
+   "type": "float",
+   "widget": "dial",
+   "min": -0.5,
+   "max": 0.5,
+   "default": 0.1,
+   "label": "Reach",
+   "ui": true
+  },
+  {
+   "name": "threshold",
+   "type": "float",
+   "widget": "dial",
+   "min": -1.0,
+   "max": 1.0,
+   "default": 0.3,
+   "label": "Thresh",
+   "ui": true
+  },
+  {
+   "name": "mode",
+   "type": "menu",
+   "widget": "menu",
+   "min": null,
+   "max": null,
+   "default": 0,
+   "label": "Mode",
+   "ui": true
+  }
+ ],
+ "f_vf_seeds": [
+  {
+   "name": "density",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.5,
+   "label": "Density",
+   "ui": true
+  },
+  {
+   "name": "jitter",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.5,
+   "label": "Jitter",
+   "ui": true
+  },
+  {
+   "name": "size",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 0.5,
+   "default": 0.2,
+   "label": "Size",
+   "ui": true
+  },
+  {
+   "name": "stretch",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "Stretch",
+   "ui": true
+  },
+  {
+   "name": "strength",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 1.0,
+   "label": "Strength",
+   "ui": true
+  },
+  {
+   "name": "mag_weight",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "Mag\u2192Wt",
+   "ui": true
+  },
+  {
+   "name": "field_priority",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "Field Pri",
+   "ui": true
+  },
+  {
+   "name": "field_gain",
+   "type": "float",
+   "widget": "dial",
+   "min": -1.5,
+   "max": 1.5,
+   "default": 0.0,
+   "label": "Field Gain",
+   "ui": true
+  },
+  {
+   "name": "bomb",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "Bomb",
+   "ui": true
+  },
+  {
+   "name": "phase",
+   "type": "float",
+   "widget": "dial",
+   "min": -1.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "Phase",
+   "ui": true
+  },
+  {
+   "name": "size_mod",
+   "type": "float",
+   "widget": "dial",
+   "min": -1.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "Size Mod",
+   "ui": true
+  },
+  {
+   "name": "stretch_mod",
+   "type": "float",
+   "widget": "dial",
+   "min": -1.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "Str Mod",
+   "ui": true
+  },
+  {
+   "name": "color_mode",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "Color Mode",
+   "ui": true
+  }
+ ],
+ "f_vf_split": [
+  {
+   "name": "bipolar",
+   "type": "text_button",
+   "widget": "text_button",
+   "min": null,
+   "max": null,
+   "default": 0,
+   "label": null,
+   "ui": true
+  }
+ ],
+ "f_vf_stamp": [
+  {
+   "name": "threshold",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.05,
+   "label": "Thresh",
+   "ui": true
+  },
+  {
+   "name": "softness",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.1,
+   "label": "Soft",
+   "ui": true
+  },
+  {
+   "name": "amount",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 4.0,
+   "default": 1.0,
+   "label": "Amount",
+   "ui": true
+  },
+  {
+   "name": "force",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 2.0,
+   "default": 1.0,
+   "label": "Force",
+   "ui": true
+  },
+  {
+   "name": "rim",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.005,
+   "max": 0.05,
+   "default": 0.015,
+   "label": "Rim",
+   "ui": true
+  },
+  {
+   "name": "attack",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 60.0,
+   "default": 0.0,
+   "label": "Attack",
+   "ui": true
+  },
+  {
+   "name": "release",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 120.0,
+   "default": 8.0,
+   "label": "Release",
+   "ui": true
+  },
+  {
+   "name": "invert",
+   "type": "text_button",
+   "widget": "text_button",
+   "min": null,
+   "max": null,
+   "default": 0,
+   "label": "Invert",
+   "ui": true
+  },
+  {
+   "name": "impulse",
+   "type": "text_button",
+   "widget": "text_button",
+   "min": null,
+   "max": null,
+   "default": 0,
+   "label": "Impulse",
+   "ui": true
+  },
+  {
+   "name": "stamp",
+   "type": "gate_button",
+   "widget": "gate_button",
+   "min": null,
+   "max": null,
+   "default": null,
+   "label": "Stamp",
+   "ui": true
+  }
+ ],
+ "f_vf_streak": [
+  {
+   "name": "gain",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.5,
+   "default": 0.3,
+   "label": "Gain",
+   "ui": true
+  },
+  {
+   "name": "mix_pct",
+   "type": "float",
+   "widget": "numbox",
+   "min": 0.0,
+   "max": 100.0,
+   "default": 0.0,
+   "label": "Mix",
+   "ui": true
+  },
+  {
+   "name": "length",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 20.0,
+   "default": 0.15,
+   "label": "Length",
+   "ui": true
+  },
+  {
+   "name": "falloff",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.99,
+   "default": 0.0,
+   "label": "Falloff",
+   "ui": true
+  },
+  {
+   "name": "color_shift",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 20.0,
+   "default": 0.0,
+   "label": "Color",
+   "ui": true
+  }
+ ],
+ "f_vf_vortex": [
+  {
+   "name": "cx",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.5,
+   "label": "Cx",
+   "ui": true
+  },
+  {
+   "name": "cy",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.5,
+   "label": "Cy",
+   "ui": true
+  },
+  {
+   "name": "convergence",
+   "type": "float",
+   "widget": "dial",
+   "min": -1.0,
+   "max": 1.0,
+   "default": 0.5,
+   "label": "Converge",
+   "ui": true
+  },
+  {
+   "name": "curl",
+   "type": "float",
+   "widget": "dial",
+   "min": -1.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "Curl",
+   "ui": true
+  },
+  {
+   "name": "falloff",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 10.0,
+   "default": 2.0,
+   "label": "Falloff",
+   "ui": true
+  },
+  {
+   "name": "cx_amt",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "Cx Amt",
+   "ui": true
+  },
+  {
+   "name": "cy_amt",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "Cy Amt",
+   "ui": true
+  },
+  {
+   "name": "convergence_amt",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "Conv Amt",
+   "ui": true
+  },
+  {
+   "name": "curl_amt",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "Curl Amt",
+   "ui": true
+  }
+ ],
+ "f_vf_vortex_multi": [
+  {
+   "name": "s1_cx",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.3,
+   "label": "S1 Cx",
+   "ui": true
+  },
+  {
+   "name": "s1_cy",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.3,
+   "label": "S1 Cy",
+   "ui": true
+  },
+  {
+   "name": "s1_conv",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.5,
+   "label": "S1 Conv",
+   "ui": true
+  },
+  {
+   "name": "s1_curl",
+   "type": "float",
+   "widget": "dial",
+   "min": -1.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "S1 Curl",
+   "ui": true
+  },
+  {
+   "name": "s2_cx",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.5,
+   "label": "S2 Cx",
+   "ui": true
+  },
+  {
+   "name": "s2_cy",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.5,
+   "label": "S2 Cy",
+   "ui": true
+  },
+  {
+   "name": "s2_conv",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.5,
+   "label": "S2 Conv",
+   "ui": true
+  },
+  {
+   "name": "s2_curl",
+   "type": "float",
+   "widget": "dial",
+   "min": -1.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "S2 Curl",
+   "ui": true
+  },
+  {
+   "name": "s3_cx",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.7,
+   "label": "S3 Cx",
+   "ui": true
+  },
+  {
+   "name": "s3_cy",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.7,
+   "label": "S3 Cy",
+   "ui": true
+  },
+  {
+   "name": "s3_conv",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.5,
+   "label": "S3 Conv",
+   "ui": true
+  },
+  {
+   "name": "s3_curl",
+   "type": "float",
+   "widget": "dial",
+   "min": -1.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "S3 Curl",
+   "ui": true
+  },
+  {
+   "name": "falloff",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 10.0,
+   "default": 2.0,
+   "label": "Falloff",
+   "ui": true
+  },
+  {
+   "name": "cx_amt",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "Cx Amt",
+   "ui": true
+  },
+  {
+   "name": "cy_amt",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "Cy Amt",
+   "ui": true
+  },
+  {
+   "name": "conv_amt",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "Conv Amt",
+   "ui": true
+  },
+  {
+   "name": "curl_amt",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "Curl Amt",
+   "ui": true
+  }
+ ],
+ "f_vf_warp": [
+  {
+   "name": "gain",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.5,
+   "default": 0.0,
+   "label": "Gain",
+   "ui": true
+  },
+  {
+   "name": "mix_pct",
+   "type": "float",
+   "widget": "numbox",
+   "min": 0.0,
+   "max": 100.0,
+   "default": 100.0,
+   "label": "Mix",
+   "ui": true
+  }
+ ],
+ "f_wave_field": [
+  {
+   "name": "speed",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 0.5,
+   "default": 0.25,
+   "label": "Speed",
+   "ui": true
+  },
+  {
+   "name": "damping",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.001,
+   "max": 5.0,
+   "default": 0.2,
+   "label": "Damp",
+   "ui": true
+  },
+  {
+   "name": "dispersion",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.5,
+   "max": 2.0,
+   "default": 1.0,
+   "label": "Disp",
+   "ui": true
+  },
+  {
+   "name": "ring",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 50.0,
+   "default": 0.0,
+   "label": "Ring",
+   "ui": true
+  },
+  {
+   "name": "edge",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.5,
+   "label": "Edge",
+   "ui": true
+  },
+  {
+   "name": "force",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.5,
+   "default": 1.0,
+   "label": "Force",
+   "ui": true
+  },
+  {
+   "name": "strength",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 1.0,
+   "label": "Strength",
+   "ui": true
+  },
+  {
+   "name": "gain",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 10.0,
+   "default": 1.0,
+   "label": "Gain",
+   "ui": true
+  },
+  {
+   "name": "lmode",
+   "type": "text_button",
+   "widget": "text_button",
+   "min": null,
+   "max": null,
+   "default": 0,
+   "label": "LFO mode",
+   "ui": true
+  },
+  {
+   "name": "strike",
+   "type": "gate_button",
+   "widget": "gate_button",
+   "min": null,
+   "max": null,
+   "default": null,
+   "label": "Strike",
+   "ui": true
+  }
+ ],
+ "f_wc": [
+  {
+   "name": "pulse_depth",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.5,
+   "default": 0.6,
+   "label": "Depth",
+   "ui": true
+  },
+  {
+   "name": "pulse_period",
+   "type": "float",
+   "widget": "dial",
+   "min": 30.0,
+   "max": 600.0,
+   "default": 147.0588,
+   "label": "Period",
+   "ui": true
+  },
+  {
+   "name": "sim_rate",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.05,
+   "max": 1.0,
+   "default": 1.0,
+   "label": "Rate",
+   "ui": true
+  },
+  {
+   "name": "pulse_mix",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 1.0,
+   "label": "P.Mix",
+   "ui": true
+  },
+  {
+   "name": "pulse_gain",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 2.0,
+   "default": 1.0,
+   "label": "P.Gain",
+   "ui": true
+  },
+  {
+   "name": "grain_scale",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.5,
+   "max": 2.0,
+   "default": 1.0,
+   "label": "Grain",
+   "ui": true
+  },
+  {
+   "name": "out_mode",
+   "type": "menu",
+   "widget": "menu",
+   "min": null,
+   "max": null,
+   "default": 1,
+   "label": "Output",
+   "ui": true
+  },
+  {
+   "name": "pulse_space",
+   "type": "menu",
+   "widget": "menu",
+   "min": null,
+   "max": null,
+   "default": 0,
+   "label": "Input",
+   "ui": true
+  },
+  {
+   "name": "out_view",
+   "type": "menu",
+   "widget": "menu",
+   "min": null,
+   "max": null,
+   "default": 0,
+   "label": "Space",
+   "ui": true
+  },
+  {
+   "name": "freeze_on",
+   "type": "header_toggle",
+   "widget": "header_toggle",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "Freeze",
+   "ui": true
+  }
+ ],
+ "f_weave": [
+  {
+   "name": "density",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.5,
+   "label": null,
+   "ui": true
+  },
+  {
+   "name": "angle",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": null,
+   "ui": true
+  },
+  {
+   "name": "weight",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.1,
+   "label": null,
+   "ui": true
+  },
+  {
+   "name": "marklen",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.3,
+   "label": null,
+   "ui": true
+  },
+  {
+   "name": "offset",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.5,
+   "label": null,
+   "ui": true
+  },
+  {
+   "name": "phase",
+   "type": "float",
+   "widget": "dial",
+   "min": -1.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": null,
+   "ui": true
+  },
+  {
+   "name": "softness",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 2.0,
+   "default": 0.0,
+   "label": "Soft",
+   "ui": true
+  },
+  {
+   "name": "variant",
+   "type": "menu",
+   "widget": "menu",
+   "min": null,
+   "max": null,
+   "default": 0,
+   "label": "Variant",
+   "ui": true
+  },
+  {
+   "name": "irreg",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.5,
+   "label": null,
+   "ui": true
+  },
+  {
+   "name": "nscale",
+   "type": "float",
+   "widget": "dial",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.5,
+   "label": "Noise",
+   "ui": true
+  },
+  {
+   "name": "weight_m",
+   "type": "float",
+   "widget": "numbox",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "weight_tex",
+   "ui": true
+  },
+  {
+   "name": "irreg_m",
+   "type": "float",
+   "widget": "numbox",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "irreg_tex",
+   "ui": true
+  },
+  {
+   "name": "marklen_m",
+   "type": "float",
+   "widget": "numbox",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.0,
+   "label": "marklen_tex",
+   "ui": true
+  },
+  {
+   "name": "mmode",
+   "type": "text_button",
+   "widget": "text_button",
+   "min": null,
+   "max": null,
+   "default": 0,
+   "label": "Mod mode",
+   "ui": true
+  }
+ ],
+ "_errors": {}
+}

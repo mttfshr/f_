@@ -1,0 +1,1432 @@
+{
+ "_meta": {
+  "judge": "J1 rubric",
+  "by": "Claude, offline",
+  "date": "2026-11-22",
+  "source": "definition.py hints, docs/f-reference/<m>.md (advect, glow, grain read; others hints only); nothing run",
+  "scope": "float/int params only; menus and buttons (screen, plate_mode, sep_mode, mode, variant, mmode, polar_sw, bayer_cell, plate_out, wet) are out of scope per spec",
+  "conf": "high/med/low = how sure J1 is; low rows are where J2 is expected to disagree",
+  "typed": "2026-11-22: H3 soft typing added (spec). 'typed' marks params whose default widget a type rule decides; their J1 role is kept as a record but they are not judged under H2",
+  "set_aside": "2026-11-22: f_halftone, f_separate, f_vf_erode, f_weave, f_lens, f_grain are set aside from the pilot (substantive layout customization already; Matt's rule). Their roles here are kept as an answer key to compare with his layouts later, not as spike evidence",
+  "new_pilot": "2026-11-22: J1 added for f_stipple, f_quasi, f_vf_seeds, f_vf_vortex, f_tf_hatch, f_vf_ch (docs read for all six; vortex, hatch, ch, stipple, seeds tables; quasi from hints only). H3 typing applied. Same offline judge as before, seen before any J2",
+  "pool": "2026-11-22: J1 added for the 15 remaining untouched pool modules (hints only, no docs read; f_vf_split has no controls). Same offline judge"
+ },
+ "f_halftone": {
+  "pitch": {
+   "role": "primary",
+   "conf": "high",
+   "why": "Names the effect: the ruling of the screen, the first thing moved; changes the look from fine to coarse"
+  },
+  "jitter": {
+   "role": "primary",
+   "conf": "low",
+   "why": "Regular lattice to scattered: a change of kind, but Dot only and not obviously live"
+  },
+  "level": {
+   "role": "primary",
+   "conf": "low",
+   "why": "Threshold screen only: sets where ink starts. Primary only while screen=Threshold (mode-conditional)"
+  },
+  "softness": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Edge width, a refinement"
+  },
+  "dot_shape": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "Round to square at equal inked area: changes the mark, not the structure; Dot only"
+  },
+  "seed": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Which random pattern; set once",
+   "typed": {
+    "rule": "1 big int",
+    "widget": "numbox"
+   }
+  },
+  "levels": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "Number of output steps for Bayer/Blue/Random; a quality setting",
+   "typed": {
+    "rule": "1 big int",
+    "widget": "numbox"
+   }
+  },
+  "scale_r": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Per-plate multiplier on Pitch"
+  },
+  "scale_g": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Per-plate multiplier on Pitch"
+  },
+  "scale_b": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Per-plate multiplier on Pitch"
+  },
+  "angle_r": {
+   "role": "secondary",
+   "conf": "low",
+   "why": "Sets the moire rosette, so it is structural, but the 15/75/45 defaults are conventional and set once",
+   "typed": {
+    "rule": "3 circular",
+    "widget": "dial"
+   }
+  },
+  "angle_g": {
+   "role": "secondary",
+   "conf": "low",
+   "why": "As angle_r",
+   "typed": {
+    "rule": "3 circular",
+    "widget": "dial"
+   }
+  },
+  "angle_b": {
+   "role": "secondary",
+   "conf": "low",
+   "why": "As angle_r",
+   "typed": {
+    "rule": "3 circular",
+    "widget": "dial"
+   }
+  },
+  "phase_r_x": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Shifts the lattice; registration, not character"
+  },
+  "phase_r_y": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "As phase_r_x"
+  },
+  "phase_g_x": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "As phase_r_x"
+  },
+  "phase_g_y": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "As phase_r_x"
+  },
+  "phase_b_x": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "As phase_r_x"
+  },
+  "phase_b_y": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "As phase_r_x"
+  }
+ },
+ "f_separate": {
+  "ink1_h": {
+   "role": "primary",
+   "conf": "med",
+   "why": "Hue names the ink, so it decides what the plates are; S and L only refine it",
+   "typed": {
+    "rule": "3 circular",
+    "widget": "dial"
+   }
+  },
+  "ink2_h": {
+   "role": "primary",
+   "conf": "med",
+   "why": "As ink1_h",
+   "typed": {
+    "rule": "3 circular",
+    "widget": "dial"
+   }
+  },
+  "ink3_h": {
+   "role": "primary",
+   "conf": "med",
+   "why": "As ink1_h",
+   "typed": {
+    "rule": "3 circular",
+    "widget": "dial"
+   }
+  },
+  "n_inks": {
+   "role": "primary",
+   "conf": "low",
+   "why": "How many plates exist; a change of kind, but set up once",
+   "typed": {
+    "rule": "1 small int",
+    "widget": "menu"
+   }
+  },
+  "ink1_s": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "Refines an ink color"
+  },
+  "ink1_l": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "Refines an ink color"
+  },
+  "ink2_s": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "Refines an ink color"
+  },
+  "ink2_l": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "Refines an ink color"
+  },
+  "ink3_s": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "Refines an ink color"
+  },
+  "ink3_l": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "Refines an ink color"
+  },
+  "gain1": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Coverage gain",
+   "typed": {
+    "rule": "2 companion",
+    "widget": "numbox"
+   }
+  },
+  "gain2": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Coverage gain",
+   "typed": {
+    "rule": "2 companion",
+    "widget": "numbox"
+   }
+  },
+  "gain3": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Coverage gain",
+   "typed": {
+    "rule": "2 companion",
+    "widget": "numbox"
+   }
+  }
+ },
+ "f_vf_erode": {
+  "flow": {
+   "role": "primary",
+   "conf": "med",
+   "why": "How hard the terrain drives the water; the pooling-in-low-places behavior depends on it (inlet 1)"
+  },
+  "lift": {
+   "role": "primary",
+   "conf": "med",
+   "why": "With Settle decides whether pigment travels or stays: spreading versus pooling"
+  },
+  "settle": {
+   "role": "primary",
+   "conf": "low",
+   "why": "Paired with Lift; one of the two may be enough to call primary"
+  },
+  "push": {
+   "role": "secondary",
+   "conf": "low",
+   "why": "Only matters with a vecfield on inlet 2; 0 equals no vecfield. Could be primary in a wind-driven patch"
+  },
+  "dry": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Rate the water goes; a tuning value"
+  },
+  "speed": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Solver step size, bounded for stability"
+  },
+  "flood": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "Amount of water per wetting"
+  },
+  "feed": {
+   "role": "secondary",
+   "conf": "low",
+   "why": "Switches wet-once to continuous for animated input: a change of mode, but only for animated sources"
+  },
+  "fade": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Only matters with Feed above 0"
+  }
+ },
+ "f_weave": {
+  "density": {
+   "role": "primary",
+   "conf": "high",
+   "why": "Cell scale: how many marks across; the first thing set"
+  },
+  "angle": {
+   "role": "primary",
+   "conf": "high",
+   "why": "Line orientation; defines the look and is moved live",
+   "typed": {
+    "rule": "3 circular",
+    "widget": "dial"
+   }
+  },
+  "weight": {
+   "role": "primary",
+   "conf": "high",
+   "why": "Line thickness"
+  },
+  "marklen": {
+   "role": "primary",
+   "conf": "med",
+   "why": "Dashes versus continuous lines: changes the kind of mark"
+  },
+  "offset": {
+   "role": "primary",
+   "conf": "low",
+   "why": "Grid-like versus staggered; structural, but a mild one next to the other four"
+  },
+  "phase": {
+   "role": "secondary",
+   "conf": "low",
+   "why": "Animation scroll; performed live, so an expected exception (secondary by role, live by use)"
+  },
+  "softness": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Edge feather"
+  },
+  "irreg": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "Depth of the chosen irregularity variant; the variant menu is the real driver"
+  },
+  "nscale": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "Frequency of that irregularity"
+  },
+  "weight_m": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Depth of a modulation texture",
+   "typed": {
+    "rule": "2 companion (mod depth)",
+    "widget": "numbox"
+   }
+  },
+  "irreg_m": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Depth of a modulation texture",
+   "typed": {
+    "rule": "2 companion (mod depth)",
+    "widget": "numbox"
+   }
+  },
+  "marklen_m": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Depth of a modulation texture",
+   "typed": {
+    "rule": "2 companion (mod depth)",
+    "widget": "numbox"
+   }
+  }
+ },
+ "f_lens": {
+  "aberration": {
+   "role": "primary",
+   "conf": "med",
+   "why": "One of the three lens defects that define the module"
+  },
+  "distortion": {
+   "role": "primary",
+   "conf": "med",
+   "why": "Barrel or pincushion: the defining lens defect"
+  },
+  "transmission": {
+   "role": "primary",
+   "conf": "low",
+   "why": "Vignette; a lens defect, but plainly milder than the other two"
+  },
+  "ghost": {
+   "role": "secondary",
+   "conf": "low",
+   "why": "A distinct additive layer. Arguably primary: this module is a bundle of independent effects, so kind versus degree is weak here"
+  },
+  "halation": {
+   "role": "secondary",
+   "conf": "low",
+   "why": "As ghost: a separate additive layer, gated by its threshold"
+  },
+  "ghost_count": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Count of ghost taps",
+   "typed": {
+    "rule": "1 small int (float, 1-4)",
+    "widget": "menu"
+   }
+  },
+  "ghost_spacing": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Ghost layout"
+  },
+  "halation_threshold": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Gate point for halation"
+  },
+  "aberration_mod": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Modulation depth",
+   "typed": {
+    "rule": "2 companion (mod depth)",
+    "widget": "numbox"
+   }
+  },
+  "distortion_mod": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Modulation depth",
+   "typed": {
+    "rule": "2 companion (mod depth)",
+    "widget": "numbox"
+   }
+  },
+  "transmission_mod": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Modulation depth",
+   "typed": {
+    "rule": "2 companion (mod depth)",
+    "widget": "numbox"
+   }
+  },
+  "surface_mod": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Modulation depth",
+   "typed": {
+    "rule": "2 companion (mod depth)",
+    "widget": "numbox"
+   }
+  }
+ },
+ "f_vf_advect": {
+  "decay": {
+   "role": "primary",
+   "conf": "med",
+   "why": "Frame retention: below 1 fades, above 1 is the excitable regime; sets whether it is a smear, a trail or a feedback"
+  },
+  "dt": {
+   "role": "primary",
+   "conf": "low",
+   "why": "Flow speed, moved live. Closer to degree than kind, so borderline"
+  },
+  "injection": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "Source bleed-in; settles at Inject / (1 - Decay), so it depends on Decay"
+  },
+  "trail": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Stretches how long Decay takes"
+  },
+  "gain": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Gain",
+   "typed": {
+    "rule": "2 companion",
+    "widget": "numbox"
+   }
+  },
+  "mix_pct": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Dry/wet",
+   "typed": {
+    "rule": "2 companion",
+    "widget": "numbox"
+   }
+  },
+  "separate": {
+   "role": "secondary",
+   "conf": "low",
+   "why": "A chroma stage with no hint or doc line read; inferred from the name"
+  }
+ },
+ "f_vf_glow": {
+  "radius": {
+   "role": "primary",
+   "conf": "high",
+   "why": "Extent of the glow; the first thing set"
+  },
+  "direction": {
+   "role": "primary",
+   "conf": "low",
+   "why": "int 0-2, hint empty: inferred from the name that it picks along or against the field. Unverified",
+   "typed": {
+    "rule": "1 small int",
+    "widget": "menu"
+   }
+  },
+  "falloff": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "Shape of the Gaussian weights; no hint, inferred"
+  },
+  "gain": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Glow intensity",
+   "typed": {
+    "rule": "2 companion",
+    "widget": "numbox"
+   }
+  },
+  "mix_pct": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Dry/wet; defaults to 0",
+   "typed": {
+    "rule": "2 companion",
+    "widget": "numbox"
+   }
+  },
+  "color_mix": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "No hint; inferred as a color blend of the glow"
+  }
+ },
+ "f_grain": {
+  "density": {
+   "role": "primary",
+   "conf": "high",
+   "why": "How many cells carry a grain"
+  },
+  "size": {
+   "role": "primary",
+   "conf": "high",
+   "why": "Grain scale"
+  },
+  "persistence": {
+   "role": "primary",
+   "conf": "med",
+   "why": "Boil versus frozen: temporal character"
+  },
+  "luma_gate": {
+   "role": "primary",
+   "conf": "low",
+   "why": "Where the grain lands (shadows or highlights); structural but perhaps a refinement"
+  },
+  "size_var": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Size randomization"
+  },
+  "shape": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "Voronoi outline to circle"
+  },
+  "softness": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Edge softness"
+  },
+  "jitter": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "Position jitter"
+  },
+  "fade": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Width of the era fade envelope"
+  },
+  "ch_diverge": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "Per-channel divergence"
+  },
+  "displace": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "Per-grain displacement; a separate effect, so could be primary"
+  },
+  "gain": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Intensity",
+   "typed": {
+    "rule": "2 companion",
+    "widget": "numbox"
+   }
+  },
+  "mix_pct": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Dry/wet",
+   "typed": {
+    "rule": "2 companion",
+    "widget": "numbox"
+   }
+  }
+ },
+ "f_stipple": {
+  "coarseness": {
+   "role": "primary",
+   "conf": "high",
+   "why": "Grain size: the first thing set; fine dust to chunky grain"
+  },
+  "anisotropy": {
+   "role": "primary",
+   "conf": "high",
+   "why": "Isotropic grain, parallel lines or aliasing: a change of kind"
+  },
+  "threshold": {
+   "role": "primary",
+   "conf": "low",
+   "why": "How much white the dither gives; tonal amount, but the control you play with. Meaning differs by source and processor mode"
+  },
+  "freq": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "Affects only the parallel hash, so it depends on Anisotropy"
+  },
+  "zoom": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Same character, bigger or smaller (stated in the hint)"
+  },
+  "colorize": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "Processor mode only: mono versus input color"
+  },
+  "along_phase": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Hash offset, driven externally for drift"
+  },
+  "across_phase": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Hash offset, driven externally for drift"
+  },
+  "softness": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Comparison edge width"
+  },
+  "angle": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "Orientation of the frame; circular by type",
+   "typed": {
+    "rule": "3 circular",
+    "widget": "dial"
+   }
+  }
+ },
+ "f_quasi": {
+  "density": {
+   "role": "primary",
+   "conf": "high",
+   "why": "Bands per frame height: the texture's fineness, the first thing set"
+  },
+  "envelope": {
+   "role": "primary",
+   "conf": "med",
+   "why": "One scale dominating versus a wider mix of octaves: changes the character of the pattern"
+  },
+  "zoom": {
+   "role": "secondary",
+   "conf": "low",
+   "why": "Cyclic scale offset (a clock adds to it); density sets the base scale. Candidate for an H3 extension (cyclic wrap)"
+  },
+  "drift": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "Cyclic phase offset (a clock adds to it); same candidate"
+  },
+  "zoom_rate": {
+   "role": "secondary",
+   "conf": "low",
+   "why": "Motion clock; performed live in an animated patch"
+  },
+  "drift_rate": {
+   "role": "secondary",
+   "conf": "low",
+   "why": "Motion clock; performed live"
+  },
+  "bands": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Contour count on the look outlet only"
+  },
+  "angle": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "Rotates the wave directions together; circular by type",
+   "typed": {
+    "rule": "3 circular",
+    "widget": "dial"
+   }
+  },
+  "gain": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Strength of the vecfield outlet",
+   "typed": {
+    "rule": "2 companion",
+    "widget": "numbox"
+   }
+  }
+ },
+ "f_vf_seeds": {
+  "density": {
+   "role": "primary",
+   "conf": "high",
+   "why": "How many seeds: the first thing set"
+  },
+  "size": {
+   "role": "primary",
+   "conf": "high",
+   "why": "Mark size"
+  },
+  "jitter": {
+   "role": "primary",
+   "conf": "med",
+   "why": "Grid versus scatter: a change of kind"
+  },
+  "stretch": {
+   "role": "primary",
+   "conf": "low",
+   "why": "Round marks versus elongated along the field; kind of mark, but only with a field"
+  },
+  "strength": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "Vecfield influence on orientation; depends on a vecfield"
+  },
+  "mag_weight": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Depth of field-magnitude to mark size"
+  },
+  "field_priority": {
+   "role": "secondary",
+   "conf": "low",
+   "why": "Seed selection Voronoi versus field magnitude; changes how marks overlap, but advanced and degenerate at 1.0"
+  },
+  "field_gain": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Scale of field priority; window varies by field source"
+  },
+  "phase": {
+   "role": "secondary",
+   "conf": "low",
+   "why": "Scroll for motion; performed live (as f_weave's phase)"
+  },
+  "color_mode": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "Blend of the shape color and the driving texture's color"
+  },
+  "bomb": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "Second sample per cell; behaves as on/off",
+   "typed": {
+    "rule": "1 small discrete (on/off)",
+    "widget": "toggle"
+   }
+  },
+  "size_mod": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Depth of a mod texture",
+   "typed": {
+    "rule": "2 companion (mod depth)",
+    "widget": "numbox"
+   }
+  },
+  "stretch_mod": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Depth of a mod texture",
+   "typed": {
+    "rule": "2 companion (mod depth)",
+    "widget": "numbox"
+   }
+  }
+ },
+ "f_vf_vortex": {
+  "convergence": {
+   "role": "primary",
+   "conf": "high",
+   "why": "Sink versus source: names the field"
+  },
+  "curl": {
+   "role": "primary",
+   "conf": "high",
+   "why": "Rotation direction and strength: names the field"
+  },
+  "falloff": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "Reach of the field; shapes it but does not change its kind"
+  },
+  "cx": {
+   "role": "secondary",
+   "conf": "low",
+   "why": "Center X; placement, but moved live in a performance and paired with cy"
+  },
+  "cy": {
+   "role": "secondary",
+   "conf": "low",
+   "why": "Center Y; as cx"
+  },
+  "cx_amt": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Modulation depth",
+   "typed": {
+    "rule": "2 companion (mod depth)",
+    "widget": "numbox"
+   }
+  },
+  "cy_amt": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Modulation depth",
+   "typed": {
+    "rule": "2 companion (mod depth)",
+    "widget": "numbox"
+   }
+  },
+  "convergence_amt": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Modulation depth",
+   "typed": {
+    "rule": "2 companion (mod depth)",
+    "widget": "numbox"
+   }
+  },
+  "curl_amt": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Modulation depth",
+   "typed": {
+    "rule": "2 companion (mod depth)",
+    "widget": "numbox"
+   }
+  }
+ },
+ "f_tf_hatch": {
+  "reach": {
+   "role": "primary",
+   "conf": "high",
+   "why": "Stroke length"
+  },
+  "grain": {
+   "role": "primary",
+   "conf": "high",
+   "why": "Fine thin strokes versus coarse thick ones"
+  },
+  "density": {
+   "role": "primary",
+   "conf": "med",
+   "why": "How many strokes"
+  },
+  "line_hard": {
+   "role": "primary",
+   "conf": "low",
+   "why": "Soft strokes versus hard engraved lines: a style change, one dial"
+  },
+  "contrast": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Brightness gain"
+  },
+  "structure_floor": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Cutoff on structure strength"
+  },
+  "coh_floor": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Cutoff on coherence"
+  },
+  "angle_offset": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "Rotates strokes against the structure axis (+-90 degrees); circular by type",
+   "typed": {
+    "rule": "3 circular",
+    "widget": "dial"
+   }
+  }
+ },
+ "f_vf_ch": {
+  "coarsen": {
+   "role": "primary",
+   "conf": "med",
+   "why": "How fast the pattern merges into bigger blobs; the Cahn-Hilliard behavior, 0 = carried only"
+  },
+  "inject": {
+   "role": "primary",
+   "conf": "low",
+   "why": "How strongly the input deposits phase B: the driver from the source, cubic"
+  },
+  "dt": {
+   "role": "primary",
+   "conf": "low",
+   "why": "Advection step: pattern speed, moved live. Same call as f_vf_advect dt (degree more than kind, borderline)"
+  },
+  "iface": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "Crisp versus soft edge between the flows; a degree"
+  },
+  "thresh": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Gate on Inject; depends on it"
+  },
+  "pull": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "Relaxes the mean toward Fill; balance"
+  },
+  "fill": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "Reset mean and the Pull target"
+  },
+  "mix_pct": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Biases the velocity weight",
+   "typed": {
+    "rule": "2 companion",
+    "widget": "numbox"
+   }
+  },
+  "taps": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Input filter, control message only",
+   "typed": {
+    "rule": "1 big int",
+    "widget": "numbox"
+   }
+  }
+ },
+ "f_caustic": {
+  "scale": {
+   "role": "primary",
+   "conf": "high",
+   "why": "Propagation distance: sheets fold at larger values; the look"
+  },
+  "expo": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "Tone curve of the layer"
+  },
+  "gain": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Brightness",
+   "typed": {
+    "rule": "2 companion",
+    "widget": "numbox"
+   }
+  },
+  "mix_pct": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Dry/wet",
+   "typed": {
+    "rule": "2 companion",
+    "widget": "numbox"
+   }
+  }
+ },
+ "f_chladni": {
+  "note": {
+   "role": "primary",
+   "conf": "high",
+   "why": "Selects the Bessel mode: names the pattern"
+  },
+  "linesharpness": {
+   "role": "primary",
+   "conf": "low",
+   "why": "Nodal line thickness; the look of the lines, tonal more than structural"
+  },
+  "amp": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Amplitude envelope"
+  },
+  "dishradius": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "Scales the field"
+  },
+  "reflectamt": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "Adds a reflected wave; a modest change"
+  },
+  "spread": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Only acts in Mode B"
+  },
+  "ph0": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "Global phase; rotates the pattern",
+   "typed": {
+    "rule": "3 circular",
+    "widget": "dial"
+   }
+  },
+  "mode": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "Linear versus Gaussian snap (0/1)",
+   "typed": {
+    "rule": "1 small discrete (on/off)",
+    "widget": "toggle"
+   }
+  },
+  "view_mode": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "Circular plate versus strip (0/1)",
+   "typed": {
+    "rule": "1 small discrete (on/off)",
+    "widget": "toggle"
+   }
+  },
+  "gain": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Scales out3",
+   "typed": {
+    "rule": "2 companion",
+    "widget": "numbox"
+   }
+  }
+ },
+ "f_ks": {
+  "scale": {
+   "role": "primary",
+   "conf": "high",
+   "why": "Grain: bold coarse cells to fine"
+  },
+  "sharp": {
+   "role": "primary",
+   "conf": "med",
+   "why": "Soft gradients versus hard-edged cells"
+  },
+  "rate": {
+   "role": "primary",
+   "conf": "low",
+   "why": "Evolution speed (live lever, degree more than kind; same call as dt)"
+  }
+ },
+ "f_ngon": {
+  "n_mirrors": {
+   "role": "primary",
+   "conf": "high",
+   "why": "Mirror count: the shape of the fold"
+  },
+  "rotation": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "Mirror axis rotation",
+   "typed": {
+    "rule": "3 circular",
+    "widget": "dial"
+   }
+  },
+  "scale": {
+   "role": "secondary",
+   "conf": "low",
+   "why": "Zoom; performed, but a degree"
+  }
+ },
+ "f_sirds": {
+  "depth_factor": {
+   "role": "primary",
+   "conf": "high",
+   "why": "The one control: depth to displacement"
+  }
+ },
+ "f_tf_aniso_blur": {
+  "length": {
+   "role": "primary",
+   "conf": "high",
+   "why": "Blur length along the structure axis"
+  },
+  "width_gate": {
+   "role": "primary",
+   "conf": "med",
+   "why": "How the kernel width responds to coherence: the blur's shape"
+  },
+  "strength_scale": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "Calibration gate, to be set with tensormap's strength"
+  },
+  "floor_pct": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "Isotropic floor"
+  },
+  "strength": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Must equal tensormap's own strength dial: a correctness value"
+  }
+ },
+ "f_tf_glyph": {
+  "grid": {
+   "role": "primary",
+   "conf": "high",
+   "why": "Cells across; the real control per its hint"
+  },
+  "glyph_scale": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "Glyph radius per cell (provisional)"
+  },
+  "thickness": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "Ring weight"
+  },
+  "softness": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Edge falloff"
+  },
+  "gate": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Draw threshold"
+  },
+  "max_aspect": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Clamp on ellipse aspect"
+  }
+ },
+ "f_vf_flow": {
+  "angle": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "Base flow direction, 0 to 1 is a full circle",
+   "typed": {
+    "rule": "3 circular",
+    "widget": "dial"
+   }
+  },
+  "spread": {
+   "role": "primary",
+   "conf": "med",
+   "why": "How much the texture perturbs the direction: uniform versus textured flow"
+  }
+ },
+ "f_vf_fluid": {
+  "viscosity": {
+   "role": "primary",
+   "conf": "high",
+   "why": "Water versus honey: only big swirls survive"
+  },
+  "project": {
+   "role": "primary",
+   "conf": "med",
+   "why": "Compressible shocks versus divergence-free swirl: a change of kind"
+  },
+  "force": {
+   "role": "primary",
+   "conf": "low",
+   "why": "How hard the input pushes the flow"
+  },
+  "dt": {
+   "role": "secondary",
+   "conf": "low",
+   "why": "Solver time step; numerical more than a lever"
+  },
+  "drag": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "Linear damping"
+  },
+  "drift": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "Allowed frame-wide drift"
+  },
+  "gain": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Output scale",
+   "typed": {
+    "rule": "2 companion",
+    "widget": "numbox"
+   }
+  },
+  "taps": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Force filter",
+   "typed": {
+    "rule": "1 big int",
+    "widget": "numbox"
+   }
+  }
+ },
+ "f_vf_optical_flow": {
+  "decay": {
+   "role": "primary",
+   "conf": "med",
+   "why": "Persistence of the accumulated flow; above 1 is excitable"
+  },
+  "scale": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Central-difference step"
+  },
+  "mask_lo": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "Confidence gate low"
+  },
+  "mask_hi": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "Confidence gate high"
+  },
+  "injection": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "Fresh solve blend; depends on Decay"
+  },
+  "step": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Window spacing"
+  },
+  "reach": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "Directional-fill spacing"
+  },
+  "gain": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Output scale",
+   "typed": {
+    "rule": "2 companion",
+    "widget": "numbox"
+   }
+  },
+  "mix_pct": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Fill dry/wet",
+   "typed": {
+    "rule": "2 companion",
+    "widget": "numbox"
+   }
+  }
+ },
+ "f_vf_potential": {
+  "decay": {
+   "role": "primary",
+   "conf": "med",
+   "why": "Memory length of the accumulated potential"
+  },
+  "dt": {
+   "role": "primary",
+   "conf": "low",
+   "why": "Accumulation speed; same call as other dt"
+  },
+  "strength": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "Output scale"
+  }
+ },
+ "f_vf_prism": {
+  "reach": {
+   "role": "primary",
+   "conf": "high",
+   "why": "How far the prism effect reaches"
+  },
+  "spread": {
+   "role": "primary",
+   "conf": "high",
+   "why": "Chromatic separation between R, G and B: the prism"
+  },
+  "threshold": {
+   "role": "primary",
+   "conf": "low",
+   "why": "Which pixels cast color; a gate"
+  },
+  "threshold_width": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Softness of the gate"
+  },
+  "feather": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "Hard split versus smooth spectrum"
+  },
+  "gain": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Prism intensity",
+   "typed": {
+    "rule": "2 companion",
+    "widget": "numbox"
+   }
+  },
+  "mix_pct": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Dry/wet",
+   "typed": {
+    "rule": "2 companion",
+    "widget": "numbox"
+   }
+  }
+ },
+ "f_vf_repulse": {
+  "reach": {
+   "role": "primary",
+   "conf": "med",
+   "why": "Ring sample radius; negative samples inside shapes"
+  },
+  "threshold": {
+   "role": "primary",
+   "conf": "low",
+   "why": "Which luma repels; negative repels from dark"
+  },
+  "gain": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "Field magnitude, negative attracts. Primary in effect, but gain is a companion by H3",
+   "typed": {
+    "rule": "2 companion",
+    "widget": "numbox"
+   }
+  }
+ },
+ "f_vf_streak": {
+  "length": {
+   "role": "primary",
+   "conf": "med",
+   "why": "Streak length; hint empty, inferred from the name"
+  },
+  "falloff": {
+   "role": "secondary",
+   "conf": "low",
+   "why": "No hint; inferred"
+  },
+  "color_shift": {
+   "role": "secondary",
+   "conf": "low",
+   "why": "No hint; inferred"
+  },
+  "gain": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Streak intensity",
+   "typed": {
+    "rule": "2 companion",
+    "widget": "numbox"
+   }
+  },
+  "mix_pct": {
+   "role": "secondary",
+   "conf": "high",
+   "why": "Dry/wet",
+   "typed": {
+    "rule": "2 companion",
+    "widget": "numbox"
+   }
+  }
+ },
+ "f_wc": {
+  "pulse_depth": {
+   "role": "primary",
+   "conf": "med",
+   "why": "Excitability: 0 fades the field, 1.5 kills it"
+  },
+  "grain_scale": {
+   "role": "primary",
+   "conf": "med",
+   "why": "Pattern scale: finer and wormier versus bigger spots"
+  },
+  "sim_rate": {
+   "role": "secondary",
+   "conf": "low",
+   "why": "Slow motion; the same look slower"
+  },
+  "pulse_period": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "Internal pulse period, used when no pulse is plugged in"
+  },
+  "pulse_mix": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "Pulse texture versus internal wave: a companion blend",
+   "typed": {
+    "rule": "2 companion",
+    "widget": "numbox"
+   }
+  },
+  "pulse_gain": {
+   "role": "secondary",
+   "conf": "med",
+   "why": "Pulse texture trim before it becomes the pulse: a companion",
+   "typed": {
+    "rule": "2 companion",
+    "widget": "numbox"
+   }
+  }
+ }
+}

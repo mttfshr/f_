@@ -25,7 +25,7 @@ patcher = {
     "bypass_mode":        "param",
 
     "presentation_width":  150,
-    "presentation_height": 80,
+    "presentation_height": 88,
 
     "outlets": [
         {"comment": "vecfield out"},
@@ -57,3 +57,12 @@ patcher = {
         "control_valueof": {"spread": {"parameter_mmin": -1.0}},
     },
 }
+
+# BEGIN overrides (build/capture.py rewrites only this block)
+patcher["overrides"] = {
+    "angle.ctl": {"presentation_rect": [4.0, 38.0, 27.0, 43.0]},
+    "angle.label": {"presentation_rect": [-7.5, 20.0, 50.0, 18.0]},
+    "spread.ctl": {"presentation_rect": [41.0, 38.0, 27.0, 43.0]},
+    "spread.label": {"presentation_rect": [29.5, 20.0, 50.0, 18.0]},
+}
+# END overrides

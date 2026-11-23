@@ -53,26 +53,26 @@ patcher = {
     "bypass_mode": "param",             # jsui -> prepend param bypass_gate -> pix (every outlet its neutral)
 
     "presentation_width":  227,
-    "presentation_height": 164,
+    "presentation_height": 122,
 
     "params": [
-        {"name": "zoom",       "type": "float", "min": 0.0,   "max": 1.0,   "default": 0.0,   "label": "Zoom",
+        {"name": "zoom",       "type": "float", "widget": "numbox", "min": 0.0,   "max": 1.0,   "default": 0.0,   "label": "Zoom",
          "hint": "Pattern scale, cyclic: one full turn is one octave and wraps with no seam. The clock adds to this"},
-        {"name": "zoom_rate",  "type": "float", "min": -0.02, "max": 0.02,  "default": 0.002, "label": "Z.rate", "pix_wire": False,
+        {"name": "zoom_rate",  "type": "float", "widget": "numbox", "min": -0.02, "max": 0.02,  "default": 0.002, "label": "Z.rate", "pix_wire": False,
          "hint": "Zoom clock: octaves per frame, either direction. 0 freezes the zoom exactly"},
-        {"name": "drift",      "type": "float", "min": 0.0,   "max": 1.0,   "default": 0.0,   "label": "Drift",
+        {"name": "drift",      "type": "float", "widget": "numbox", "min": 0.0,   "max": 1.0,   "default": 0.0,   "label": "Drift",
          "hint": "Phase of the waves, cyclic: one full turn is the identical frame. The clock adds to this"},
-        {"name": "drift_rate", "type": "float", "min": -0.02, "max": 0.02,  "default": 0.001, "label": "D.rate", "pix_wire": False,
+        {"name": "drift_rate", "type": "float", "widget": "numbox", "min": -0.02, "max": 0.02,  "default": 0.001, "label": "D.rate", "pix_wire": False,
          "hint": "Drift clock: turns per frame, either direction. 0 freezes the phase exactly"},
         {"name": "density",    "type": "float", "min": 1.0,   "max": 12.0,  "default": 4.0,   "label": "Dens",
          "hint": "Bands per frame height at the base scale: finer or coarser texture"},
         {"name": "envelope",   "type": "float", "min": 0.25,  "max": 0.7,   "default": 0.5,   "label": "Env",
          "hint": "How many octaves show: low = one scale dominates, high = a wider mix. The top of the range keeps the zoom loop seamless"},
-        {"name": "bands",      "type": "float", "min": 1.0,   "max": 12.0,  "default": 5.0,   "label": "Bands",
+        {"name": "bands",      "type": "float", "widget": "numbox", "min": 1.0,   "max": 12.0,  "default": 5.0,   "label": "Bands",
          "hint": "Contour count in the look outlet"},
         {"name": "angle",      "type": "float", "min": 0.0,   "max": 180.0, "default": 0.0,   "label": "Angle",
          "hint": "Rotates the five wave directions together (degrees)"},
-        {"name": "gain",       "type": "float", "min": 0.0,   "max": 8.0,   "default": 1.0,   "label": "Gain",
+        {"name": "gain",       "type": "float", "widget": "numbox", "min": 0.0,   "max": 8.0,   "default": 1.0,   "label": "Gain",
          "hint": "Strength of the vecfield outlet (unbounded in use: the bounded field only fills part of the range at 1)"},
         {"name": "bypass", "type": "bypass"},
 
@@ -149,3 +149,26 @@ for _k, (_rate, _param, _b) in enumerate(_CLOCKS):
 # module drew nothing (Matt, live).  `r draw` goes straight to the pix, as f_grain / f_masonry do, so the generator
 # renders every frame with nothing on the inlet.  Connected, a texture also triggers the pix: two cheap passes.
 patcher["raw_lines"].append(_line(1, 0, _PIX, 0))     # r draw -> the pix
+
+# BEGIN overrides (build/capture.py rewrites only this block)
+patcher["overrides"] = {
+    "angle.ctl": {"presentation_rect": [78.0, 38.0, 27.0, 43.0]},
+    "angle.label": {"presentation_rect": [66.5, 20.0, 50.0, 18.0]},
+    "bands.ctl": {"presentation_rect": [152.0, 100.0, 34.0, 15.0]},
+    "bands.label": {"presentation_rect": [140.5, 82.0, 50.0, 18.0]},
+    "density.ctl": {"presentation_rect": [4.0, 38.0, 27.0, 43.0]},
+    "density.label": {"presentation_rect": [-7.5, 20.0, 50.0, 18.0]},
+    "drift.ctl": {"presentation_rect": [78.0, 100.0, 34.0, 15.0]},
+    "drift.label": {"presentation_rect": [66.5, 82.0, 50.0, 18.0]},
+    "drift_rate.ctl": {"presentation_rect": [115.0, 100.0, 34.0, 15.0]},
+    "drift_rate.label": {"presentation_rect": [103.5, 82.0, 50.0, 18.0]},
+    "envelope.ctl": {"presentation_rect": [41.0, 38.0, 27.0, 43.0]},
+    "envelope.label": {"presentation_rect": [29.5, 20.0, 50.0, 18.0]},
+    "gain.ctl": {"presentation_rect": [189.0, 100.0, 34.0, 15.0]},
+    "gain.label": {"presentation_rect": [177.5, 82.0, 50.0, 18.0]},
+    "zoom.ctl": {"presentation_rect": [4.0, 100.0, 34.0, 15.0]},
+    "zoom.label": {"presentation_rect": [-7.5, 82.0, 50.0, 18.0]},
+    "zoom_rate.ctl": {"presentation_rect": [41.0, 100.0, 34.0, 15.0]},
+    "zoom_rate.label": {"presentation_rect": [29.5, 82.0, 50.0, 18.0]},
+}
+# END overrides

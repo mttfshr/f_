@@ -33,7 +33,7 @@ patcher = {
     "signal_type":        "∇ in/out",
 
     "presentation_width":  190,
-    "presentation_height": 150,
+    "presentation_height": 160,
 
     "archetype": "processor",
 
@@ -46,7 +46,7 @@ patcher = {
         {"name": "dt", "type": "float", "min": 0.0, "max": 0.05, "default": 0.01,
          "label": "dt",
          "hint": "Advection step: how far the blend pattern is carried by the flow each frame"},
-        {"name": "iface", "type": "float", "min": 1.5, "max": 12.0, "default": 4.0,
+        {"name": "iface", "type": "float", "widget": "numbox", "min": 1.5, "max": 12.0, "default": 4.0,
          "label": "Iface",
          "hint": "Interface width in solver texels: small = crisp edge between the two flows, large = soft blend zone"},
         {"name": "coarsen", "type": "float", "min": 0.0, "max": 1.0, "default": 0.3,
@@ -55,13 +55,13 @@ patcher = {
         {"name": "inject", "type": "float", "min": 0.0, "max": 1.0, "default": 0.3,
          "label": "Inject",
          "hint": "How strongly the bright parts of the texture on input 0 deposit phase B (velocity B). The dial is cubic: gentle at the bottom, full strength at 1"},
-        {"name": "thresh", "type": "float", "min": 0.0, "max": 0.9, "default": 0.5,
+        {"name": "thresh", "type": "float", "widget": "numbox", "min": 0.0, "max": 0.9, "default": 0.5,
          "label": "Thresh",
          "hint": "Brightness the input-0 texture needs before it deposits anything: dim and mid-grey parts add nothing, only brighter parts do"},
-        {"name": "pull", "type": "float", "min": 0.0, "max": 1.0, "default": 0.3,
+        {"name": "pull", "type": "float", "widget": "numbox", "min": 0.0, "max": 1.0, "default": 0.3,
          "label": "Pull",
          "hint": "Slowly pulls the overall mix back toward Fill, so a held source settles into a balance instead of flooding the screen with B. 0 = off"},
-        {"name": "fill", "type": "float", "min": -0.6, "max": 0.6, "default": 0.0,
+        {"name": "fill", "type": "float", "widget": "numbox", "min": -0.6, "max": 0.6, "default": 0.0,
          "label": "Fill",
          "hint": "Mean mix at reset, and the balance point Pull relaxes toward: negative = mostly A, positive = mostly B"},
         {"name": "mix_pct", "type": "float", "min": 0.0, "max": 100.0, "default": 50.0,
@@ -209,3 +209,24 @@ patcher["raw_lines"] = [
     _line(10, 0, 11, 0), _line(11, 0, 12, 0), _line(12, 0, 11, 1),    # draw -> [i] -> +1 -> [i]
     _line(11, 0, 13, 0), _line(13, 0, 14, 0), _line(14, 0, _PASS, 0),   # sel 2 -> reseed 0 -> pass
 ]
+
+# BEGIN overrides (build/capture.py rewrites only this block)
+patcher["overrides"] = {
+    "coarsen.ctl": {"presentation_rect": [41.0, 38.0, 27.0, 43.0]},
+    "coarsen.label": {"presentation_rect": [29.5, 20.0, 50.0, 18.0]},
+    "dt.ctl": {"presentation_rect": [4.0, 38.0, 27.0, 43.0]},
+    "dt.label": {"presentation_rect": [-7.5, 20.0, 50.0, 18.0]},
+    "fill.ctl": {"presentation_rect": [4.0, 138.0, 34.0, 15.0]},
+    "fill.label": {"presentation_rect": [-7.5, 120.0, 50.0, 18.0]},
+    "iface.ctl": {"presentation_rect": [4.0, 100.0, 34.0, 15.0]},
+    "iface.label": {"presentation_rect": [-7.5, 82.0, 50.0, 18.0]},
+    "inject.ctl": {"presentation_rect": [78.0, 38.0, 27.0, 43.0]},
+    "inject.label": {"presentation_rect": [66.5, 20.0, 50.0, 18.0]},
+    "mix_pct.ctl": {"presentation_rect": [41.0, 138.0, 34.0, 15.0]},
+    "mix_pct.label": {"presentation_rect": [29.5, 120.0, 50.0, 18.0]},
+    "pull.ctl": {"presentation_rect": [78.0, 100.0, 34.0, 15.0]},
+    "pull.label": {"presentation_rect": [66.5, 82.0, 50.0, 18.0]},
+    "thresh.ctl": {"presentation_rect": [41.0, 100.0, 34.0, 15.0]},
+    "thresh.label": {"presentation_rect": [29.5, 82.0, 50.0, 18.0]},
+}
+# END overrides

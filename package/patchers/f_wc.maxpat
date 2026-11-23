@@ -1098,14 +1098,14 @@
 						915.5,
 						260.0,
 						272.0,
-						150.0
+						160.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						0.0,
 						0.0,
 						272.0,
-						150.0
+						160.0
 					],
 					"proportion": 0.5
 				}
@@ -1495,13 +1495,7 @@
 			{
 				"box": {
 					"id": "obj-23",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "Internal pulse period in frames (used when the pulse inlet is unplugged). 147 = the source; under ~100 the field dies",
 					"numinlets": 1,
@@ -1513,22 +1507,19 @@
 					"param_connect": "#0_wc_nl::pulse_period",
 					"parameter_enable": 1,
 					"patching_rect": [
-						118.5,
+						110.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						41.0,
-						38.0,
-						27.0,
-						43.0
+						4.0,
+						100.0,
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								147.0588
@@ -1544,10 +1535,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "pulse_period"
 				}
 			},
@@ -1586,8 +1573,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						29.5,
-						20.0,
+						-7.5,
+						82.0,
 						50.0,
 						18.0
 					],
@@ -1599,13 +1586,7 @@
 			{
 				"box": {
 					"id": "obj-26",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "Slow motion: 1 = the source speed; 0.5 = half speed, pulse and pattern together (same look)",
 					"numinlets": 1,
@@ -1617,22 +1598,19 @@
 					"param_connect": "#0_wc_nl::sim_rate",
 					"parameter_enable": 1,
 					"patching_rect": [
-						190.5,
+						182.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						78.0,
-						38.0,
-						27.0,
-						43.0
+						41.0,
+						100.0,
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								1.0
@@ -1648,10 +1626,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "sim_rate"
 				}
 			},
@@ -1690,8 +1664,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						66.5,
-						20.0,
+						29.5,
+						82.0,
 						50.0,
 						18.0
 					],
@@ -1703,13 +1677,7 @@
 			{
 				"box": {
 					"id": "obj-29",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "Pulse texture vs the internal wave: 1 = the texture is the pulse; 0 = ignored; between = blend",
 					"numinlets": 1,
@@ -1721,22 +1689,19 @@
 					"param_connect": "#0_wc_nl::pulse_mix",
 					"parameter_enable": 1,
 					"patching_rect": [
-						262.5,
+						254.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						115.0,
-						38.0,
-						27.0,
-						43.0
+						78.0,
+						100.0,
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								1.0
@@ -1752,10 +1717,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "pulse_mix"
 				}
 			},
@@ -1794,8 +1755,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						103.5,
-						20.0,
+						66.5,
+						82.0,
 						50.0,
 						18.0
 					],
@@ -1807,13 +1768,7 @@
 			{
 				"box": {
 					"id": "obj-32",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "Pulse texture brightness before it becomes the pulse: raise a dim image, tame a bright one",
 					"numinlets": 1,
@@ -1825,22 +1780,19 @@
 					"param_connect": "#0_wc_nl::pulse_gain",
 					"parameter_enable": 1,
 					"patching_rect": [
-						334.5,
+						326.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						152.0,
-						38.0,
-						27.0,
-						43.0
+						115.0,
+						100.0,
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								1.0
@@ -1856,10 +1808,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "pulse_gain"
 				}
 			},
@@ -1898,8 +1846,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						140.5,
-						20.0,
+						103.5,
+						82.0,
 						50.0,
 						18.0
 					],
@@ -1936,8 +1884,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						4.0,
-						100.0,
+						41.0,
+						38.0,
 						27.0,
 						43.0
 					],
@@ -2021,8 +1969,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						-7.5,
-						82.0,
+						29.5,
+						20.0,
 						50.0,
 						18.0
 					],
@@ -2054,8 +2002,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						37.0,
-						114.0,
+						152.0,
+						100.0,
 						45.0,
 						15.0
 					],
@@ -2119,7 +2067,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						29.5,
+						140.5,
 						82.0,
 						50.0,
 						18.0
@@ -2152,8 +2100,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						74.0,
-						114.0,
+						4.0,
+						138.0,
 						45.0,
 						15.0
 					],
@@ -2215,8 +2163,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						66.5,
-						82.0,
+						-7.5,
+						120.0,
 						50.0,
 						18.0
 					],
@@ -2248,8 +2196,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						111.0,
-						114.0,
+						78.0,
+						138.0,
 						45.0,
 						15.0
 					],
@@ -2311,8 +2259,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						103.5,
-						82.0,
+						66.5,
+						120.0,
 						50.0,
 						18.0
 					],

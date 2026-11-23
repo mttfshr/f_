@@ -2412,13 +2412,7 @@
 			{
 				"box": {
 					"id": "obj-32",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "Vecfield influence on mark orientation (0=rightward, 1=full field)",
 					"numinlets": 1,
@@ -2429,22 +2423,19 @@
 					],
 					"parameter_enable": 1,
 					"patching_rect": [
-						334.5,
+						326.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						152.0,
-						38.0,
-						27.0,
-						43.0
+						4.0,
+						100.0,
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								1.0
@@ -2460,10 +2451,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "strength"
 				}
 			},
@@ -2502,8 +2489,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						140.5,
-						20.0,
+						-7.5,
+						82.0,
 						50.0,
 						18.0
 					],
@@ -2514,13 +2501,7 @@
 			{
 				"box": {
 					"id": "obj-35",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "Field magnitude \u2192 mark weight modulation depth",
 					"numinlets": 1,
@@ -2531,22 +2512,19 @@
 					],
 					"parameter_enable": 1,
 					"patching_rect": [
-						406.5,
+						398.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						4.0,
+						41.0,
 						100.0,
-						27.0,
-						43.0
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								0.0
@@ -2562,10 +2540,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "mag_weight"
 				}
 			},
@@ -2604,7 +2578,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						-7.5,
+						29.5,
 						82.0,
 						50.0,
 						18.0
@@ -2616,13 +2590,7 @@
 			{
 				"box": {
 					"id": "obj-38",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "Seed selection: 0=nearest-distance (Voronoi, original behavior), 1=field-magnitude-only (degenerate at exactly 1.0 \u2014 see docs)",
 					"numinlets": 1,
@@ -2633,22 +2601,19 @@
 					],
 					"parameter_enable": 1,
 					"patching_rect": [
-						478.5,
+						470.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						41.0,
+						78.0,
 						100.0,
-						27.0,
-						43.0
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								0.0
@@ -2664,10 +2629,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "field_priority"
 				}
 			},
@@ -2706,7 +2667,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						29.5,
+						66.5,
 						82.0,
 						50.0,
 						18.0
@@ -2718,13 +2679,7 @@
 			{
 				"box": {
 					"id": "obj-41",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "Field-priority scale \u2014 useful window varies by vecfield source (Flow ~0.2, Repulse ~0.8, Vortex ~1.5).",
 					"numinlets": 1,
@@ -2735,22 +2690,19 @@
 					],
 					"parameter_enable": 1,
 					"patching_rect": [
-						550.5,
+						542.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						78.0,
+						115.0,
 						100.0,
-						27.0,
-						43.0
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								0.0
@@ -2766,10 +2718,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "field_gain"
 				}
 			},
@@ -2808,7 +2756,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						66.5,
+						103.5,
 						82.0,
 						50.0,
 						18.0
@@ -2935,13 +2883,7 @@
 			{
 				"box": {
 					"id": "obj-44",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "Second-sample-per-cell toggle \u2014 behaves as on/off, not a graded fader (see spec.md Evolution 2). Its attrui is bound directly to active_blend on Stage 1b \u2014 the dial itself keeps showing \"Bomb\".",
 					"numinlets": 1,
@@ -2952,22 +2894,19 @@
 					],
 					"parameter_enable": 1,
 					"patching_rect": [
-						622.5,
+						614.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						115.0,
+						152.0,
 						100.0,
-						27.0,
-						43.0
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								0.0
@@ -2983,10 +2922,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "bomb"
 				}
 			},
@@ -3025,7 +2960,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						103.5,
+						140.5,
 						82.0,
 						50.0,
 						18.0
@@ -3037,13 +2972,7 @@
 			{
 				"box": {
 					"id": "obj-47",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "Scroll marks along field direction (connect LFO for motion)",
 					"numinlets": 1,
@@ -3054,22 +2983,19 @@
 					],
 					"parameter_enable": 1,
 					"patching_rect": [
-						694.5,
+						686.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						152.0,
-						100.0,
-						27.0,
-						43.0
+						4.0,
+						138.0,
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								0.0
@@ -3085,10 +3011,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "phase"
 				}
 			},
@@ -3127,8 +3049,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						140.5,
-						82.0,
+						-7.5,
+						120.0,
 						50.0,
 						18.0
 					],
@@ -3139,13 +3061,7 @@
 			{
 				"box": {
 					"id": "obj-50",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "Mod tex \u2192 size modulation depth (bipolar)",
 					"numinlets": 1,
@@ -3156,22 +3072,19 @@
 					],
 					"parameter_enable": 1,
 					"patching_rect": [
-						766.5,
+						758.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						4.0,
-						162.0,
-						27.0,
-						43.0
+						41.0,
+						138.0,
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								0.0
@@ -3187,10 +3100,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "size_mod"
 				}
 			},
@@ -3229,8 +3138,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						-7.5,
-						144.0,
+						29.5,
+						120.0,
 						50.0,
 						18.0
 					],
@@ -3241,13 +3150,7 @@
 			{
 				"box": {
 					"id": "obj-53",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "Mod tex \u2192 stretch modulation depth (bipolar)",
 					"numinlets": 1,
@@ -3258,22 +3161,19 @@
 					],
 					"parameter_enable": 1,
 					"patching_rect": [
-						838.5,
+						830.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						41.0,
-						162.0,
-						27.0,
-						43.0
+						78.0,
+						138.0,
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								0.0
@@ -3289,10 +3189,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "stretch_mod"
 				}
 			},
@@ -3331,8 +3227,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						29.5,
-						144.0,
+						66.5,
+						120.0,
 						50.0,
 						18.0
 					],
@@ -3343,13 +3239,7 @@
 			{
 				"box": {
 					"id": "obj-56",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "Blend between shape tex's own color (0) and the color driving texture sampled at each seed's position (1).",
 					"numinlets": 1,
@@ -3360,22 +3250,19 @@
 					],
 					"parameter_enable": 1,
 					"patching_rect": [
-						910.5,
+						902.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						78.0,
-						162.0,
-						27.0,
-						43.0
+						115.0,
+						138.0,
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								0.0
@@ -3391,10 +3278,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "color_mode"
 				}
 			},
@@ -3433,8 +3316,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						66.5,
-						144.0,
+						103.5,
+						120.0,
 						50.0,
 						18.0
 					],
