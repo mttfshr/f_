@@ -1403,14 +1403,14 @@
 						771.5,
 						260.0,
 						190.0,
-						130.0
+						160.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						0.0,
 						0.0,
 						190.0,
-						130.0
+						160.0
 					],
 					"proportion": 0.5
 				}
@@ -1653,13 +1653,7 @@
 			{
 				"box": {
 					"id": "obj-20",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "Central difference step size for Ix/Iy gradients (normalized UV). Negative inverts gradient axis.",
 					"numinlets": 1,
@@ -1671,22 +1665,19 @@
 					"param_connect": "#0_of_stage_a::scale",
 					"parameter_enable": 1,
 					"patching_rect": [
-						46.5,
+						38.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						4.0,
-						38.0,
-						27.0,
-						43.0
+						100.0,
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								0.004
@@ -1702,10 +1693,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "scale"
 				}
 			},
@@ -1745,7 +1732,7 @@
 					"presentation": 1,
 					"presentation_rect": [
 						-7.5,
-						20.0,
+						82.0,
 						50.0,
 						18.0
 					],
@@ -1757,13 +1744,7 @@
 			{
 				"box": {
 					"id": "obj-23",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "Output vecfield magnitude scale. Negative inverts flow direction.",
 					"numinlets": 1,
@@ -1775,22 +1756,19 @@
 					"param_connect": "#0_of_stage_c::gain",
 					"parameter_enable": 1,
 					"patching_rect": [
-						118.5,
+						110.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						41.0,
-						38.0,
-						27.0,
-						43.0
+						100.0,
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								1.0
@@ -1806,10 +1784,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "gain"
 				}
 			},
@@ -1849,7 +1823,7 @@
 					"presentation": 1,
 					"presentation_rect": [
 						29.5,
-						20.0,
+						82.0,
 						50.0,
 						18.0
 					],
@@ -1861,13 +1835,7 @@
 			{
 				"box": {
 					"id": "obj-26",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "Confidence-gate low threshold -- det values at or below this read as no-flow (neutral). Raise to suppress noise in low-texture/edge-only regions (the aperture problem). Added 2026-07-18 after real testing showed unmasked noise amplifying along real edges, not just in flat regions.",
 					"numinlets": 1,
@@ -1879,22 +1847,19 @@
 					"param_connect": "#0_of_stage_c::mask_lo",
 					"parameter_enable": 1,
 					"patching_rect": [
-						190.5,
+						182.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						78.0,
-						38.0,
-						27.0,
-						43.0
+						100.0,
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								0.0
@@ -1910,10 +1875,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "mask_lo"
 				}
 			},
@@ -1953,7 +1914,7 @@
 					"presentation": 1,
 					"presentation_rect": [
 						66.5,
-						20.0,
+						82.0,
 						50.0,
 						18.0
 					],
@@ -1965,13 +1926,7 @@
 			{
 				"box": {
 					"id": "obj-29",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "Confidence-gate high threshold -- det values at or above this pass through at full strength. Widen the Lo/Hi gap for a softer transition, narrow it for a harder cutoff. det's real range was never precisely measured (T017) -- use this dial while watching the vecfield preview to find it empirically.",
 					"numinlets": 1,
@@ -1983,22 +1938,19 @@
 					"param_connect": "#0_of_stage_c::mask_hi",
 					"parameter_enable": 1,
 					"patching_rect": [
-						262.5,
+						254.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						115.0,
-						38.0,
-						27.0,
-						43.0
+						100.0,
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								1.0
@@ -2014,10 +1966,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "mask_hi"
 				}
 			},
@@ -2057,7 +2005,7 @@
 					"presentation": 1,
 					"presentation_rect": [
 						103.5,
-						20.0,
+						82.0,
 						50.0,
 						18.0
 					],
@@ -2094,7 +2042,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						152.0,
+						4.0,
 						38.0,
 						27.0,
 						43.0
@@ -2160,7 +2108,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						140.5,
+						-7.5,
 						20.0,
 						50.0,
 						18.0
@@ -2173,13 +2121,7 @@
 			{
 				"box": {
 					"id": "obj-35",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "How strongly this frame's fresh solve blends into the accumulated field each frame.",
 					"numinlets": 1,
@@ -2191,22 +2133,19 @@
 					"param_connect": "#0_of_stage_d::injection",
 					"parameter_enable": 1,
 					"patching_rect": [
-						406.5,
+						398.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						4.0,
+						152.0,
 						100.0,
-						27.0,
-						43.0
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								0.3
@@ -2222,10 +2161,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "injection"
 				}
 			},
@@ -2264,7 +2199,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						-7.5,
+						140.5,
 						82.0,
 						50.0,
 						18.0
@@ -2277,13 +2212,7 @@
 			{
 				"box": {
 					"id": "obj-38",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "Stage B 5-tap window spacing (normalized UV), both horizontal and vertical passes. Bipolar range lets negative values invert tap direction if useful.",
 					"numinlets": 1,
@@ -2295,22 +2224,19 @@
 					"param_connect": "#0_of_stage_b_h::step",
 					"parameter_enable": 1,
 					"patching_rect": [
-						478.5,
+						470.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						41.0,
-						100.0,
-						27.0,
-						43.0
+						4.0,
+						138.0,
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								0.0015
@@ -2326,10 +2252,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "step"
 				}
 			},
@@ -2368,8 +2290,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						29.5,
-						82.0,
+						-7.5,
+						120.0,
 						50.0,
 						18.0
 					],
@@ -2381,13 +2303,7 @@
 			{
 				"box": {
 					"id": "obj-41",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "Stage E directional-fill tap spacing (normalized UV) along the locally-ambiguous axis (T035). Same naming/role as f_vf_prism's own Reach dial.",
 					"numinlets": 1,
@@ -2399,22 +2315,19 @@
 					"param_connect": "#0_of_stage_e::reach",
 					"parameter_enable": 1,
 					"patching_rect": [
-						550.5,
+						542.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						78.0,
-						100.0,
-						27.0,
-						43.0
+						41.0,
+						138.0,
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								0.01
@@ -2430,10 +2343,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "reach"
 				}
 			},
@@ -2472,8 +2381,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						66.5,
-						82.0,
+						29.5,
+						120.0,
 						50.0,
 						18.0
 					],
@@ -2504,8 +2413,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						115.0,
-						100.0,
+						78.0,
+						138.0,
 						34.0,
 						15.0
 					],
@@ -2563,8 +2472,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						103.5,
-						82.0,
+						66.5,
+						120.0,
 						50.0,
 						18.0
 					],

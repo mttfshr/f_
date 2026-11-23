@@ -67,7 +67,7 @@ patcher = {
     "bypass_target": ["c", "d"],
 
     "presentation_width":  190,
-    "presentation_height": 130,
+    "presentation_height": 160,
 
     "pix_chain": [
         {
@@ -198,7 +198,7 @@ patcher = {
 
     "params": [
         {
-            "name": "scale", "type": "float",
+            "name": "scale", "type": "float", "widget": "numbox",
             "min": -0.05, "max": 0.05, "default": 0.004,
             "hint": "Central difference step size for Ix/Iy gradients (normalized UV). Negative inverts gradient axis.",
             "label": "Scale",
@@ -207,21 +207,21 @@ patcher = {
             # correct here.
         },
         {
-            "name": "gain", "type": "float",
+            "name": "gain", "type": "float", "widget": "numbox",
             "min": -10.0, "max": 10.0, "default": 1.0,
             "hint": "Output vecfield magnitude scale. Negative inverts flow direction.",
             "label": "Gain",
             "pix_target": "c",
         },
         {
-            "name": "mask_lo", "type": "float",
+            "name": "mask_lo", "type": "float", "widget": "numbox",
             "min": 0.0, "max": 20.0, "default": 0.0,
             "hint": "Confidence-gate low threshold -- det values at or below this read as no-flow (neutral). Raise to suppress noise in low-texture/edge-only regions (the aperture problem). Added 2026-07-18 after real testing showed unmasked noise amplifying along real edges, not just in flat regions.",
             "label": "Mask Lo",
             "pix_target": "c",
         },
         {
-            "name": "mask_hi", "type": "float",
+            "name": "mask_hi", "type": "float", "widget": "numbox",
             "min": 0.0, "max": 20.0, "default": 1.0,
             "hint": "Confidence-gate high threshold -- det values at or above this pass through at full strength. Widen the Lo/Hi gap for a softer transition, narrow it for a harder cutoff. det's real range was never precisely measured (T017) -- use this dial while watching the vecfield preview to find it empirically.",
             "label": "Mask Hi",
@@ -235,21 +235,21 @@ patcher = {
             "pix_target": "d",
         },
         {
-            "name": "injection", "type": "float",
+            "name": "injection", "type": "float", "widget": "numbox",
             "min": 0.0, "max": 2.0, "default": 0.3,
             "hint": "How strongly this frame's fresh solve blends into the accumulated field each frame.",
             "label": "Inject",
             "pix_target": "d",
         },
         {
-            "name": "step", "type": "float",
+            "name": "step", "type": "float", "widget": "numbox",
             "min": -0.1, "max": 0.1, "default": 0.0015,
             "hint": "Stage B 5-tap window spacing (normalized UV), both horizontal and vertical passes. Bipolar range lets negative values invert tap direction if useful.",
             "label": "Step",
             "pix_target": "bh",
         },
         {
-            "name": "reach", "type": "float",
+            "name": "reach", "type": "float", "widget": "numbox",
             "min": 0.0, "max": 0.1, "default": 0.01,
             "hint": "Stage E directional-fill tap spacing (normalized UV) along the locally-ambiguous axis (T035). Same naming/role as f_vf_prism's own Reach dial.",
             "label": "Reach",
@@ -266,3 +266,26 @@ patcher = {
         {"name": "bypass", "type": "bypass"},
     ],
 }
+
+# BEGIN overrides (build/capture.py rewrites only this block)
+patcher["overrides"] = {
+    "decay.ctl": {"presentation_rect": [4.0, 38.0, 27.0, 43.0]},
+    "decay.label": {"presentation_rect": [-7.5, 20.0, 50.0, 18.0]},
+    "gain.ctl": {"presentation_rect": [41.0, 100.0, 34.0, 15.0]},
+    "gain.label": {"presentation_rect": [29.5, 82.0, 50.0, 18.0]},
+    "injection.ctl": {"presentation_rect": [152.0, 100.0, 34.0, 15.0]},
+    "injection.label": {"presentation_rect": [140.5, 82.0, 50.0, 18.0]},
+    "mask_hi.ctl": {"presentation_rect": [115.0, 100.0, 34.0, 15.0]},
+    "mask_hi.label": {"presentation_rect": [103.5, 82.0, 50.0, 18.0]},
+    "mask_lo.ctl": {"presentation_rect": [78.0, 100.0, 34.0, 15.0]},
+    "mask_lo.label": {"presentation_rect": [66.5, 82.0, 50.0, 18.0]},
+    "mix_pct.ctl": {"presentation_rect": [78.0, 138.0, 34.0, 15.0]},
+    "mix_pct.label": {"presentation_rect": [66.5, 120.0, 50.0, 18.0]},
+    "reach.ctl": {"presentation_rect": [41.0, 138.0, 34.0, 15.0]},
+    "reach.label": {"presentation_rect": [29.5, 120.0, 50.0, 18.0]},
+    "scale.ctl": {"presentation_rect": [4.0, 100.0, 34.0, 15.0]},
+    "scale.label": {"presentation_rect": [-7.5, 82.0, 50.0, 18.0]},
+    "step.ctl": {"presentation_rect": [4.0, 138.0, 34.0, 15.0]},
+    "step.label": {"presentation_rect": [-7.5, 120.0, 50.0, 18.0]},
+}
+# END overrides

@@ -259,14 +259,14 @@
 						760.0,
 						260.0,
 						154.0,
-						91.0
+						122.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						0.0,
 						0.0,
 						154.0,
-						91.0
+						122.0
 					],
 					"proportion": 0.5
 				}
@@ -686,13 +686,7 @@
 			{
 				"box": {
 					"id": "obj-26",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "Zoom -- confirmed stable near zero; 1.0=identity",
 					"numinlets": 1,
@@ -704,22 +698,19 @@
 					"param_connect": "ngon_pix::scale",
 					"parameter_enable": 1,
 					"patching_rect": [
-						190.5,
+						182.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						78.0,
-						38.0,
-						27.0,
-						43.0
+						4.0,
+						100.0,
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								1.0
@@ -735,10 +726,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "scale"
 				}
 			},
@@ -777,8 +764,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						66.5,
-						20.0,
+						-7.5,
+						82.0,
 						50.0,
 						18.0
 					],

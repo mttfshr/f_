@@ -8,14 +8,14 @@ patcher = {
     "pix_type":           "float32",
 
     "presentation_width":  165,
-    "presentation_height": 80,
+    "presentation_height": 122,
 
     "outlets": [
         {"comment": "vecfield"},
     ],
 
     "params": [
-        {"name": "gain",      "type": "float", "min": -10.0, "max": 10.0,  "default": 4.0,  "label": "Gain",     "hint": "Field magnitude. Negative = attraction."},
+        {"name": "gain",      "type": "float", "widget": "numbox", "min": -10.0, "max": 10.0,  "default": 4.0,  "label": "Gain",     "hint": "Field magnitude. Negative = attraction."},
         {"name": "reach",     "type": "float", "min": -0.5,  "max": 0.5,   "default": 0.1,  "label": "Reach",    "hint": "Ring sample radius (normalized UV). Negative samples inside shapes."},
         {"name": "threshold", "type": "float", "min": -1.0,  "max": 1.0,   "default": 0.3,  "label": "Thresh",   "hint": "Luma threshold for repulsion. Negative = repulse from dark regions."},
         {"name": "mode",      "type": "menu",  "options": ["Cancel", "Max", "Abs Add", "Turbulent"], "default": 0, "label": "Mode", "hint": "Accumulation mode: Cancel, Max, Abs Add, Turbulent."},
@@ -172,3 +172,16 @@ field_y = gv * kk * 0.5 + 0.5;
 out1 = mix(vec(field_x, field_y, 0.5, 1.0), vec(0.5, 0.5, 0.5, 1.0), bypass);
 """,
 }
+
+# BEGIN overrides (build/capture.py rewrites only this block)
+patcher["overrides"] = {
+    "gain.ctl": {"presentation_rect": [4.0, 100.0, 34.0, 15.0]},
+    "gain.label": {"presentation_rect": [-7.5, 82.0, 50.0, 18.0]},
+    "mode.ctl": {"presentation_rect": [41.0, 100.0, 45.0, 15.0]},
+    "mode.label": {"presentation_rect": [29.5, 82.0, 50.0, 18.0]},
+    "reach.ctl": {"presentation_rect": [4.0, 38.0, 27.0, 43.0]},
+    "reach.label": {"presentation_rect": [-7.5, 20.0, 50.0, 18.0]},
+    "threshold.ctl": {"presentation_rect": [41.0, 38.0, 27.0, 43.0]},
+    "threshold.label": {"presentation_rect": [29.5, 20.0, 50.0, 18.0]},
+}
+# END overrides

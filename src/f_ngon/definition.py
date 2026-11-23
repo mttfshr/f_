@@ -51,12 +51,12 @@ patcher = {
     "archetype":   "processor",
 
     "presentation_width":  154,
-    "presentation_height": 91,
+    "presentation_height": 122,
 
     "params": [
         {"name": "n_mirrors", "type": "float", "min": 2.0, "max": 18.0, "default": 6.0, "label": "N Mirrors", "hint": "Mirror count -- output is a 2*n_mirrors-gon; 32-iteration fold confirmed stable through n_mirrors=18"},
         {"name": "rotation",  "type": "float", "min": 0.0, "max": 6.2831853, "default": 0.0, "label": "Rotation", "hint": "Mirror axis rotation, radians -- mirror-0 defaults to x-axis"},
-        {"name": "scale",     "type": "float", "min": 0.0, "max": 2.0, "default": 1.0, "label": "Scale",    "hint": "Zoom -- confirmed stable near zero; 1.0=identity"},
+        {"name": "scale",     "type": "float", "widget": "numbox", "min": 0.0, "max": 2.0, "default": 1.0, "label": "Scale",    "hint": "Zoom -- confirmed stable near zero; 1.0=identity"},
         {"name": "bypass",    "type": "bypass"},
     ],
 
@@ -64,3 +64,14 @@ patcher = {
 
     "codebox": CODEBOX,
 }
+
+# BEGIN overrides (build/capture.py rewrites only this block)
+patcher["overrides"] = {
+    "n_mirrors.ctl": {"presentation_rect": [4.0, 38.0, 27.0, 43.0]},
+    "n_mirrors.label": {"presentation_rect": [-7.5, 20.0, 50.0, 18.0]},
+    "rotation.ctl": {"presentation_rect": [41.0, 38.0, 27.0, 43.0]},
+    "rotation.label": {"presentation_rect": [29.5, 20.0, 50.0, 18.0]},
+    "scale.ctl": {"presentation_rect": [4.0, 100.0, 34.0, 15.0]},
+    "scale.label": {"presentation_rect": [-7.5, 82.0, 50.0, 18.0]},
+}
+# END overrides

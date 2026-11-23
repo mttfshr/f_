@@ -53,7 +53,7 @@ patcher = {
     "bypass_mode": "param",
 
     "presentation_width":  190,
-    "presentation_height": 90,    # was 122 with the Width / Height numbox row (removed 2026-10-30)
+    "presentation_height": 122,    # was 122 with the Width / Height numbox row (removed 2026-10-30)
 
     "codebox": (_HERE / "codebox_aniso.gen").open(newline="").read(),
 
@@ -92,7 +92,7 @@ patcher = {
 
     "params": [
         {
-            "name": "strength_scale", "type": "float",
+            "name": "strength_scale", "type": "float", "widget": "numbox",
             "min": 0.0, "max": 2.0, "default": 0.5,
             "label": "Strength",
             "hint": "Energy-to-length gate: W = min(1, lambda1 * this). "
@@ -128,7 +128,7 @@ patcher = {
                     "off); 1 = full coherence response. PROVISIONAL (tier-3).",
         },
         {
-            "name": "floor_pct", "type": "float",
+            "name": "floor_pct", "type": "float", "widget": "numbox",
             "min": 0.0, "max": 1.0, "default": 0.25,
             "label": "Floor",
             "hint": "Width floor: the kernel keeps at least this fraction "
@@ -140,7 +140,7 @@ patcher = {
                     "operator collision). PROVISIONAL 0.25 (tier-3).",
         },
         {
-            "name": "strength", "type": "float",
+            "name": "strength", "type": "float", "widget": "numbox",
             "min": 1.0, "max": 1000.0, "default": 100.0,
             "exponent": 4.0,
             "label": "T-Map Strength",
@@ -160,3 +160,18 @@ patcher = {
 # Layout: the library's 5-column, 190 px grid (one row of five dials; the numbox row went with the Width / Height
 # dials on 2026-10-30, so the frame is 190 x 90, was 122).
 patcher["overrides"] = {}
+
+# BEGIN overrides (build/capture.py rewrites only this block)
+patcher["overrides"] = {
+    "floor_pct.ctl": {"presentation_rect": [41.0, 100.0, 34.0, 15.0]},
+    "floor_pct.label": {"presentation_rect": [29.5, 82.0, 50.0, 18.0]},
+    "length.ctl": {"presentation_rect": [4.0, 38.0, 27.0, 43.0]},
+    "length.label": {"presentation_rect": [-7.5, 20.0, 50.0, 18.0]},
+    "strength.ctl": {"presentation_rect": [78.0, 100.0, 34.0, 15.0]},
+    "strength.label": {"presentation_rect": [66.5, 82.0, 50.0, 18.0]},
+    "strength_scale.ctl": {"presentation_rect": [4.0, 100.0, 34.0, 15.0]},
+    "strength_scale.label": {"presentation_rect": [-7.5, 82.0, 50.0, 18.0]},
+    "width_gate.ctl": {"presentation_rect": [41.0, 38.0, 27.0, 43.0]},
+    "width_gate.label": {"presentation_rect": [29.5, 20.0, 50.0, 18.0]},
+}
+# END overrides

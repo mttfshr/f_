@@ -292,14 +292,14 @@
 						760.0,
 						260.0,
 						190.0,
-						90.0
+						122.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						0.0,
 						0.0,
 						190.0,
-						90.0
+						122.0
 					],
 					"proportion": 0.5
 				}
@@ -599,13 +599,7 @@
 			{
 				"box": {
 					"id": "obj-20",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "Energy-to-length gate: W = min(1, lambda1 * this). Must be calibrated TOGETHER with tensormap's `strength` (the G-channel trap: the raw tensor's G carries Jxy*strength*0.5+0.5 -- the decode `strength` param below must match the value tensormap was dialed to). PROVISIONAL default 0.5 -- the T010 coupling measurement shows W saturates (full length) at lambda1 >= 2, typical at strength 100 on noise.",
 					"numinlets": 1,
@@ -617,22 +611,19 @@
 					"param_connect": "#0_aniso_blur_pix::strength_scale",
 					"parameter_enable": 1,
 					"patching_rect": [
-						46.5,
+						38.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						4.0,
-						38.0,
-						27.0,
-						43.0
+						100.0,
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								0.5
@@ -648,10 +639,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "strength_scale"
 				}
 			},
@@ -691,7 +678,7 @@
 					"presentation": 1,
 					"presentation_rect": [
 						-7.5,
-						20.0,
+						82.0,
 						50.0,
 						18.0
 					],
@@ -728,7 +715,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						41.0,
+						4.0,
 						38.0,
 						27.0,
 						43.0
@@ -795,7 +782,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						29.5,
+						-7.5,
 						20.0,
 						50.0,
 						18.0
@@ -833,7 +820,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						78.0,
+						41.0,
 						38.0,
 						27.0,
 						43.0
@@ -899,7 +886,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						66.5,
+						29.5,
 						20.0,
 						50.0,
 						18.0
@@ -912,13 +899,7 @@
 			{
 				"box": {
 					"id": "obj-29",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "Width floor: the kernel keeps at least this fraction of isotropic smoothing everywhere, even at coherence 0 (prevents a visible no-blur seam in flat regions). 1 = fully isotropic everywhere. 0 = no smoothing where there is no structure (the painterly look). Named floor_pct on the wire (the GenExpr floor() operator collision). PROVISIONAL 0.25 (tier-3).",
 					"numinlets": 1,
@@ -930,22 +911,19 @@
 					"param_connect": "#0_aniso_blur_pix::floor_pct",
 					"parameter_enable": 1,
 					"patching_rect": [
-						262.5,
+						254.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						115.0,
-						38.0,
-						27.0,
-						43.0
+						41.0,
+						100.0,
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								0.25
@@ -961,10 +939,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "floor_pct"
 				}
 			},
@@ -1003,8 +977,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						103.5,
-						20.0,
+						29.5,
+						82.0,
 						50.0,
 						18.0
 					],
@@ -1016,13 +990,7 @@
 			{
 				"box": {
 					"id": "obj-32",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "The value tensormap's own `strength` dial is set to: the raw tensor's G channel is 0.5-offset encoded with that gain, so the decode needs it. Mismatches scale the decoded tensor by strength_tm/strength_here and thus the kernel length (measured in tasks.md T010). PROVISIONAL: OQ3 option (a), documented pairing.",
 					"numinlets": 1,
@@ -1034,22 +1002,19 @@
 					"param_connect": "#0_aniso_blur_pix::strength",
 					"parameter_enable": 1,
 					"patching_rect": [
-						334.5,
+						326.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						152.0,
-						38.0,
-						27.0,
-						43.0
+						78.0,
+						100.0,
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								100.0
@@ -1060,16 +1025,11 @@
 							"parameter_mmax": 1000.0,
 							"parameter_mmin": 1.0,
 							"parameter_modmode": 3,
-							"parameter_exponent": 4.0,
 							"parameter_shortname": "strength",
 							"parameter_type": 0,
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "strength"
 				}
 			},
@@ -1108,8 +1068,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						140.5,
-						20.0,
+						66.5,
+						82.0,
 						50.0,
 						18.0
 					],

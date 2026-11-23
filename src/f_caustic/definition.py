@@ -81,15 +81,17 @@ patcher = {
 
 # BEGIN overrides (build/capture.py rewrites only this block)
 patcher["overrides"] = {
-    "edge.ctl": {"presentation_rect": [115.0, 100.0, 45.0, 15.0]},
-    "edge.label": {"presentation_rect": [103.5, 82.0, 50.0, 18.0]},
-    "expo.ctl": {"presentation_rect": [78.0, 100.0, 34.0, 15.0]},
-    "expo.label": {"presentation_rect": [66.5, 82.0, 50.0, 18.0]},
+    "edge.ctl": {"presentation_rect": [152.0, 100.0, 45.0, 15.0]},
+    "edge.label": {"presentation_rect": [140.5, 82.0, 50.0, 18.0]},
+    "expo.ctl": {"presentation_rect": [115.0, 100.0, 34.0, 15.0]},
+    "expo.label": {"presentation_rect": [103.5, 82.0, 50.0, 18.0]},
     "gain.ctl": {"presentation_rect": [41.0, 100.0, 34.0, 15.0]},
     "gain.label": {"presentation_rect": [29.5, 82.0, 50.0, 18.0]},
+    "gain.range_menu": {"presentation_rect": [77.0, 100.0, 16.0, 15.0]},
     "mix_pct.ctl": {"presentation_rect": [4.0, 100.0, 34.0, 15.0]},
     "mix_pct.label": {"presentation_rect": [-7.5, 82.0, 50.0, 18.0]},
     "scale.ctl": {"presentation_rect": [4.0, 38.0, 27.0, 43.0]},
     "scale.label": {"presentation_rect": [-7.5, 20.0, 50.0, 18.0]},
+    "scale.range_menu": {"presentation_rect": [26.5, 21.5, 16.0, 15.0]},
 }
 # END overrides

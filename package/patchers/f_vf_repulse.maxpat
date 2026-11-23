@@ -260,14 +260,14 @@
 						760.0,
 						260.0,
 						165.0,
-						80.0
+						122.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						0.0,
 						0.0,
 						165.0,
-						80.0
+						122.0
 					],
 					"proportion": 0.5
 				}
@@ -510,13 +510,7 @@
 			{
 				"box": {
 					"id": "obj-20",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
+					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
 					"hint": "Field magnitude. Negative = attraction.",
 					"numinlets": 1,
@@ -528,22 +522,19 @@
 					"param_connect": "repulse_pix::gain",
 					"parameter_enable": 1,
 					"patching_rect": [
-						46.5,
+						38.0,
 						250.0,
-						27.0,
-						43.0
+						44.0,
+						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						4.0,
-						38.0,
-						27.0,
-						43.0
+						100.0,
+						34.0,
+						15.0
 					],
 					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
 						"valueof": {
 							"parameter_initial": [
 								4.0
@@ -559,10 +550,6 @@
 							"parameter_unitstyle": 1
 						}
 					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
 					"varname": "gain"
 				}
 			},
@@ -602,7 +589,7 @@
 					"presentation": 1,
 					"presentation_rect": [
 						-7.5,
-						20.0,
+						82.0,
 						50.0,
 						18.0
 					],
@@ -639,7 +626,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						41.0,
+						4.0,
 						38.0,
 						27.0,
 						43.0
@@ -705,7 +692,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						29.5,
+						-7.5,
 						20.0,
 						50.0,
 						18.0
@@ -743,7 +730,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						78.0,
+						41.0,
 						38.0,
 						27.0,
 						43.0
@@ -809,7 +796,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						66.5,
+						29.5,
 						20.0,
 						50.0,
 						18.0
@@ -842,8 +829,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						111.0,
-						52.0,
+						41.0,
+						100.0,
 						45.0,
 						15.0
 					],
@@ -907,8 +894,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						103.5,
-						20.0,
+						29.5,
+						82.0,
 						50.0,
 						18.0
 					],

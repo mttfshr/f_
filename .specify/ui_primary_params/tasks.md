@@ -78,3 +78,15 @@ Spec: `spec.md`. Record of results: this file. Who observed what is stated per t
 - **Panel size changes:** taller: advect +10, glow +2, stipple +3, vf_ch +10, wc +10, flow +8; shorter: quasi -42, hatch -28, caustic 0, chladni -4, ks -22, glyph -28, fluid -28, prism -38; seeds and vortex unchanged. Helpfiles that now embed a module smaller than its panel: `f_vf_ch.maxhelp` (190 x 150, panel 160), `f_wc.maxhelp` (272 x 150, panel 160), `f_chladni.maxhelp` (154 x 91, already below the old frame, Phase 0 of `.specify/preflight/`). Not fixed.
 - **Stand-ins:** `f_chladni` `mode` and `view_mode` (0/1 switches) are number boxes now, as are `f_vf_seeds` `bomb` and `f_vf_glow` `direction`; H3's menu/stepper is not built.
 - **Judgment calls to watch:** `dt` is primary in advect, ch and potential but secondary in fluid; `f_tf_glyph` has one primary (`grid`); `f_vf_repulse` `gain` is a number box by H3 although it is the effect's magnitude (held anyway).
+
+### 2026-11-22: range selects tucked in (Matt's note; Claude, offline; not committed, not looked at in Max)
+
+- Cause: the small range menus (`range_tiers`) kept their stock positions after the layout change, so they sat on the wrong labels. Fixed in `f_vf_seeds` (`field_gain`) and `f_caustic` (`gain`, `scale`), the only applied modules with range menus (`f_lens` is set aside, `f_vf_vorticity` is paused).
+- Rule used: next to a number box, the 16 x 15 menu sits immediately right of it on the same row, and that param takes two grid slots; on a dial (`f_caustic` `scale`) it stays where the builder puts it, at the right end of the label. Observed afterwards: drift 16/16 (`tests/logs/20261122-175910-offline.log`), no control overlaps. The panel sizes did not change.
+
+### 2026-11-22: the held-back seven (Matt: "all 7"; Claude, offline; not committed, not looked at in Max)
+
+- **Applied (6):** `f_vf_optical_flow` (130 -> 160), `f_vf_streak` (100 -> 122), `f_tf_aniso_blur` (90 -> 122), `f_vf_potential` (100 -> 122), `f_vf_repulse` (80 -> 122), `f_ngon` (91 -> 122). Same method and checks as the earlier batches: drift 16/16 (`tests/logs/20261122-180453-offline.log`), no overlaps, `generate_menu.py` rerun (size table).
+- **`f_sirds` reverted, not applied:** rebuilding it failed `test_drift.py` (15/16, `tests/logs/20261122-180446-offline.log`: `f_sirds` drifted from its definition, 11 boxes each way). Its shipped patcher does not reproduce from `definition.py` (known side finding, HANDOFF 2026-11-21: a definition plus an older build script, which governs is not established). Restored `src/f_sirds/definition.py` and `package/patchers/f_sirds.maxpat` from git. It has one param, so there was nothing to lay out anyway.
+- **Helpfile embeds smaller than the new panel (not fixed):** `f_vf_optical_flow.maxhelp` 154 x 91, `f_vf_streak.maxhelp` 154 x 91, `f_vf_potential.maxhelp` 208 x 110, `f_vf_repulse.maxhelp` 182 x 91, `f_ngon.maxhelp` 172 x 101; most were already below the old frame (preflight Phase 0).
+- Totals now: 22 shipped modules carry the role layout (8 pilot, 8 pool, 6 held-back).

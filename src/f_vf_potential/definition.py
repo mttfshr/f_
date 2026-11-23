@@ -24,7 +24,7 @@ patcher = {
     "bypass_mode":        "param",
 
     "presentation_width":  190,
-    "presentation_height": 100,
+    "presentation_height": 122,
 
     "archetype": "processor",
 
@@ -87,7 +87,7 @@ patcher = {
             "label": "Decay",
         },
         {
-            "name": "strength", "type": "float",
+            "name": "strength", "type": "float", "widget": "numbox",
             "min": 0.0, "max": 2.0, "default": 1.0,
             "hint": "Output scale",
             "label": "Strength",
@@ -103,3 +103,14 @@ patcher = {
         },
     ],
 }
+
+# BEGIN overrides (build/capture.py rewrites only this block)
+patcher["overrides"] = {
+    "decay.ctl": {"presentation_rect": [41.0, 38.0, 27.0, 43.0]},
+    "decay.label": {"presentation_rect": [29.5, 20.0, 50.0, 18.0]},
+    "dt.ctl": {"presentation_rect": [4.0, 38.0, 27.0, 43.0]},
+    "dt.label": {"presentation_rect": [-7.5, 20.0, 50.0, 18.0]},
+    "strength.ctl": {"presentation_rect": [4.0, 100.0, 34.0, 15.0]},
+    "strength.label": {"presentation_rect": [-7.5, 82.0, 50.0, 18.0]},
+}
+# END overrides
